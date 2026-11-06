@@ -1,0 +1,14 @@
+{
+  "name": "tide-data-lab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "조석 데이터 탐구실 — 고등학교 지구과학 수행평가용 조석 자료 분석·보고서 웹앱",
+  "type": "module",
+  "scripts": {
+    "start": "node tools/serve.mjs",
+    "test": "node --test \"tests/unit/*.test.mjs\"",
+    "test:e2e": "node tests/e2e/run-e2e.mjs",
+    "make-sample": "node tools/make-sample-data.mjs"
+  },
+  "license": "UNLICENSED"
+}

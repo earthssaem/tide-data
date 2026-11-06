@@ -1,0 +1,18 @@
+{
+  "formatVersion": 1,
+  "defaultCase": "sample-2099",
+  "cases": [
+    {
+      "id": "sample-2099",
+      "path": "sample-2099",
+      "label": "예시 사례 (기능 확인용 예시 데이터)",
+      "enabled": true
+    },
+    {
+      "id": "test-minimal",
+      "path": "test-minimal",
+      "label": "검증용 사례 (예측·기상·달의 위상 자료 없음)",
+      "enabled": false
+    }
+  ]
+}

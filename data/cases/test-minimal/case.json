@@ -1,0 +1,60 @@
+{
+  "formatVersion": 1,
+  "id": "test-minimal",
+  "dataVersion": "test-minimal-v1",
+  "isSample": true,
+  "sampleNotice": "실제 관측값이 아닙니다. 예측 조위 기준면 불일치, 기상·달의 위상 자료 미제공 상태를 확인하는 사례입니다.",
+  "title": "검증용 사례: 자료 일부 미제공",
+  "timezone": { "label": "KST", "name": "한국 표준시(UTC+9)", "offsetMinutes": 540 },
+  "station": { "id": "EX-A", "name": "예시 관측소 A", "lat": 34.80, "lon": 127.90, "note": "가상 관측소" },
+  "description": {
+    "provider": "개발용 예시 자료 생성기",
+    "title": "검증용 최소 자료",
+    "period": "2099-09-18 ~ 2099-09-23 (가상)",
+    "interval": "1시간",
+    "datumLabel": "예시 기준면 (가상)",
+    "identifier": "test-minimal-v1"
+  },
+  "datasets": {
+    "observed": {
+      "file": "observed_utc_m.csv",
+      "adapter": "csv-tide",
+      "kind": "observed",
+      "label": "관측 조위",
+      "stationId": "EX-A",
+      "datum": "EX-DATUM",
+      "datumLabel": "예시 기준면",
+      "unit": "m",
+      "intervalMinutes": 60,
+      "time": { "column": "datetime_utc", "offset": "+00:00" },
+      "value": { "column": "level_m" },
+      "quality": { "column": "flag", "ok": ["1"], "suspect": ["2"], "bad": ["3"], "missing": ["9"] },
+      "missingValues": [""],
+      "meta": { "provider": "예시 자료 생성기", "title": "관측 조위(검증용, UTC·m)", "identifier": "EX-A-OBS-min-v1" }
+    },
+    "predicted": {
+      "file": "predicted_other_datum.csv",
+      "adapter": "csv-tide",
+      "kind": "predicted",
+      "label": "천문조 예측 조위",
+      "stationId": "EX-A",
+      "datum": "OTHER-DATUM",
+      "datumLabel": "다른 기준면(검증용)",
+      "unit": "cm",
+      "intervalMinutes": 60,
+      "time": { "column": "time", "offset": "+09:00" },
+      "value": { "column": "pred_cm" },
+      "meta": { "provider": "예시 자료 생성기", "title": "예측 조위(검증용, 기준면 다름)", "identifier": "EX-A-PRED-min-v1" }
+    },
+    "weather": { "provided": false },
+    "moonPhases": { "provided": false },
+    "typhoon": { "name": "가상 태풍 A", "year": 2099, "note": "검증용 가상 태풍(경로 자료 없음)" }
+  },
+  "inquiry1": { "start": "2099-09-18 00:00", "end": "2099-09-21 00:00" },
+  "inquiry2": { "start": "2099-09-18 00:00", "end": "2099-09-24 00:00" },
+  "inquiry3": {
+    "start": "2099-09-18 00:00",
+    "end": "2099-09-23 00:00",
+    "keyTimes": [{ "time": "2099-09-20 12:00", "label": "최근접(교사 설정)" }]
+  }
+}
