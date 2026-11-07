@@ -95,6 +95,8 @@ function setupShell() {
     if (SCREENS[step] && step !== app.currentStep) navigate(step, { fromHash: true });
   });
   window.addEventListener('beforeunload', () => { app.store.flush(); });
+  // 전체화면 평가 모드 연결 지점: 평가가 일시 중지되면 입력 중이던 답안을 바로 저장한다(자동 저장과 같은 경로)
+  document.addEventListener('tidelab:assessment-pause', () => { app.store.flush(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) app.store.flush(); });
 }
 

@@ -1,0 +1,69 @@
+/* 전체화면 평가 모드 — 기존 app.css와 독립(모든 선택자에 asmt- 접두어) */
+#asmt-root { font-family: "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; color: #1d2733; }
+html.asmt-blocked, html.asmt-blocked body { overflow: hidden; }
+
+/* 불투명 오버레이: 평가 콘텐츠를 완전히 가림 */
+.asmt-overlay {
+  position: fixed; inset: 0; z-index: 2147483000;
+  display: grid; place-items: center; padding: 24px; overflow-y: auto;
+  background: #eef2f7;
+}
+.asmt-overlay[hidden], .asmt-pill[hidden], .asmt-modal-backdrop[hidden] { display: none !important; }
+.asmt-overlay.asmt-paused { background: #0b1f3a; }
+.asmt-card {
+  width: min(640px, 100%); background: #fff; border-radius: 14px; padding: 32px 36px;
+  border: 1px solid #d5dce4; box-shadow: 0 18px 50px rgba(10, 25, 50, .18); line-height: 1.65;
+}
+.asmt-card-wide { width: min(860px, 100%); }
+.asmt-kicker { margin: 0; color: #0f8b8d; font-weight: 800; letter-spacing: .02em; }
+.asmt-card h1 { margin: .2rem 0 1rem; font-size: 1.7rem; color: #1f3a68; line-height: 1.35; }
+.asmt-paused .asmt-card h1 { color: #b42318; }
+.asmt-icon { width: 52px; height: 52px; border-radius: 50%; background: #fdecea; color: #b42318; display: grid; place-items: center; font-size: 1.8rem; font-weight: 900; margin-bottom: .6rem; }
+.asmt-lines { display: grid; gap: .25rem; font-size: 1.08rem; margin: 0 0 1rem; }
+.asmt-rules { margin: 0 0 1rem; padding-left: 1.2rem; display: grid; gap: .45rem; }
+.asmt-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin: 1.2rem 0 .8rem; }
+.asmt-btn {
+  font: inherit; font-weight: 700; min-height: 44px; padding: .5rem 1.2rem; border-radius: 9px; cursor: pointer;
+  border: 1.5px solid #1f3a68; background: #fff; color: #1f3a68;
+}
+.asmt-btn:hover:not(:disabled) { background: #e8eef7; }
+.asmt-btn:disabled { opacity: .6; cursor: progress; }
+.asmt-btn:focus-visible, .asmt-link:focus-visible { outline: 3px solid #0f8b8d; outline-offset: 2px; }
+.asmt-btn-primary { background: #1f3a68; color: #fff; font-size: 1.08rem; min-height: 52px; padding: .6rem 1.8rem; }
+.asmt-btn-primary:hover:not(:disabled) { background: #0b1f3a; }
+.asmt-btn-danger { background: #b42318; border-color: #b42318; color: #fff; }
+.asmt-btn-danger:hover:not(:disabled) { background: #8f1c13; }
+.asmt-btn-sm { min-height: 32px; padding: .2rem .8rem; font-size: .88rem; }
+.asmt-link { background: none; border: 0; padding: 0; color: #1f3a68; text-decoration: underline; font: inherit; font-weight: 700; cursor: pointer; }
+.asmt-error { color: #b42318; font-weight: 700; }
+.asmt-small { font-size: .9rem; margin: .4rem 0 0; }
+.asmt-muted { color: #5b6675; }
+.asmt-dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .4rem 1rem; margin: 1rem 0; }
+.asmt-dl div { background: #f5f7fa; border-radius: 8px; padding: .4rem .7rem; }
+.asmt-dl dt { font-size: .82rem; color: #5b6675; }
+.asmt-dl dd { margin: 0; font-weight: 700; word-break: break-all; }
+.asmt-table-wrap { max-height: 260px; overflow: auto; border: 1px solid #e3e8ee; border-radius: 8px; }
+.asmt-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.asmt-table th, .asmt-table td { padding: .35rem .55rem; border-bottom: 1px solid #e8edf2; text-align: left; white-space: nowrap; }
+.asmt-table th { background: #f2f5f9; color: #1f3a68; position: sticky; top: 0; }
+
+/* 진행 중 표시 */
+.asmt-pill {
+  position: fixed; left: 50%; bottom: 10px; transform: translateX(-50%); z-index: 2147482000;
+  display: flex; align-items: center; gap: .6rem; padding: .35rem .45rem .35rem .9rem;
+  background: #fff; border: 1.5px solid #1f3a68; border-radius: 999px; box-shadow: 0 4px 14px rgba(15, 30, 60, .15);
+  font-size: .88rem; font-weight: 700; color: #1f3a68; white-space: nowrap;
+}
+.asmt-dot { width: 9px; height: 9px; border-radius: 50%; background: #0f8b8d; }
+.asmt-pill-count { color: #5b6675; font-weight: 600; }
+
+/* 종료 확인 */
+.asmt-modal-backdrop { position: fixed; inset: 0; z-index: 2147482500; background: rgba(15, 25, 40, .5); display: grid; place-items: center; padding: 24px; }
+.asmt-modal { width: min(520px, 100%); background: #fff; border-radius: 12px; padding: 24px 26px; box-shadow: 0 18px 50px rgba(10, 25, 50, .3); line-height: 1.6; }
+.asmt-modal h2 { margin: 0 0 .6rem; color: #1f3a68; font-size: 1.2rem; }
+
+@media print {
+  /* 평가 진행 중 인쇄: 평가 표시는 빼고 보고서만 / 중지·안내 상태: 평가 콘텐츠를 인쇄하지 않음 */
+  html:not(.asmt-blocked) #asmt-root { display: none !important; }
+  html.asmt-blocked body > :not(#asmt-root) { display: none !important; }
+}

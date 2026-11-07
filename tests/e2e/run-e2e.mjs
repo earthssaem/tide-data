@@ -24,6 +24,14 @@ const predRows = new Map(readCsv('predicted.csv').map(([t, v]) => [t, Math.round
 const wxRows = new Map(readCsv('weather.csv').map(([t, p, w, d]) => [t, { p: p === '' ? null : Number(p), w: w === '' ? null : Number(w), d: d === '' ? null : Number(d) }]));
 const obsMap = new Map(obsRows.map((r) => [r.t, r.v]));
 
+
+// 전체화면 평가 모드가 켜져 있으므로 시작 안내·중지 화면이 뜨면 버튼을 눌러 진행한다.
+async function passAssessment(p) {
+  await p.waitForSelector('#asmt-root', { state: 'attached' });
+  const btn = await p.$('.asmt-overlay:not([hidden]) [data-act=start], .asmt-overlay:not([hidden]) [data-act=resume]');
+  if (btn) { await btn.click(); await p.waitForFunction(() => document.documentElement.dataset.asmt === 'running'); }
+}
+
 const results = [];
 const check = (name, fn) => { try { fn(); results.push(['✓', name]); } catch (e) { results.push(['✗', name, e.message]); } };
 
@@ -41,6 +49,7 @@ try {
   const okDialog = async () => { await page.click('dialog button[value=ok]'); await page.waitForTimeout(150); };
 
   await page.goto(BASE);
+  await passAssessment(page);
   await page.waitForSelector('.student-form');
 
   // 1. 학생 정보 검증
@@ -191,12 +200,14 @@ try {
   // 6. 새로고침 복구
   const before = await page.evaluate(() => JSON.stringify({ a: window.__tideApp.store.state.answers, e: window.__tideApp.store.state.evidences, l: window.__tideApp.store.state.links }));
   await page.reload();
+  await passAssessment(page);
   await page.waitForSelector('#ans-c1');
   const after = await page.evaluate(() => JSON.stringify({ a: window.__tideApp.store.state.answers, e: window.__tideApp.store.state.evidences, l: window.__tideApp.store.state.links }));
   check('새로고침 후 답안·근거·연결 복구', () => assert.deepEqual(JSON.parse(after), JSON.parse(before)));
   check('저장 상태 "저장됨" 표시', async () => {});
   assert.match(await page.textContent('#save-status'), /저장됨/);
   await page.goto(BASE + '#/inq1');
+  await passAssessment(page);
   await page.waitForSelector('#ans-i1q1');
   check('줄바꿈 포함 답안이 입력란에 복구', async () => {});
   assert.equal(await page.inputValue('#ans-i1q1'), longAns);
@@ -290,6 +301,7 @@ try {
   const p2 = await ctx2.newPage();
   p2.on('pageerror', (e) => errors.push(`pageerror(minimal): ${e.message}`));
   await p2.goto(BASE + '?case=test-minimal');
+  await passAssessment(p2);
   await p2.waitForSelector('.student-form');
   await p2.selectOption('select[name=grade]', '1');
   await p2.fill('input[name=klass]', '1');
