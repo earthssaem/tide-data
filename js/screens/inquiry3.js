@@ -53,11 +53,11 @@ export function render(app, container) {
     const det = h('details', { class: 'track' });
     det.innerHTML = `<summary>태풍 경로 자료 보기 (${ty.track.length}개 시각${ty.trackKind ? ` · ${escapeHtml(ty.trackKind)}` : ''})</summary>
       <p class="muted small">${escapeHtml(ty.trackNote || '태풍 중심의 위치입니다.')} 중심기압은 태풍 중심의 기압으로, 부산에서 관측한 기압이 아닙니다.</p>
-      <table class="data-table compact"><thead><tr><th scope="col">시각</th><th scope="col">중심 위치</th><th scope="col">태풍 중심기압</th><th scope="col">중심 최대풍속</th><th scope="col">조위 관측소까지 거리</th></tr></thead>
+      <div class="table-host"><table class="data-table compact"><thead><tr><th scope="col">시각</th><th scope="col">중심 위치</th><th scope="col">태풍 중심기압</th><th scope="col">중심 최대풍속</th><th scope="col">조위 관측소까지 거리</th></tr></thead>
       <tbody>${ty.track.map((p) => {
         const d = haversineKm(cd.station.lat, cd.station.lon, p.lat, p.lon);
         return `<tr><th scope="row">${escapeHtml(fmtDateTime(p.t, cd.tz))}</th><td>${escapeHtml(fmtLatLon(p.lat, p.lon))}</td><td class="num">${p.pressure != null ? `${fmtNum(p.pressure)} hPa` : '자료 없음'}</td><td class="num">${p.maxWind != null ? `${fmtNum(p.maxWind)} m/s` : '자료 없음'}</td><td class="num">${d != null ? `${d.toFixed(0)} km` : '—'}</td></tr>`;
-      }).join('')}</tbody></table>
+      }).join('')}</tbody></table></div>
       <p class="muted small">출처: ${escapeHtml(ty.meta.provider || '사례 설정 자료')} (${escapeHtml(ty.meta.identifier || '')})</p>`;
     info.append(det);
   }

@@ -56,6 +56,8 @@ html.asmt-blocked, html.asmt-blocked body { overflow: hidden; }
 }
 .asmt-dot { width: 9px; height: 9px; border-radius: 50%; background: #0f8b8d; }
 .asmt-pill-count { color: #5b6675; font-weight: 600; }
+/* 좁은 화면: 아래쪽 단계 이동 버튼과 겹치지 않게, 평가 중에는 그 막대 아래에 표시 자리를 둔다 */
+@media (max-width: 820px) { html[data-asmt="running"] .bottom-nav { padding-bottom: 3.6rem; } }
 
 /* 종료 확인 */
 .asmt-modal-backdrop { position: fixed; inset: 0; z-index: 2147482500; background: rgba(15, 25, 40, .5); display: grid; place-items: center; padding: 24px; }
