@@ -9,8 +9,8 @@ import { fmtRange, fmtDateTime, fmtDateKo, DAY, HOUR } from '../util/time.js';
 import { fmtNum } from '../util/format.js';
 import { layoutChart } from '../chart/layout.js';
 import {
-  inq1MainSpec, inq1DailySpec, inq2Specs, stationsMapLayout, inq3Specs, inq3DailySpec, inq4TideSpecs, weatherSpec,
-  typhoonMapLayout, closestTyphoonPoint, monthDays, extremaIn, periodTitle, periodCd, PERIOD_NAMES,
+  inq1MainSpec, inq1MonthSpec, inq2Specs, stationsMapLayout, inq3Specs, inq3DailySpec, inq4TideSpecs, weatherSpec,
+  typhoonMapLayout, closestTyphoonPoint, extremaIn, periodTitle, periodCd, PERIOD_NAMES,
 } from '../chart/assess.js';
 
 const localTz = () => ({ offsetMinutes: -new Date().getTimezoneOffset(), label: '' });
@@ -37,8 +37,7 @@ export function answerLines(ad, state, q) {
       return [`만조 ${a.high || '□'}회 / 간조 ${a.low || '□'}회 / 만조에서 다음 만조까지 약 ${a.period || '□'}시간`];
     }
     case 'q3': {
-      const days = monthDays(ad.st[ad.rep], ad.win.month);
-      const t = (k) => { const d = days.find((x) => x.day === k); return d ? `${fmtDateKo(d.start, tz)} (변동 폭 ${cm(d.range)})` : k; };
+      const t = (k) => { const [y, mo, d] = k.split('-').map(Number); return `${y}년 ${mo}월 ${d}일(${'일월화수목금토'[new Date(Date.UTC(y, mo - 1, d)).getUTCDay()]})`; };
       return [a.spring && `대조로 고른 날: ${t(a.spring)}`, a.neap && `소조로 고른 날: ${t(a.neap)}`].filter(Boolean);
     }
     case 'q4': return [];
@@ -105,14 +104,16 @@ export function buildReport(ad, state) {
     if (on(Q2)) s1.items.push(qa(Q2, 'inq1'));
   }
   if (on(Q3)) {
-    s1.items.push(fig('f2', `그림 2. 부산 예측 조위 한 달 일별 변동 폭 (${ad.setup.month}) — ③에서 고른 날${rv.moon ? ', 달의 위상' : ''}`, [{ height: 220, spec: (ctx) => inq1DailySpec(ctx, ad, view(state), { showMoon: !!rv.moon, title: false }) }]));
+    s1.items.push(fig('f2', `그림 2. 부산 예측 조위 한 달 (${ad.setup.month}) — ③에서 고른 날${rv.moon ? ', 달의 위상' : ''}`, [{ height: 230, spec: (ctx) => inq1MonthSpec(ctx, ad, view(state), { showMoon: !!rv.moon, title: false }) }]));
     s1.items.push(qa(Q3, 'inq1'));
   }
   if (on(Q4)) {
     const a = answerOf(state, Q4) || {};
     const q = qa(Q4, 'inq1');
     if (!a.spring && !a.neap) missing.push({ step: 'inq1', qid: 'q4', label: qLabel(Q4) });
-    s1.items.push({ ...q, type: 'drawings', items: [{ title: '대조일 때', drawing: a.spring || null }, { title: '소조일 때', drawing: a.neap || null }] });
+    s1.items.push({ ...q, type: 'drawings', items: [{ title: '대조일 때', orbit: a.spring || null }, { title: '소조일 때', orbit: a.neap || null }] });
+    const od = a.oldDrawings || state.answers.q4?.oldDrawings;
+    if (od && (od.spring || od.neap)) s1.items.push({ type: 'drawings', id: 'q4-old', label: `${qLabel(Q4)} (이전 그림판에 그린 그림)`, text: '배치판으로 바뀌기 전에 그린 그림입니다.', lines: [], items: [{ title: '대조일 때', drawing: od.spring || null }, { title: '소조일 때', drawing: od.neap || null }] });
   }
   if (rv.moon && ad.moon) {
     const ph = ad.moon.phases.filter((p) => p.t >= ad.win.month[0] - DAY && p.t < ad.win.month[1] + DAY);

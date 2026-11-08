@@ -27,6 +27,7 @@ function readCsv(file) {
 }
 const series = (file, col) => new Map(readCsv(file).map((r) => [r.time, r[col] === '' ? null : Number(r[col])]));
 const pred5 = series('stations/DT_0005/predicted.csv', 'pred_cm');
+const pred10 = series('stations/DT_0005/predicted10.csv', 'pred_cm');
 const obs5 = series('stations/DT_0005/observed.csv', 'tide_cm');
 const obs22 = series('past/DT_0005-2022-09/observed.csv', 'tide_cm');
 const wx22 = new Map(readCsv('past/DT_0005-2022-09/weather.csv').map((r) => [r.time, r]));
@@ -125,45 +126,59 @@ try {
   });
   // 키보드로 지점 고르기: 첫 → 는 구간 첫 자료(09-10 00:00)
   const kbPick = async (sel, n) => { await page.focus(`${sel} .chart-view`); for (let i = 0; i < n; i++) await page.keyboard.press('ArrowRight'); await page.keyboard.press('Enter'); await page.waitForTimeout(150); };
-  await kbPick('#inq1-main', 28); // 09-11 03:00
+  await check('탐구 1: 3일 그래프는 10분 간격 예측 자료', async () => assert.match(await page.textContent('#inq1-main .data-line'), /10분 간격/));
+  await kbPick('#inq1-main', 163); // 10분 간격: 09-10 00:00 + 162칸 → 09-11 03:00
   await page.click('#q1-set-high');
-  await kbPick('#inq1-main', 6); // 이어서 6칸 → 09-11 09:00
+  await kbPick('#inq1-main', 39); // 이어서 39칸 → 09-11 09:30
   await page.click('#q1-set-low');
   await check('탐구 1 ①: 고른 지점의 시각·높이 = 원자료', async () => {
     const st = await stateOf(page);
     assert.equal(st.answers.q1.high.t, T('2026-09-11 03:00'));
-    assert.equal(st.answers.q1.high.v, pred5.get('2026-09-11 03:00'));
-    assert.equal(st.answers.q1.low.t, T('2026-09-11 09:00'));
+    assert.equal(st.answers.q1.high.v, pred10.get('2026-09-11 03:00'));
+    assert.equal(st.answers.q1.low.t, T('2026-09-11 09:30'));
+    assert.equal(st.answers.q1.low.v, pred10.get('2026-09-11 09:30'));
     const tx = await page.textContent('#q1-table');
-    assert.ok(tx.includes(`${fmtV(pred5.get('2026-09-11 03:00'))} cm`) && tx.includes(`${fmtV(pred5.get('2026-09-11 09:00'))} cm`));
+    assert.ok(tx.includes(`${fmtV(pred10.get('2026-09-11 03:00'))} cm`) && tx.includes('2026-09-11 09:30') && tx.includes(`${fmtV(pred10.get('2026-09-11 09:30'))} cm`));
     assert.ok(!/조차\s*\d/.test(await page.textContent('#q-q1')) || true, '조차는 앱이 계산하지 않음');
   });
   await page.fill('#q1-range', '112'); await page.fill('#q2-high', '2'); await page.fill('#q2-low', '2'); await page.fill('#q2-period', '12.4');
   await check('탐구 1 ②: 24시간 구간 표시', async () => assert.match(await page.textContent('#q-q2'), /2026-09-11 00:00 ~ 09-12 00:00/));
   await kbPick('#inq1-daily', 12); await page.click('#q3-set-spring');
   await kbPick('#inq1-daily', 8); await page.click('#q3-set-neap'); // 이어서 8칸 → 9/20
-  await check('탐구 1 ③: 고른 날짜와 변동 폭 = 원자료(하루 최고 − 최저)', async () => {
+  await check('탐구 1 ③: 한 달 그래프는 점을 이은 선, 고른 날짜 기록(앱이 판정하지 않음)', async () => {
     const st = await stateOf(page);
     assert.deepEqual([st.answers.q3.spring, st.answers.q3.neap], ['2026-09-12', '2026-09-20']);
-    const day = [...pred5].filter(([k]) => k.startsWith('2026-09-12')).map(([, v]) => v);
-    assert.match(await page.textContent('#q3-spring'), new RegExp(`${fmtV(Math.max(...day) - Math.min(...day))} cm`));
+    assert.match(await page.textContent('#q3-spring'), /2026년 9월 12일/);
+    assert.ok(await page.$('#inq1-daily svg polyline'));
+    assert.ok(!(await visibleText(page)).includes('변동 폭 막대'));
   });
-  for (const k of ['spring', 'neap']) {
-    await page.$eval(`#draw-q4-${k}`, (e) => e.scrollIntoView({ block: 'center' }));
-    const b = await page.locator(`#draw-q4-${k} .draw-surface`).boundingBox();
-    await page.mouse.move(b.x + 40, b.y + 40); await page.mouse.down(); await page.mouse.move(b.x + 160, b.y + 90, { steps: 6 }); await page.mouse.up();
+  // ④ 태양·지구·달 끌어 놓기(대조), 키보드로 옮기기(소조)
+  await page.$eval('#orbit-q4-spring', (e) => e.scrollIntoView({ block: 'center' }));
+  for (const [k, x, y] of [['sun', 80, 120], ['earth', 330, 120], ['moon', 430, 120]]) {
+    const hb = await page.locator(`#orbit-q4-spring [data-body=${k}]`).boundingBox();
+    const sv = await page.locator('#orbit-q4-spring svg').boundingBox(); const sc = sv.width / 560;
+    await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await page.mouse.down(); await page.mouse.move(sv.x + x * sc, sv.y + y * sc, { steps: 6 }); await page.mouse.up();
   }
+  await page.focus('#orbit-q4-neap [data-body=moon]');
+  for (let i = 0; i < 8; i++) await page.keyboard.press('ArrowUp');
   await page.waitForTimeout(300);
-  await check('탐구 1 ④: 그림 두 칸 저장', async () => { const st = await stateOf(page); assert.ok(st.answers.q4.spring.strokes.length && st.answers.q4.neap.strokes.length); });
+  await check('탐구 1 ④: 천체를 끌어 놓은 위치 저장(마우스·키보드)', async () => {
+    const st = await stateOf(page);
+    assert.deepEqual(st.answers.q4.spring.sun, { x: 80, y: 120, placed: true });
+    assert.equal(st.answers.q4.spring.moon.x, 430);
+    assert.equal(st.answers.q4.neap.moon.placed, true);
+    assert.equal(st.answers.q4.neap.sun.placed, false);
+  });
   await page.click('#btn-reveal-moon'); await okDialog(page);
   await page.waitForSelector('#reveal-moon.done');
   await check('탐구 1: [달의 위상 확인] 후 위상 표시, ③·④ 고정(공개 순간 보관)', async () => {
     assert.match(await page.textContent('#moon-list'), /삭 09-11/);
     assert.equal(await page.$('#q3-set-spring'), null);
-    assert.ok(await page.$('#draw-q4-spring.locked'));
+    assert.ok(await page.$('#orbit-q4-spring.locked'));
+    assert.equal(await page.$('#orbit-q4-spring [data-body]'), null, '고정 뒤에는 옮길 수 없음');
     const st = await stateOf(page);
     assert.equal(st.reveals.moon.answers.q3.spring, '2026-09-12');
-    assert.ok(st.reveals.moon.answers.q4.spring.strokes.length);
+    assert.equal(st.reveals.moon.answers.q4.spring.earth.x, 330);
   });
 
   // ───── 3. 탐구 2 ─────
@@ -279,7 +294,7 @@ try {
     assert.deepEqual(parts, ['inq1', 'inq2', 'inq3', 'inq4', 'conclusion', 'sources']);
     assert.match(await page.textContent('#rp-f1'), /만조\(내가 고름\)/);
     assert.match(await page.textContent('#rp-f2'), /대조\(내가 고름\)/);
-    assert.equal(await page.$$eval('#rp-q4 .rp-drawing svg', (x) => x.length), 2);
+    assert.equal(await page.$$eval('#rp-q4 .rp-orbit svg', (x) => x.length), 2);
   });
   await page.click('#btn-pdf');
   await page.waitForSelector('dialog[open]');
@@ -311,6 +326,8 @@ try {
     }
     assert.ok(norm(body).includes(norm(st.answers.q11.slice(0, 12))) && norm(body).includes(norm(st.answers.q11.slice(-8))), 'q11(나란히)');
     assert.ok(body.includes('만조로 고른 지점: 2026-09-11 03:00'));
+    assert.ok(body.includes('간조로 고른 지점: 2026-09-11 09:30'));
+    assert.ok(body.includes('대조로 고른 날: 2026년 9월 12일'));
     assert.ok(body.includes('조차: 112 cm'));
     assert.ok(body.includes('만조 2회 / 간조 2회 / 만조에서 다음 만조까지 약 12.4시간'));
     assert.ok(body.includes('인천 > 부산 > 묵호'));

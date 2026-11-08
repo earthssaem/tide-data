@@ -538,3 +538,11 @@ textarea:focus { border-color: var(--teal); }
 .reveal-card.done { background: #f1f8f4; }
 .moon-list { margin-top: .4rem; }
 @media (max-width: 820px) { .rp-draw-grid { grid-template-columns: 1fr; } }
+/* 태양·지구·달 배치판 */
+.orbit-board { border: 1px solid var(--line); border-radius: 8px; padding: .4rem; background: #fbfcfd; }
+.orbit-surface svg { width: 100%; height: auto; display: block; border-radius: 6px; touch-action: none; }
+.orbit-handle { cursor: grab; outline: none; }
+.orbit-handle:focus-visible { stroke: #f2b705; stroke-width: 3; }
+.orbit-board.locked .orbit-surface svg { opacity: .92; }
+.orbit-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem; margin-top: .3rem; }
+.rp-orbit svg { background: #0f1b2d; }

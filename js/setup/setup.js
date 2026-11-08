@@ -141,6 +141,10 @@ export function validateSetup(ad0, cfg) {
     const c0 = parseLocal(st.inq1.countStart, tz);
     if (!Number.isFinite(c0) || c0 < a1 || c0 + DAY > b1) add('error', '탐구 1 구간', '문항 ②의 24시간 구간이 탐구 1 구간 안에 들어가야 합니다.');
     else add('ok', '탐구 1 구간', `문항 ②의 24시간: ${fmtRange(c0, c0 + DAY, tz)}`);
+    const p10 = rep.predicted10;
+    const has10 = p10 && p10.points.filter((p) => p.t >= a1 && p.t <= b1 && p.v != null).length >= Math.round((b1 - a1) / p10.intervalMs);
+    if (has10) add('ok', '탐구 1 구간', '10분 간격 예측 자료 사용(만조·간조를 10분 단위로 고를 수 있음)');
+    else add('warn', '탐구 1 구간', `이 구간에는 10분 간격 예측 자료가 없어 1시간 간격으로 표시합니다(10분 자료가 있는 달: ${(p10?.months || []).join(', ') || '없음'}).`);
   }
   const [a2, b2] = raw(st.inq2);
   if (!Number.isFinite(a2) || !Number.isFinite(b2) || b2 <= a2) add('error', '탐구 2 기간', '탐구 2 지역 비교 기간의 시각 형식이 올바르지 않습니다.');

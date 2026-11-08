@@ -176,6 +176,18 @@ export function sanitizeDrawing(d) {
   return { w, h, strokes, texts };
 }
 
+/** 태양·지구·달 배치(문항 ④). 형식이 맞지 않으면 null */
+export function sanitizeOrbit(o) {
+  if (!isObj(o)) return null;
+  const out = {};
+  for (const k of ['sun', 'earth', 'moon']) {
+    const b = o[k];
+    if (!isObj(b) || num(b.x) == null || num(b.y) == null) return null;
+    out[k] = { x: clampN(b.x, 0, 560), y: clampN(b.y, 0, 300), placed: b.placed === true };
+  }
+  return ['sun', 'earth', 'moon'].some((k) => out[k].placed) ? out : null;
+}
+
 const pick = (p) => (isObj(p) && num(p.t) != null ? { t: p.t, v: num(p.v) } : null);
 const shortText = (v, max) => str(v, max);
 
@@ -190,7 +202,11 @@ export function sanitizeAnswers(a) {
   const q3 = isObj(x.q3) ? x.q3 : {};
   out.q3 = { spring: typeof q3.spring === 'string' && DAY_KEY.test(q3.spring) ? q3.spring : null, neap: typeof q3.neap === 'string' && DAY_KEY.test(q3.neap) ? q3.neap : null };
   const q4 = isObj(x.q4) ? x.q4 : {};
-  out.q4 = { spring: sanitizeDrawing(q4.spring), neap: sanitizeDrawing(q4.neap) };
+  out.q4 = { spring: sanitizeOrbit(q4.spring), neap: sanitizeOrbit(q4.neap) };
+  // 이전 그림판 그림(배치판으로 바뀌기 전 저장분)은 지우지 않고 따로 보관
+  const old = isObj(q4.oldDrawings) ? q4.oldDrawings : {};
+  const od = { spring: sanitizeDrawing(old.spring) || (isObj(q4.spring) && q4.spring.strokes ? sanitizeDrawing(q4.spring) : null), neap: sanitizeDrawing(old.neap) || (isObj(q4.neap) && q4.neap.strokes ? sanitizeDrawing(q4.neap) : null) };
+  if (od.spring || od.neap) out.q4.oldDrawings = od;
   out.q5 = Array.isArray(x.q5) ? [0, 1, 2].map((i) => (typeof x.q5[i] === 'string' && (x.q5[i] === '' || STATION_ID.test(x.q5[i])) ? x.q5[i] : '')) : ['', '', ''];
   out.q6 = {};
   if (isObj(x.q6)) for (const [k, v] of Object.entries(x.q6).slice(0, 20)) if (STATION_ID.test(k) && isObj(v)) out.q6[k] = { type: TYPES.includes(v.type) ? v.type : '', reason: shortText(v.reason, 500) };

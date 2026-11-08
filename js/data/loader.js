@@ -105,6 +105,7 @@ async function buildSingleCase(config, readFile) {
     throw new Error('관측 조위 자료를 불러오지 못했습니다. ' + issues.map((i) => i.message).join(' '));
   }
   const predicted = await tryLoad('predicted', async (s) => normalizeTideSeries(await readFile(s.file), s));
+  const predicted10 = await tryLoad('predicted10', async (s) => ({ ...normalizeTideSeries(await readFile(s.file), s), months: s.months || [] }));
   const weather = await tryLoad('weather', async (s) => normalizeWeather(await readFile(s.file), s));
   const moon = await tryLoad('moonPhases', async (s) => normalizeMoonPhases(await readFile(s.file), s));
   const typhoon = await tryLoad('typhoon', async (s) => {
@@ -131,6 +132,7 @@ async function buildSingleCase(config, readFile) {
     station,
     observed,
     predicted,
+    predicted10,
     weather,
     moon,
     typhoon,

@@ -170,3 +170,32 @@ test('예시·검증 사례: 예시 표시, 없는 자료는 미제공(만들지
   assert.ok(gap.every((p) => p.v === null), '결측 시각은 0이 아니라 null');
   assert.equal(INQUIRIES.length, 4);
 });
+
+test('10분 간격 예측(부산 2026-09): 정시 값은 1시간 예측과 같고 탐구 1에 쓰임', async () => {
+  const { inq1Series } = await import('../../js/chart/assess.js');
+  const ad = applySetup(await load('khoa-assess-2025-26'), deployed());
+  const p10 = ad.st.DT_0005.predicted10;
+  assert.deepEqual(p10.months, ['2026-09']);
+  assert.equal(p10.intervalMs, 600000);
+  assert.equal(p10.points.length, 30 * 144);
+  const hourly = new Map(ad.st.DT_0005.predicted.points.map((p) => [p.t, p.v]));
+  for (const p of p10.points.filter((x) => x.t % 3600e3 === 0)) assert.equal(p.v, hourly.get(p.t));
+  assert.equal(inq1Series(ad), p10);
+  const other = applySetup(await load('khoa-assess-2025-26'), { ...deployed(), month: '2026-08', inq1: { start: '2026-08-10 00:00', end: '2026-08-13 00:00', countStart: '2026-08-11 00:00' } });
+  assert.equal(inq1Series(other), other.st.DT_0005.predicted, '10분 자료가 없는 달은 1시간 자료');
+});
+
+test('문항 ④ 배치판: 위치 저장, 옮기지 않은 판은 빈 답, 이전 그림판 그림은 보관', () => {
+  const st = emptyState('x', 'v');
+  st.answers.q4 = {
+    spring: { sun: { x: 80, y: 120, placed: true }, earth: { x: 330, y: 120, placed: true }, moon: { x: 9999, y: 120, placed: true } },
+    neap: { sun: { x: 60, y: 245, placed: false }, earth: { x: 150, y: 262, placed: false }, moon: { x: 205, y: 236, placed: false } },
+  };
+  let c = sanitizeState(JSON.parse(JSON.stringify(st)));
+  assert.equal(c.answers.q4.spring.moon.x, 560, '판 밖 좌표는 판 안으로');
+  assert.equal(c.answers.q4.neap, null);
+  st.answers.q4 = { spring: { w: 640, h: 360, strokes: [{ c: '#1d2733', w: 3, p: [[1, 1], [50, 50]] }], texts: [] }, neap: null };
+  c = sanitizeState(JSON.parse(JSON.stringify(st)));
+  assert.equal(c.answers.q4.spring, null);
+  assert.equal(c.answers.q4.oldDrawings.spring.strokes.length, 1, '이전 그림은 지우지 않고 보관');
+});

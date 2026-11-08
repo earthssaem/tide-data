@@ -6,6 +6,7 @@
 
 import { drawingLayout, isEmptyDrawing } from '../chart/drawing.js';
 import { layoutFigure } from './model.js';
+import { orbitLayout, isEmptyOrbit } from '../chart/orbit.js';
 
 const FONT_URL = 'fonts/NotoSansKR-Regular.ttf';
 const LIBS = ['vendor/pdf-lib.min.js', 'vendor/fontkit.umd.min.js'];
@@ -351,14 +352,14 @@ export async function generatePdf(model, { onProgress = () => {} } = {}) {
     qaHead(q);
     const gap = 12;
     const w = (CW - gap) / 2;
-    const Ls = q.items.map((it) => (isEmptyDrawing(it.drawing) ? null : drawingLayout(it.drawing, w)));
+    const Ls = q.items.map((it) => ('orbit' in it ? (isEmptyOrbit(it.orbit) ? null : orbitLayout(it.orbit, w, { showTray: false })) : (isEmptyDrawing(it.drawing) ? null : drawingLayout(it.drawing, w))));
     const hh = Math.max(60, ...Ls.map((L) => (L ? L.height : 60)));
     ensure(hh + 24);
     q.items.forEach((it, n) => {
       const x = M.left + n * (w + gap);
       drawText(it.title, x, y - 10, { size: 9, bold: true, color: C.teal });
       if (Ls[n]) drawLayout(Ls[n], x, y - 14);
-      else drawText('(그림 없음)', x + 6, y - 32, { size: 9.5, color: C.muted });
+      else drawText('orbit' in it ? '(배치하지 않음)' : '(그림 없음)', x + 6, y - 32, { size: 9.5, color: C.muted });
       page.drawRectangle({ x, y: y - 14 - hh, width: w, height: hh, borderColor: hex(C.rule), borderWidth: 0.6 });
     });
     y -= hh + 22;

@@ -85,13 +85,15 @@ function baseSpec(ctx, cd, view) {
  */
 export function tideSpec(ctx, o) {
   const { cd, kind, view } = o;
-  const s = cd[kind];
+  const s = o.series || cd[kind];
   const color = o.color || (kind === 'predicted' ? COLORS.pred : COLORS.obs);
   const label = kind === 'predicted' ? '예측 조위' : '관측 조위';
+  const step = Math.round((s?.intervalMs || HOUR) / 60000);
+  const stepText = step >= 60 ? `${step / 60}시간` : `${step}분`;
   const spec = {
     ...baseSpec(ctx, cd, view),
     header: o.title ? { title: o.title, subtitle: o.subtitle ?? `${fmtRange(view[0], view[1], cd.tz)}${sampleTag(cd)}` } : null,
-    legend: o.noLegend ? [] : [{ kind: 'line', label: `${label} (1시간 간격 값, 직선 연결)`, color, marker: 'circle' }, ...(o.legendExtra || [])],
+    legend: o.noLegend ? [] : [{ kind: 'line', label: `${label} (${stepText} 간격 값을 이은 선)`, color, marker: step >= 60 ? 'circle' : null }, ...(o.legendExtra || [])],
     y: { label: '조위 (cm)', domain: o.yDomain || null, tickStep: o.tickStep || null },
     series: s ? [{ kind: 'line', points: s.points, maxGapMs: (s.intervalMs || HOUR) * 1.5, color, width: 1.8, dots: true, dotMinSpacing: o.dotMinSpacing ?? 5 }] : [],
     marks: o.marks || [],
@@ -104,10 +106,22 @@ export function tideSpec(ctx, o) {
 }
 
 // ───────────── 탐구 1 ─────────────
-export function q1Marks(cd, q1) {
+/** 탐구 1에 쓸 예측 조위: 그 구간 전체에 10분 간격 자료가 있으면 10분, 없으면 1시간 */
+export function inq1Series(ad, view = ad.win.inq1) {
+  const cd = ad.st[ad.rep];
+  const p10 = cd.predicted10;
+  if (p10) {
+    const n = p10.points.filter((p) => p.t >= view[0] && p.t <= view[1] && p.v != null).length;
+    if (n >= Math.round((view[1] - view[0]) / p10.intervalMs)) return p10;
+  }
+  return cd.predicted;
+}
+
+export function q1Marks(ad, q1) {
+  const s = inq1Series(ad);
   const out = [];
-  if (q1?.high) out.push({ t: q1.high.t, v: q1.high.v ?? valueAt(cd.predicted, q1.high.t), label: '만조(내가 고름)', shape: 'triangle', color: COLORS.pick });
-  if (q1?.low) out.push({ t: q1.low.t, v: q1.low.v ?? valueAt(cd.predicted, q1.low.t), label: '간조(내가 고름)', shape: 'triangleDown', color: COLORS.pick2, labelPos: 'below' });
+  if (q1?.high) out.push({ t: q1.high.t, v: q1.high.v ?? valueAt(s, q1.high.t), label: '만조(내가 고름)', shape: 'triangle', color: COLORS.pick });
+  if (q1?.low) out.push({ t: q1.low.t, v: q1.low.v ?? valueAt(s, q1.low.t), label: '간조(내가 고름)', shape: 'triangleDown', color: COLORS.pick2, labelPos: 'below' });
   return out;
 }
 
@@ -115,9 +129,9 @@ export function inq1MainSpec(ctx, ad, ans, { cursor = null, title = true } = {})
   const cd = ad.st[ad.rep];
   const [c0, c1] = ad.win.count;
   return tideSpec(ctx, {
-    cd, kind: 'predicted', view: ad.win.inq1,
+    cd, kind: 'predicted', view: ad.win.inq1, series: inq1Series(ad),
     title: title ? `부산 예측 조위 — 3일` : null,
-    marks: q1Marks(cd, ans.q1),
+    marks: q1Marks(ad, ans.q1),
     bands: [{ t0: c0, t1: c1, fill: COLORS.band, opacity: 0.18, stroke: '#b98900', strokeWidth: 1 }],
     legendExtra: [{ kind: 'bar', label: `문항 ② 24시간 (${fmtRange(c0, c1, cd.tz, { withTz: false })})`, color: '#f6dc8a' }],
     cursor,
@@ -130,30 +144,28 @@ export function monthDays(cd, month, kind = 'predicted') {
   return s ? dailyRanges(s.points, cd.tz, s.intervalMs, month[0], month[1]) : [];
 }
 
-export function inq1DailySpec(ctx, ad, ans, { showMoon = false, focusDay = null, title = true } = {}) {
+/** 한 달 예측 조위(점을 이은 선). ③에서 고른 날은 색칠하고 위쪽에 학생이 붙인 이름 표시 */
+export function inq1MonthSpec(ctx, ad, ans, { showMoon = false, focusDay = null, title = true } = {}) {
   const cd = ad.st[ad.rep];
   const month = ad.win.month;
-  const days = monthDays(cd, month);
-  const picks = { [ans.q3?.spring || '']: '대조', [ans.q3?.neap || '']: '소조' };
-  const bars = days.map((d) => ({
-    t0: d.start, t1: d.end, v: d.complete ? d.range : null, hollow: !d.complete && d.range != null,
-    color: picks[d.day] ? (picks[d.day] === '대조' ? COLORS.pick : COLORS.pick2) : COLORS.bar,
-    label: picks[d.day] ? `${picks[d.day]}(내가 고름)` : '', selected: !!picks[d.day], focus: d.day === focusDay,
-  }));
+  const dayStart = (k) => Date.parse(`${k}T00:00:00Z`) - cd.tz.offsetMinutes * 60000;
+  const picks = [[ans.q3?.spring, '대조', COLORS.pick], [ans.q3?.neap, '소조', COLORS.pick2]].filter(([k]) => k);
+  const bands = picks.map(([k, , c]) => ({ t0: dayStart(k), t1: dayStart(k) + DAY, fill: c, opacity: 0.16, stroke: c, strokeWidth: 1 }));
+  if (focusDay && !picks.some(([k]) => k === focusDay)) bands.push({ t0: dayStart(focusDay), t1: dayStart(focusDay) + DAY, fill: COLORS.sel, opacity: 0.14, stroke: '#1d2733', strokeWidth: 1, dash: [4, 3] });
+  const marks = picks.map(([k, name, c]) => ({ t: dayStart(k) + DAY / 2, v: null, label: `${name}(내가 고름)`, color: c }));
   const vlines = showMoon && cd.moon ? cd.moon.phases.filter((p) => p.t >= month[0] - DAY && p.t <= month[1] + DAY).map((p) => ({
     t: p.t, icon: p.phase, label: `${p.label} ${fmtDateTime(p.t, cd.tz, { year: false }).slice(3, 5).replace(/^0/, '')}일`, color: COLORS.moon, dash: [2, 3], width: 1.1,
   })) : [];
-  const legend = [{ kind: 'bar', label: '하루 동안의 변동 폭(그날 예측 조위 최고값 − 최저값)', color: COLORS.bar }];
-  if (showMoon && cd.moon) legend.push({ kind: 'moon', icon: 'full', label: '달의 위상(삭●·상현◑·망○·하현◐) 시각', color: COLORS.moon });
-  return {
-    ...baseSpec(ctx, cd, month),
-    header: title ? { title: `부산 예측 조위 — 한 달 일별 변동 폭`, subtitle: `${fmtRange(month[0], month[1], cd.tz)}${sampleTag(cd)}` } : null,
-    legend,
-    y: { label: '변동 폭 (cm)', includeZero: true, floorZero: true },
-    x: { ...baseSpec(ctx, cd, month).x, minTickSpacing: 30 },
-    series: [{ kind: 'bars', bars, color: COLORS.bar }],
-    vlines,
-  };
+  const spec = tideSpec(ctx, {
+    cd, kind: 'predicted', view: month, title: title ? '부산 예측 조위 — 한 달' : null,
+    bands, marks, vlines, dotMinSpacing: 4,
+    legendExtra: [
+      ...(picks.length ? [{ kind: 'bar', label: '내가 고른 날', color: '#f3c6b4' }] : []),
+      ...(showMoon && cd.moon ? [{ kind: 'moon', icon: 'full', label: '달의 위상(삭●·상현◑·망○·하현◐) 시각', color: COLORS.moon }] : []),
+    ],
+  });
+  spec.x = { ...spec.x, minTickSpacing: 30 };
+  return spec;
 }
 
 // ───────────── 탐구 2 ─────────────

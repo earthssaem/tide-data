@@ -427,6 +427,53 @@
       "title": "기상청_지상(종관, ASOS) 시간자료 조회서비스 (data.go.kr 15057210)",
       "identifier": "data.go.kr 15057210, ASOS 159"
      }
+    },
+    "predicted10": {
+     "file": "stations/DT_0005/predicted10.csv",
+     "adapter": "csv-tide",
+     "kind": "predicted",
+     "label": "예측 조위(10분 간격)",
+     "stationId": "DT_0005",
+     "datum": "UNCONFIRMED",
+     "datumLabel": "조석표 기준면(평균해면 아래 65 cm)",
+     "datumConfirmed": false,
+     "unit": "cm",
+     "intervalMinutes": 10,
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "value": {
+      "column": "pred_cm"
+     },
+     "quality": {
+      "column": "qc",
+      "ok": [
+       "1"
+      ],
+      "bad": [
+       "3"
+      ],
+      "missing": [
+       "9"
+      ],
+      "labels": {
+       "1": "응답값",
+       "3": "오류·충돌",
+       "9": "값 없음"
+      }
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "국립해양조사원",
+      "title": "해양수산부 국립해양조사원_조석예보(시계열) 10분 간격",
+      "identifier": "data.go.kr 15156022"
+     },
+     "months": [
+      "2026-09"
+     ]
     }
    },
    "timeShiftFlags": []

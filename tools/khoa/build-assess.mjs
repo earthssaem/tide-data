@@ -131,6 +131,18 @@ for (const ps of plan.stations) {
   writeFileSync(join(sdir, 'observed.csv'), seriesCsv('hourly', ps.code, ps.name, 'tide_cm', obs.series, '문서에 없음(미확인)'));
   writeFileSync(join(sdir, 'predicted.csv'), seriesCsv('forecast', ps.code, ps.name, 'pred_cm', pred.series, predDatum));
   const shifts = timeShiftCheck(obs, pred);
+  // 10분 간격 예측(받은 달만, 대표 관측소): 정시 값이 1시간 예측과 같은지 확인
+  let pred10 = null;
+  const f10 = loadDataset(so, manifest, 'forecast10', dates);
+  if (f10.rows.length) {
+    pred10 = buildSeries(so, f10, DATASETS.forecast10.valueFields.pred_cm, '예측 조위(10분)');
+    const P = new Map(pred.series.map((p) => [p.time, p.value]));
+    let n = 0, mx = 0;
+    for (const p of pred10.series) if (p.time.endsWith(':00') && P.has(p.time) && p.value != null) { n++; mx = Math.max(mx, Math.abs(p.value - P.get(p.time))); }
+    pred10.check = { comparedHours: n, maxDiffCm: Math.round(mx * 1000) / 1000 };
+    pred10.months = [...new Set(pred10.series.filter((p) => p.value != null).map((p) => p.time.slice(0, 7)))].sort();
+    writeFileSync(join(sdir, 'predicted10.csv'), seriesCsv('forecast10', ps.code, ps.name, 'pred_cm', pred10.series, predDatum).replace('time,pred_cm,qc', `# 10분 간격(min=10). 받은 달: ${pred10.months.join(', ')} · 정시 값과 1시간 예측 비교 ${n}개, 최대 차 ${pred10.check.maxDiffCm} cm\ntime,pred_cm,qc`));
+  }
   const w = ps.code === REP ? weatherFor(ps, o.raw, manifest, dates, sdir, `stations/${ps.code}/weather.csv`) : null;
   stations.push({
     id: ps.code, name: ps.name, nameEn: ps.nameEn, sea: ps.sea, lat: ps.lat, lon: ps.lon, note: ps.note,
@@ -138,10 +150,11 @@ for (const ps of plan.stations) {
       observed: tideSpec(`stations/${ps.code}/observed.csv`, 'observed', '관측 조위', ps.code, 'hourly', 'tide_cm', '미확인(문서에 없음)'),
       predicted: tideSpec(`stations/${ps.code}/predicted.csv`, 'predicted', '예측 조위', ps.code, 'forecast', 'pred_cm', `조석표 기준면(${TIDE_TABLE_DATUM[ps.code] || '미확인'})`),
       weather: w ? w.spec : { provided: false },
+      ...(pred10 ? { predicted10: { ...tideSpec(`stations/${ps.code}/predicted10.csv`, 'predicted', '예측 조위(10분 간격)', ps.code, 'forecast10', 'pred_cm', `조석표 기준면(${TIDE_TABLE_DATUM[ps.code] || '미확인'})`), intervalMinutes: 10, months: pred10.months } } : {}),
     },
     timeShiftFlags: shifts,
   });
-  report.push({ code: ps.code, name: ps.name, sea: ps.sea, obs: obsComp, pred: predComp, obsIssues: obs.issues.length, predIssues: pred.issues.length, shifts, weather: w ? { station: w.station.name, completeness: w.completeness } : null });
+  report.push({ pred10: pred10 ? { months: pred10.months, ...pred10.check } : null, code: ps.code, name: ps.name, sea: ps.sea, obs: obsComp, pred: predComp, obsIssues: obs.issues.length, predIssues: pred.issues.length, shifts, weather: w ? { station: w.station.name, completeness: w.completeness } : null });
 }
 
 // 부산 2022년 9월(관측 조위·기상·태풍)
@@ -278,6 +291,7 @@ const md = `# 자료 확보 현황 — ${o.caseId}
 ${report.map((r) => `| ${r.code} ${r.name} | ${r.sea} | ${pct(r.obs)} | ${pct(r.pred)} | ${r.shifts.length ? r.shifts.map((s) => `${s.date}(${s.bestShiftHours > 0 ? '+' : ''}${s.bestShiftHours}h)`).join(', ') : '없음'} | ${r.weather ? `${r.weather.station}: ${wx(r.weather)}` : '—'} |`).join('\n')}
 | ${REP} 부산 2022-09 | 남해 | ${pct(obs22Comp)} | — | — | ${w22 ? `${w22.station.name}: ${wx(w22)}` : '—'} |
 
+${report.filter((r) => r.pred10).map((r) => `- ${r.code} ${r.name} 10분 간격 예측: ${r.pred10.months.join(', ')} (정시 값 ${r.pred10.comparedHours}개를 1시간 예측과 비교, 최대 차 ${r.pred10.maxDiffCm} cm)`).join('\n')}
 - 시각 어긋남 의심: 날마다 하루 평균을 뺀 관측·예측 곡선의 상관이 0시간이 아닌 곳(2시간 이상)에서 뚜렷이 커지는 날. 표시만 하고 시각은 고치지 않습니다.
 - 결측은 채우지 않았습니다.
 `;

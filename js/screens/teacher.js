@@ -11,7 +11,7 @@ import {
   loadTeacherSetup, saveTeacherSetup, clearTeacherSetup, loadDeployedSetup, fmtLocal, parseLocal, monthRange,
 } from '../setup/setup.js';
 import { INQUIRIES, CONCLUSION, CIRCLED } from '../content/questions.js';
-import { inq1MainSpec, inq1DailySpec, inq2Specs, inq4TideSpecs } from '../chart/assess.js';
+import { inq1MainSpec, inq1MonthSpec, inq1Series, inq2Specs, inq4TideSpecs } from '../chart/assess.js';
 import { layoutChart } from '../chart/layout.js';
 import { layoutToSVG, screenMeasure } from '../chart/svg.js';
 import { $, h, confirmDialog, alertDialog, choiceDialog, downloadBlob, pickFile, toast } from '../util/dom.js';
@@ -212,8 +212,8 @@ function editor(app, T) {
     cfg.inq1 = { start: `${s0} 00:00`, end: `${addDaysStr(s0, 3)} 00:00`, countStart: `${addDaysStr(s0, 1)} 00:00` };
     cfg.inq2 = { start: `${s0} 00:00`, end: `${addDaysStr(s0, 3)} 00:00` };
     toast('분석 연월을 바꾸어 탐구 1·2 구간을 그달 10일부터 3일로 다시 정했습니다. 그래프를 보고 조정하세요.');
-  }), h('span', { class: 'muted small' }, '그달의 부산 예측 조위 일별 변동 폭입니다. 점선은 달의 위상(교사용 참고 — 학생에게는 [달의 위상 확인] 전까지 숨김).')));
-  fs1.append(chartBox('t-month-chart', 220, (ctx) => inq1DailySpec(ctx, A, { q3: {} }, { showMoon: true, title: false }), '한 달 일별 변동 폭'));
+  }), h('span', { class: 'muted small' }, '그달의 부산 예측 조위입니다. 점선은 달의 위상(교사용 참고 — 학생에게는 [달의 위상 확인] 전까지 숨김).')));
+  fs1.append(chartBox('t-month-chart', 230, (ctx) => inq1MonthSpec(ctx, A, { q3: {} }, { showMoon: true, title: false }), '한 달 예측 조위'));
   card.append(fs1);
 
   // 탐구 1
@@ -228,6 +228,10 @@ function editor(app, T) {
     h('b', {}, ' 길이 '), sel('t-inq1-len', '탐구 1 길이', [[2, '2일'], [3, '3일'], [4, '4일']].map(([a, b]) => [String(a), b]), String(i1len), (v) => { cfg.inq1.end = `${addDaysStr(i1s, Number(v))} 00:00`; if (parseLocal(cfg.inq1.countStart, tz) + DAY > parseLocal(cfg.inq1.end, tz)) cfg.inq1.countStart = cfg.inq1.start; }),
     h('b', {}, ' ②의 24시간 시작 '), sel('t-inq1-count', '문항 ② 24시간 시작', countOpts, fmtLocal(A.win.count[0], tz), (v) => { cfg.inq1.countStart = v; })));
   fs2.append(h('p', { class: 'muted small' }, '24시간의 시작·끝이 만조·간조와 겹치지 않게 고르면 학생이 횟수를 세기 쉽습니다.'));
+  const s1 = inq1Series(A);
+  fs2.append(h('p', { class: `small ${s1.intervalMs < 3600e3 ? 'muted' : 'notice notice-warn'}`, id: 't-inq1-interval' }, s1.intervalMs < 3600e3
+    ? `이 구간은 ${Math.round(s1.intervalMs / 60000)}분 간격 예측 자료를 씁니다(만조·간조 시각을 10분 단위로 고를 수 있음).`
+    : `이 구간에는 10분 간격 자료가 없어 1시간 간격으로 표시합니다(10분 자료가 있는 달: ${(A.st[A.rep].predicted10?.months || []).join(', ') || '없음'}). 실제 만조·간조는 정시 사이에 있을 수 있습니다.`));
   fs2.append(chartBox('t-inq1-chart', 240, (ctx) => inq1MainSpec(ctx, A, { q1: {} }, { title: false }), '탐구 1 미리보기'));
   card.append(fs2);
 
