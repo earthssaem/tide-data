@@ -183,7 +183,7 @@ try {
     const r = rowFor(maxRes.t); const w = wxRows.get(maxRes.t);
     assert.equal(r[5], w ? `${w.p.toFixed(1)} hPa` : '자료 없음');
   });
-  await page.click('label[for=bottom-windDir]');
+  await page.click('label[for=wx-windSpeed]'); // 풍속 그래프 끄기(기상 그래프 선택 기능)
   await page.click('.screen-inq3 .add-ev-bar button');
   await page.fill('#ans-i3q1', `관측 조위 최고: ${maxObs.t}, ${maxObs.v} cm`);
   await page.click('#q-i3q1 .chip');

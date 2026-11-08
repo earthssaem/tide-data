@@ -15,6 +15,7 @@ import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DATASETS, parseResponse, dateRange } from './khoa-api.mjs';
 import { moonPhasesBetween } from '../lib/moon.mjs';
+import { buildWeather, buildTyphoon, pressureMinCheck, writeWeather } from './weather-build.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 
@@ -22,7 +23,8 @@ function parseArgs(argv) {
   const o = {
     raw: join(ROOT, 'data', 'raw', 'khoa'), casesDir: join(ROOT, 'data', 'cases'), station: 'DT_0005', stationName: '부산', start: null, end: null,
     caseId: null, observed: 'auto', predicted: 'auto', setDefault: false, typhoon: '힌남노(HINNAMNOR)', typhoonYear: 2022,
-    minCm: -300, maxCm: 1500,
+    minCm: -300, maxCm: 1500, weather: 'auto', asosStation: '159',
+    typhoonDir: join(ROOT, 'data', 'raw', 'kma', 'typhoon', '2022-11'), asosStationFile: join(ROOT, 'data', 'raw', 'kma', 'station', '159.json'),
   };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i], v = () => argv[++i];
@@ -38,6 +40,9 @@ function parseArgs(argv) {
     else if (a === '--set-default') o.setDefault = true;
     else if (a === '--typhoon') o.typhoon = v();
     else if (a === '--typhoon-year') o.typhoonYear = Number(v());
+    else if (a === '--weather') o.weather = v(); // auto | khoa | asos | none
+    else if (a === '--asos-station') o.asosStation = v();
+    else if (a === '--typhoon-dir') o.typhoonDir = v();
     else if (a === '--inq1') o.inq1 = v(); // 예: 2022-09-13,2022-09-16
     else if (a === '--inq3') o.inq3 = v(); // 예: 2022-09-04,2022-09-08
     else throw new Error(`알 수 없는 옵션: ${a}`);
@@ -53,7 +58,7 @@ function loadDataset(o, manifest, dsKey, dates) {
   const days = {};
   const rows = [];
   for (const date of dates) {
-    const st = manifest.requests[`${dsKey}|${o.station}|${date}`];
+    const st = manifest.requests[`${dsKey}|${ds.stationOption ? o[ds.stationOption] : o.station}|${date}`];
     days[date] = st ? st.status : 'not-collected';
     if (!st || st.status !== 'ok') continue;
     for (const f of st.files || []) {
@@ -233,6 +238,13 @@ function main() {
     ...moonPhasesBetween(t0, t1).map((p) => `${iso(p.t)},${NAMES[p.phase]},`),
   ].join('\n') + '\n');
 
+  // 기상·태풍
+  const asosStationInfo = existsSync(o.asosStationFile) ? JSON.parse(readFileSync(o.asosStationFile, 'utf8')) : null;
+  const weather = buildWeather(o, manifest, dates, { tideStation: { lat, lon }, asosStationInfo });
+  if (weather.source) writeWeather(outDir, weather);
+  const typhoon = buildTyphoon(o, outDir);
+  const tzCheck = pressureMinCheck(weather, typhoon);
+
   const quality = {
     format: 'khoa-case-quality', builtAt: new Date().toISOString(), caseId: o.caseId,
     period: { start: o.start, end: o.end, days: dates.length },
@@ -242,12 +254,19 @@ function main() {
     observed: { rows: obs.series.length, ...obsComp, issues: obs.issues },
     predicted: pred ? { rows: pred.series.length, ...predComp, issues: pred.issues } : '자료 없음',
     alignment,
+    weather: weather.source ? {
+      source: weather.source, titles: weather.sourceTitles, station: weather.station, completeness: weather.completeness, notes: weather.notes,
+      issues: weather.issues, collectionStatus: weather.status, timeZoneCheck: tzCheck,
+    } : { source: null, note: '기상 원본 자료 없음', collectionStatus: weather.status },
+    typhoon: typhoon ? { typhoon: typhoon.meta.typhoon, analysisPoints: typhoon.meta.analysisPoints, forecastPoints: typhoon.meta.forecastPoints, announcements: typhoon.meta.announcements, closest: typhoon.meta.closestAnalysisToStation, trackFileTimeZone: typhoon.meta.files.track, keyTimes: typhoon.keyTimes, notObtained: typhoon.meta.notObtained } : '자료 없음',
     metadata: {
       unit: 'cm (API 활용가이드 명시)',
       timeZone: '미확인 — API 문서에 시간대가 적혀 있지 않음. 앱에서는 KST(UTC+9)로 해석',
       datum: '미확인 — API 문서에 높이 기준면이 적혀 있지 않음. 바다누리 내려받기 안내: "조석기준면 결정 전 자료는 참고용으로만 사용"',
       residual: '기준면 미확인이므로 웹앱에서 잔차를 계산하지 않음(case.json datumConfirmed:false)',
       moonPhases: '계산값(Meeus) — 공식 자료 아님',
+      weatherTimeZone: weather.source ? '미확인 — 문서에 시간대 미기재, KST로 해석' : '—',
+      typhoonCentralPressure: '태풍 중심기압은 태풍 중심의 값이며 기상 그래프(부산 관측 기압)에 쓰지 않음',
     },
   };
   writeFileSync(join(outDir, 'quality-report.json'), JSON.stringify(quality, null, 1));
@@ -293,12 +312,30 @@ ${alignment ? `- 같은 시각에 두 값이 모두 있는 시각: ${alignment.s
 - 관측에만 있는 시각: ${alignment.obsOnlyTimes}, 예측에만 있는 시각: ${alignment.predOnlyTimes}
 - (참고) 관측 − 예측 평균: ${alignment.meanObsMinusPred_cm_referenceOnly} cm — 기준면 일치의 증거가 아님` : '- 예측 자료가 없어 대조하지 않음'}
 
+## 기상 자료
+${weather.source ? `- 출처: ${weather.sourceTitles.join(' / ')}
+- 관측 지점: ${weather.station.name}${weather.station.lat != null ? ` (${weather.station.lat}, ${weather.station.lon})` : ''}${weather.station.elevation_m != null ? `, 해발 ${weather.station.elevation_m} m` : ''}
+${Object.values(weather.completeness).map((c) => `- ${c.label}: ${c.valid}/${c.expected}시간${c.qcFlagged ? ` (품질 플래그 오류·결측 ${c.qcFlagged})` : ''}${c.missingRanges.length ? `, 누락 ${c.missingRanges.map((r) => `${r.from}~${r.to.slice(11)}(${r.hours}h)`).slice(0, 8).join(', ')}${c.missingRanges.length > 8 ? ' …' : ''}` : ', 누락 없음'}`).join('\n')}
+${weather.notes.map((n) => `- ${n}`).join('\n')}
+- 점검 결과:
+${issuesMd(weather.issues)}
+${tzCheck ? `- (정황) ${tzCheck.pressureKind} 최저 ${tzCheck.minValue} hPa at ${tzCheck.minTime} · 태풍 최근접 분석 시각 ${tzCheck.closestAnalysisKst} KST · 차이 ${tzCheck.diffHours}시간 — 시간대 해석의 참고 자료` : ''}` : `- 기상 원본 자료 없음(수집 상태: ${JSON.stringify(Object.fromEntries(Object.entries(weather.status).map(([k, v]) => [k, Object.values(v).reduce((a, x) => { a[x] = (a[x] || 0) + 1; return a; }, {})])))})`}
+
+## 태풍
+${typhoon ? `- ${typhoon.meta.typhoon}: 실황 분석 위치 ${typhoon.meta.analysisPoints}개(typhoon_track.csv), 예보 위치 ${typhoon.meta.forecastPoints}개(typhoon_forecast.csv, 발표 ${typhoon.meta.announcements}회)
+- 출처: 기상청 기상자료개방포털 태풍정보(시각 KST, 포털 안내)
+- 부산 조위관측소와 가장 가까운 실황 분석 위치: ${typhoon.meta.closestAnalysisToStation?.time_kst} KST, ${typhoon.meta.closestAnalysisToStation?.dist_km} km (분석 시각 사이에 실제 최근접이 있을 수 있음)
+- 주요 시각: ${typhoon.keyTimes.map((k) => `${k.time} ${k.label}`).join(' / ')}
+- 태풍경로 파일(pgmNo=704)의 시간대: ${typhoon.meta.files.track.inferred}
+- 태풍 중심기압은 태풍 중심의 값이므로 부산 관측 기압으로 쓰지 않음
+- 받지 못한 자료: ${typhoon.meta.notObtained.join('; ')}` : '- 태풍 자료 없음'}
+
 ## 확인하지 못한 정보
 - 시간대: ${quality.metadata.timeZone}
 - 높이 기준면: ${quality.metadata.datum}
 - 따라서 잔차(관측 − 예측)는 계산하지 않음. 기준면을 공식 문서로 확인하면 case.json의 datumConfirmed를 true로 바꾸고 근거를 description.datumSource에 적는다.
 - 달의 위상: ${quality.metadata.moonPhases}
-- 태풍 경로·주요 시각, 기상(기압·바람) 자료: 아직 넣지 않음
+- 기상 자료 시간대: ${quality.metadata.weatherTimeZone}
 `);
 
   // case.json
@@ -336,16 +373,16 @@ ${alignment ? `- 같은 시각에 두 값이 모두 있는 시각: ${alignment.s
         missingValues: [''],
         meta: { provider: '국립해양조사원', title: srcLine(predSrc), identifier: `data.go.kr ${DATASETS[predSrc].datasetId}` },
       } : { provided: false },
-      weather: { provided: false },
+      weather: weather.source ? weather.spec : { provided: false },
       moonPhases: {
         file: 'moon.csv', adapter: 'csv-moon', time: { column: 'time', offset: '+09:00' }, phaseColumn: 'phase', lunarColumn: 'lunar',
         meta: { provider: 'Meeus 계산식으로 계산한 값(공식 자료 아님, 한국천문연구원 자료로 확인 권장)', title: '달의 위상 시각(계산값)', identifier: 'moon-calc-meeus' },
       },
-      typhoon: { name: o.typhoon, year: o.typhoonYear, note: '태풍 경로와 주요 시각은 아직 넣지 않았습니다. 기상청 태풍 정보를 확인해 교사가 입력하세요.' },
+      typhoon: typhoon ? typhoon.spec : { name: o.typhoon, year: o.typhoonYear, note: '태풍 경로 자료가 없습니다.' },
     },
     inquiry1: pickRange(o.inq1, ['2022-09-13', '2022-09-16'], dates, 3),
     inquiry2: { start: `${o.start} 00:00`, end: `${addDays(o.end, 1)} 00:00` },
-    inquiry3: { ...pickRange(o.inq3, ['2022-09-04', '2022-09-08'], dates, 5), keyTimes: [] },
+    inquiry3: { ...pickRange(o.inq3, ['2022-09-04', '2022-09-08'], dates, 5), keyTimes: (typhoon?.keyTimes || []).filter((k) => dates.includes(k.time.slice(0, 10))) },
   };
   writeFileSync(join(outDir, 'case.json'), JSON.stringify(caseJson, null, 2) + '\n');
 
@@ -357,7 +394,9 @@ ${alignment ? `- 같은 시각에 두 값이 모두 있는 시각: ${alignment.s
   if (o.setDefault) reg.defaultCase = o.caseId;
   writeFileSync(regPath, JSON.stringify(reg, null, 2) + '\n');
 
-  console.log(`사례 파일: ${relative(ROOT, outDir)}/ (observed.csv${pred ? ', predicted.csv' : ''}, moon.csv, case.json, quality-report.md/json)`);
+  console.log(`사례 파일: ${relative(ROOT, outDir)}/ (observed.csv${pred ? ', predicted.csv' : ''}${weather.source ? ', weather.csv' : ''}${typhoon ? ', typhoon_track.csv, typhoon_forecast.csv' : ''}, moon.csv, case.json, quality-report.md/json)`);
+  console.log(weather.source ? `기상: ${weather.sourceTitles.join(' / ')} · ${Object.values(weather.completeness).map((c) => `${c.label} ${c.valid}/${c.expected}`).join(', ')}` : '기상: 원본 자료 없음');
+  if (typhoon) console.log(`태풍: 실황 ${typhoon.meta.analysisPoints}개, 예보 ${typhoon.meta.forecastPoints}개, 주요 시각 ${typhoon.keyTimes.length}개`);
   console.log(`관측 조위 ${pct(obsComp)} · 누락 구간 ${obsComp.ranges.length}개 · 점검 항목 ${obs.issues.length}건`);
   if (pred) console.log(`예측 조위 ${pct(predComp)} · 누락 구간 ${predComp.ranges.length}개 · 점검 항목 ${pred.issues.length}건`);
   console.log(`관측소명 일치: ${stationCheck.nameMatches ? '예' : '아니오(보고서 확인)'} · 기준면·시간대: 미확인 → 잔차 계산 안 함`);

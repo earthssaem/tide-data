@@ -3,7 +3,7 @@
 // 이후 그래프를 움직여도 근거는 바뀌지 않는다(학생이 '교체'나 '삭제'를 눌러야만 바뀜).
 
 import { pairDiff } from '../analysis/series.js';
-import { obsPointAt, predAt, residualAt, weatherAt, inq2Days, inq2DetailView, BOTTOM_KINDS } from '../chart/specs.js';
+import { obsPointAt, predAt, residualAt, weatherAt, inq2Days, inq2DetailView, WEATHER_KINDS, weatherKinds, inq3Panels, weatherLabel, fmtWeather } from '../chart/specs.js';
 import { fmtDateTime, fmtDuration, hoursDecimal, fmtRange, fmtDateKo, DAY } from '../util/time.js';
 import { fmtValue, fmtSignedValue, fmtWindDir, fmtNum } from '../util/format.js';
 
@@ -15,7 +15,7 @@ function datasetsFor(cd, inquiry, state) {
   if (inquiry === 3) {
     if (cd.predicted) out.push({ label: '천문조 예측 조위', identifier: cd.predicted.meta.identifier || '' });
     if (cd.residual?.ok) out.push({ label: '조위 잔차(관측 − 예측)', identifier: '앱에서 같은 시각끼리 계산' });
-    if (cd.weather) out.push({ label: `기상: ${BOTTOM_KINDS[state.bottom || 'pressure'].label} 그래프 표시`, identifier: cd.weather.meta.identifier || '' });
+    if (cd.weather) out.push({ label: `기상(${cd.weather.station?.name || '기상 관측 지점'}): ${inq3Panels(cd, state).map((k) => weatherLabel(cd, k)).join('·') || '그래프 없음'}`, identifier: cd.weather.meta.identifier || '' });
   }
   return out;
 }
@@ -78,19 +78,26 @@ export function inq2Values(cd, a) {
 }
 
 export function inq3Values(cd, a) {
+  const kinds = weatherKinds(cd);
   const marks = (a.marks || []).map((m) => {
     const op = obsPointAt(cd, m.t);
     const w = weatherAt(cd, m.t);
+    const weather = Object.fromEntries(kinds.map((k) => [k, w?.[k] ?? null]));
     return {
       label: m.label, t: m.t,
       obs: op?.v ?? null, obsQ: op?.q ?? null,
       pred: predAt(cd, m.t), res: residualAt(cd, m.t),
-      pressure: w?.pressure ?? null, windSpeed: w?.windSpeed ?? null, windDir: w?.windDir ?? null,
+      weather,
+      // 이전 형식 호환
+      pressure: weather.pressure ?? weather.pressureSea ?? null, windSpeed: weather.windSpeed ?? null, windDir: weather.windDir ?? null,
     };
   });
   return {
-    kind: 'inq3', marks, bottom: a.bottom || 'pressure',
+    kind: 'inq3', marks,
+    panels: inq3Panels(cd, a),
+    weatherKinds: kinds.map((k) => ({ key: k, label: weatherLabel(cd, k), unit: WEATHER_KINDS[k].unit })),
     residualOk: !!cd.residual?.ok,
+    predictedProvided: !!cd.predicted,
     weatherStation: cd.weather?.station?.name || null,
     weatherDistanceKm: cd.weatherDistanceKm,
   };
@@ -133,7 +140,8 @@ export function summarize(cd, v) {
     return `날짜 ${v.days.map((d) => d.label).join('·')} ${v.days.length}개${v.moonShown ? ' · 달의 위상 표시' : ''}`;
   }
   if (!v.marks.length) return '선택 시각 없음';
-  return `시각 ${v.marks.map((m) => m.label).join('·')} ${v.marks.length}개 · 아래 그래프: ${BOTTOM_KINDS[v.bottom].label}`;
+  const wx = (v.weatherKinds || []).filter((k) => (v.panels || []).includes(k.key)).map((k) => k.label);
+  return `시각 ${v.marks.map((m) => m.label).join('·')} ${v.marks.length}개${wx.length ? ` · 기상 그래프: ${wx.join('·')}` : v.bottom ? ` · 아래 그래프: ${WEATHER_KINDS[v.bottom]?.label || v.bottom}` : ''}`;
 }
 
 const qualityText = (q) => ({ ok: '정상', suspect: '의심', bad: '오류', missing: '결측' })[q] || '—';
@@ -201,14 +209,17 @@ export function evidenceTables(cd, ev) {
   } else {
     meta.push(['표시 범위', fmtRange(ev.state.view[0], ev.state.view[1], tz)]);
     if (v.weatherStation) meta.push(['기상 관측 지점', `${v.weatherStation}${v.weatherDistanceKm != null ? ` (조위 관측소에서 약 ${v.weatherDistanceKm.toFixed(0)} km)` : ''}`]);
+    // 근거에 기록된 기상 항목(옛 근거는 기압·풍속·풍향 고정)
+    const wk = v.weatherKinds || [{ key: 'pressure', label: '기압', unit: 'hPa' }, { key: 'windSpeed', label: '풍속', unit: 'm/s' }, { key: 'windDir', label: '풍향', unit: '°' }];
+    const wxVal = (m, k) => (m.weather ? m.weather[k] : m[k]) ?? null;
     tables.push({
       title: '선택 시각의 값 (잔차 = 같은 시각의 관측 − 예측)',
-      head: ['기호', '시각', '관측 조위', '예측 조위', '잔차', '기압', '풍속', '풍향(불어오는 방향)'],
+      head: ['기호', '시각', '관측 조위', '예측 조위', '잔차', ...(v.weatherStation || v.weatherKinds?.length ? wk.map((k) => (k.key === 'windDir' ? `${k.label}(불어오는 방향)` : k.label)) : ['기상'])],
       rows: v.marks.map((m) => [
         m.label, fmtDateTime(m.t, tz),
-        fmtValue(m.obs, 'cm'), fmtValue(m.pred, 'cm'),
+        fmtValue(m.obs, 'cm'), v.predictedProvided === false ? '자료 미제공' : fmtValue(m.pred, 'cm'),
         v.residualOk ? fmtSignedValue(m.res, 'cm') : '계산 불가',
-        fmtValue(m.pressure, 'hPa', 1), fmtValue(m.windSpeed, 'm/s', 1), fmtWindDir(m.windDir),
+        ...(v.weatherStation || v.weatherKinds?.length ? wk.map((k) => fmtWeather(k.key in WEATHER_KINDS ? k.key : 'pressure', wxVal(m, k.key))) : ['자료 미제공']),
       ]),
       empty: '선택한 시각이 없습니다.',
     });

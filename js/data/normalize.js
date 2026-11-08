@@ -131,8 +131,11 @@ export function normalizeWeather(csvText, spec) {
   const fields = {};
   const conv = {};
   const conversions = [];
+  // 기압 종류를 섞지 않도록 해면기압·현지기압·(종류 미확인) 기압을 서로 다른 항목으로 둔다
   const defs = {
     pressure: { table: PRESSURE_TO_HPA, unit: 'hPa', label: '기압' },
+    pressureSea: { table: PRESSURE_TO_HPA, unit: 'hPa', label: '해면기압' },
+    pressureStation: { table: PRESSURE_TO_HPA, unit: 'hPa', label: '현지기압' },
     windSpeed: { table: SPEED_TO_MS, unit: 'm/s', label: '풍속' },
     windDir: { table: { deg: 1, '°': 1 }, unit: '°', label: '풍향' },
   };
@@ -143,7 +146,7 @@ export function normalizeWeather(csvText, spec) {
     if (factor == null) throw new Error(`지원하지 않는 ${def.label} 단위: ${f.unit}`);
     if (factor !== 1) conversions.push(`${def.label}: ${f.unit} → ${def.unit} (×${round6(factor)})`);
     conv[key] = factor;
-    fields[key] = { unit: def.unit, label: def.label, column: f.column, range: f.range };
+    fields[key] = { unit: def.unit, label: f.label || def.label, column: f.column, range: f.range, qc: f.qc || null, note: f.note || '' };
   }
   let points = [];
   for (const rec of records) {
@@ -155,6 +158,14 @@ export function normalizeWeather(csvText, spec) {
       if (v === undefined) {
         issues.push({ line: rec.__line, type: 'value', message: `${f.label}: 숫자가 아닌 값 → 결측` });
         v = null;
+      }
+      // 품질 플래그(예: 기상청 QC 0 정상 / 1 오류 / 9 결측): 오류·결측은 값을 비움
+      if (f.qc && v != null) {
+        const flag = String(rec[f.qc.column] ?? '').trim();
+        if ((f.qc.bad || []).includes(flag) || (f.qc.missing || []).includes(flag)) {
+          issues.push({ line: rec.__line, type: 'qc', message: `${f.label}: 품질 플래그 ${flag} → 결측 처리` });
+          v = null;
+        }
       }
       if (v != null) v = round6(v * conv[key]);
       if (v != null && f.range && (v < f.range[0] || v > f.range[1])) {

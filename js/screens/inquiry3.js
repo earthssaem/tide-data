@@ -5,7 +5,7 @@ import { fmtDateTime, fmtRange, DAY } from '../util/time.js';
 import { INQUIRIES } from '../content/questions.js';
 import { ViewController, ChartView, createToolbar, tipRow } from '../chart/interactive.js';
 import {
-  inq3TideSpec, inq3ResidualSpec, inq3BottomSpec, BOTTOM_KINDS, obsAt, predAt, residualAt, weatherAt,
+  inq3TideSpec, inq3ResidualSpec, inq3WeatherSpec, WEATHER_KINDS, weatherKinds, inq3Panels, weatherLabel, fmtWeather, obsAt, predAt, residualAt, weatherAt,
 } from '../chart/specs.js';
 import { lowerBound, dataDomain } from '../analysis/series.js';
 import { haversineKm, fmtLatLon } from '../analysis/geo.js';
@@ -46,13 +46,14 @@ export function render(app, container) {
       <div><h2 class="h-sm">관측 위치</h2>
         <p>조위: ${escapeHtml(cd.station.name)} <span class="muted small">(${escapeHtml(fmtLatLon(cd.station.lat, cd.station.lon))})</span></p>
         <p>기상: ${wx ? `${escapeHtml(wx.station?.name || '—')} <span class="muted small">(${escapeHtml(fmtLatLon(wx.station?.lat, wx.station?.lon))})</span>` : '자료 미제공'}</p>
-        ${cd.weatherDistanceKm != null ? `<p class="notice notice-info small">기상 자료는 조위 관측소에서 약 <b>${cd.weatherDistanceKm.toFixed(1)} km</b> 떨어진 지점에서 관측되었습니다. 두 위치의 기압·바람이 같다고 단정할 수 없습니다.</p>` : ''}
+        ${cd.weatherDistanceKm != null ? (cd.weatherDistanceKm < 0.1 ? '<p class="notice notice-info small">기상 자료는 조위 관측소와 같은 지점에서 관측되었습니다.</p>' : `<p class="notice notice-info small">기상 자료는 조위 관측소에서 약 <b>${cd.weatherDistanceKm.toFixed(1)} km</b> 떨어진 지점${wx?.station?.elevation_m != null ? `(해발 ${wx.station.elevation_m} m)` : ''}에서 관측되었습니다. 두 위치의 기압·바람이 같다고 단정할 수 없습니다.</p>`) : ''}
       </div>
     </div>`;
   if (ty && ty.track.length) {
     const det = h('details', { class: 'track' });
-    det.innerHTML = `<summary>태풍 경로 자료 보기 (${ty.track.length}개 시각)</summary>
-      <table class="data-table compact"><thead><tr><th scope="col">시각</th><th scope="col">위치</th><th scope="col">중심기압</th><th scope="col">최대풍속</th><th scope="col">조위 관측소까지 거리</th></tr></thead>
+    det.innerHTML = `<summary>태풍 경로 자료 보기 (${ty.track.length}개 시각${ty.trackKind ? ` · ${escapeHtml(ty.trackKind)}` : ''})</summary>
+      <p class="muted small">${escapeHtml(ty.trackNote || '태풍 중심의 위치입니다.')} 중심기압은 태풍 중심의 기압으로, 부산에서 관측한 기압이 아닙니다.</p>
+      <table class="data-table compact"><thead><tr><th scope="col">시각</th><th scope="col">중심 위치</th><th scope="col">태풍 중심기압</th><th scope="col">중심 최대풍속</th><th scope="col">조위 관측소까지 거리</th></tr></thead>
       <tbody>${ty.track.map((p) => {
         const d = haversineKm(cd.station.lat, cd.station.lon, p.lat, p.lon);
         return `<tr><th scope="row">${escapeHtml(fmtDateTime(p.t, cd.tz))}</th><td>${escapeHtml(fmtLatLon(p.lat, p.lon))}</td><td class="num">${p.pressure != null ? `${fmtNum(p.pressure)} hPa` : '자료 없음'}</td><td class="num">${p.maxWind != null ? `${fmtNum(p.maxWind)} m/s` : '자료 없음'}</td><td class="num">${d != null ? `${d.toFixed(0)} km` : '—'}</td></tr>`;
@@ -74,32 +75,42 @@ export function render(app, container) {
   const card = h('div', { class: 'card chart-card' });
   card.append(h('div', { class: 'card-head' },
     h('h2', {}, '같은 시간축 비교'),
-    h('p', { class: 'data-line' }, `세 그래프는 확대·이동이 함께 움직입니다. 그래프를 누르면 그 시각이 A, B, C … 로 표시되고 모든 그래프에 같은 시각선이 나타납니다.`)));
+    h('p', { class: 'data-line' }, `모든 그래프는 확대·이동이 함께 움직입니다. 그래프를 누르면 그 시각이 A, B, C … 로 표시되고 모든 그래프에 같은 시각선이 나타납니다.`)));
   card.append(createToolbar(controller, { label: '태풍 비교 그래프' }));
-  const chartHosts = [h('div', { class: 'chart-host' }), h('div', { class: 'chart-host' }), h('div', { class: 'chart-host' })];
+  const chartHosts = [h('div', { class: 'chart-host' }), h('div', { class: 'chart-host' })];
   const panelTitle = (t, sub) => h('div', { class: 'panel-title' }, h('h3', {}, t), sub ? h('span', { class: 'muted small' }, sub) : null);
   card.append(panelTitle('① 관측 조위와 천문조 예측 조위', `기준면: ${obs.datumLabel} · 단위 cm`), chartHosts[0]);
   if (!cd.availability.predicted) card.append(h('p', { class: 'notice notice-warn' }, '이 사례에는 천문조 예측 조위 자료가 제공되지 않았습니다. 예측값을 만들어 채우지 않습니다.'));
   card.append(panelTitle('② 조위 잔차', '잔차 = 같은 시각의 관측 조위 − 예측 조위. 잔차에는 태풍 외의 요인(관측 오차, 다른 기상 효과, 예측 오차 등)도 포함될 수 있습니다.'), chartHosts[1]);
   if (!cd.availability.residual) card.append(h('p', { class: 'notice notice-warn' }, unavailableText(cd, { needs: ['residual'] })));
 
-  const bottomSel = h('div', { class: 'seg', role: 'radiogroup', 'aria-label': '아래 그래프 자료 선택' });
-  for (const [k, K] of Object.entries(BOTTOM_KINDS)) {
-    const id = `bottom-${k}`;
-    const inp = h('input', { type: 'radio', name: 'bottom', id, value: k, disabled: !cd.availability.weather });
-    inp.checked = (A().bottom || 'pressure') === k;
+  // ③ 기상 자료: 항목마다 별도 그래프(같은 시간축). 서로 다른 기압 종류는 다른 그래프로 둔다.
+  const kindsAvail = weatherKinds(cd);
+  const wxSel = h('div', { class: 'wx-select', role: 'group', 'aria-label': '표시할 기상 그래프 선택' });
+  const syncChecks = () => {
+    const sel = inq3Panels(cd, A());
+    wxSel.querySelectorAll('input').forEach((inp) => { inp.checked = sel.includes(inp.value); });
+  };
+  for (const k of kindsAvail) {
+    const id = `wx-${k}`;
+    const inp = h('input', { type: 'checkbox', id, value: k });
     inp.addEventListener('change', () => {
-      store.update((s) => { s.analysis.inq3.bottom = k; }, { topic: 'analysis' });
-      bottomDesc.textContent = descFor(k);
-      charts[2].render();
+      const cur = new Set(inq3Panels(cd, A()));
+      if (inp.checked) cur.add(k); else cur.delete(k);
+      const ordered = kindsAvail.filter((x) => cur.has(x));
+      store.update((s) => { s.analysis.inq3.panels = ordered; }, { topic: 'analysis' });
+      buildWeatherCharts();
     });
-    bottomSel.append(inp, h('label', { for: id }, `${K.label} (${K.unit})`));
+    wxSel.append(h('label', { class: 'wx-check', for: id }, inp, ` ${weatherLabel(cd, k)} (${WEATHER_KINDS[k].unit})`));
   }
-  const descFor = (k) => `${BOTTOM_KINDS[k].label}: ${BOTTOM_KINDS[k].desc}. 단위가 다른 자료는 한 축에 섞지 않고 하나씩 봅니다.`;
-  const bottomDesc = h('p', { class: 'muted small' }, descFor(A().bottom || 'pressure'));
-  card.append(h('div', { class: 'panel-title' }, h('h3', {}, `③ 기상 자료${wx ? ` — ${wx.station?.name || ''}` : ''}`), bottomSel));
-  card.append(bottomDesc);
-  card.append(chartHosts[2]);
+  syncChecks();
+  card.append(h('div', { class: 'panel-title' }, h('h3', {}, `③ 기상 자료${wx ? ` — ${wx.station?.name || ''}` : ''}`), kindsAvail.length ? wxSel : null));
+  if (wx) {
+    const notes = kindsAvail.map((k) => `${weatherLabel(cd, k)}: ${wx.fields[k].note || WEATHER_KINDS[k].desc}`).join(' · ');
+    card.append(h('p', { class: 'muted small' }, `${notes}. 단위나 종류가 다른 자료는 한 축에 섞지 않고 각각 따로 그립니다. 태풍 중심기압은 이 그래프에 넣지 않습니다(부산의 관측 기압이 아님).`));
+  }
+  const wxHost = h('div', { class: 'wx-host' });
+  card.append(wxHost);
   if (!cd.availability.weather) card.append(h('p', { class: 'notice notice-warn' }, unavailableText(cd, { needs: ['weather'] })));
   card.append(h('p', { class: 'notice notice-info small' }, '풍향은 바람이 불어오는 방향입니다. 예: 풍향 90°(동풍)는 동쪽에서 서쪽으로 부는 바람입니다.'));
   left.append(card);
@@ -122,8 +133,9 @@ export function render(app, container) {
     getAnalysis: () => ({ ...A(), view: controller.view }),
     applyState: (st) => {
       store.update((s) => { s.analysis.inq3 = { ...s.analysis.inq3, ...st }; }, { topic: 'analysis' });
-      bottomSel.querySelector(`input[value="${st.bottom || 'pressure'}"]`).checked = true;
-      bottomDesc.textContent = descFor(st.bottom || 'pressure');
+      if (!Array.isArray(st.panels) && st.bottom) store.update((s) => { s.analysis.inq3.panels = [st.bottom]; }, { topic: 'analysis' });
+      syncChecks();
+      buildWeatherCharts();
       if (st.view) controller.set(st.view[0], st.view[1], true);
       refreshAll();
       toast('근거의 분석 상태를 그래프에 다시 열었습니다. 근거 자체는 바뀌지 않습니다.');
@@ -150,24 +162,20 @@ export function render(app, container) {
       ${tipRow('관측 조위', fmtValue(obsAt(cd, tg.t), 'cm'))}
       ${tipRow('예측 조위', cd.predicted ? fmtValue(predAt(cd, tg.t), 'cm') : '자료 미제공')}
       ${tipRow('잔차', cd.residual?.ok ? fmtSignedValue(res, 'cm') : '계산 불가')}
-      ${tipRow('기압', cd.weather ? fmtValue(w?.pressure ?? null, 'hPa', 1) : '자료 미제공')}
-      ${tipRow('풍속', cd.weather ? fmtValue(w?.windSpeed ?? null, 'm/s', 1) : '자료 미제공')}
-      ${tipRow('풍향', cd.weather ? fmtWindDir(w?.windDir ?? null) : '자료 미제공')}
+      ${cd.weather ? kindsAvail.map((k) => tipRow(weatherLabel(cd, k), fmtWeather(k, w?.[k] ?? null))).join('') : tipRow('기상 자료', '자료 미제공')}
       <div class="tip-hint">누르면 이 시각을 표시</div>`;
   };
   const view = () => ({ ...A(), view: controller.view });
   const builders = [
     (ctx) => inq3TideSpec({ ...ctx, cd, padLeft: padFor(ctx.measure), hideXTitle: true }, view()),
     (ctx) => inq3ResidualSpec({ ...ctx, cd, padLeft: padFor(ctx.measure), hideXTitle: true }, view()),
-    (ctx) => inq3BottomSpec({ ...ctx, cd, padLeft: padFor(ctx.measure) }, view()),
   ];
   const hoverVals = [
     (t) => ({ v: obsAt(cd, t) }),
     (t) => ({ v: residualAt(cd, t) }),
-    (t) => ({ v: weatherAt(cd, t)?.[A().bottom || 'pressure'] ?? null }),
   ];
-  const labels = ['관측·예측 조위 그래프', '조위 잔차 그래프', '기상 자료 그래프'];
-  const heights = [320, 230, 240];
+  const labels = ['관측·예측 조위 그래프', '조위 잔차 그래프'];
+  const heights = [320, 230];
   const charts = chartHosts.map((el, i) => {
     const c = new ChartView({
       el, controller, height: heights[i], fontSize: fs, ariaLabel: labels[i],
@@ -176,6 +184,31 @@ export function render(app, container) {
     c.hoverValue = hoverVals[i];
     return c;
   });
+  let wxCharts = [];
+  function buildWeatherCharts() {
+    wxCharts.forEach((c) => c.destroy());
+    wxHost.innerHTML = '';
+    let kinds = inq3Panels(cd, A());
+    if (!cd.weather) kinds = ['pressure']; // '기상 자료 미제공' 그래프 하나
+    if (cd.weather && !kinds.length) {
+      wxHost.append(h('p', { class: 'muted small' }, '표시할 기상 그래프를 위에서 고르세요.'));
+      wxCharts = [];
+      return;
+    }
+    wxCharts = kinds.map((k, i) => {
+      const el = h('div', { class: 'chart-host' });
+      wxHost.append(el);
+      const c = new ChartView({
+        el, controller, height: 210, fontSize: fs, ariaLabel: `${cd.weather ? weatherLabel(cd, k) : '기상 자료'} 그래프`,
+        build: (ctx) => inq3WeatherSpec({ ...ctx, cd, padLeft: padFor(ctx.measure), hideXTitle: i < kinds.length - 1 }, view(), k),
+        pick, step, describe, onSelect: (tg) => mark(tg.t),
+      });
+      c.hoverValue = (t) => ({ v: weatherAt(cd, t)?.[k] ?? null });
+      c.render();
+      return c;
+    });
+  }
+  buildWeatherCharts();
 
   function mark(t) {
     const marks = A().marks;
@@ -206,18 +239,18 @@ export function render(app, container) {
       return;
     }
     const tbl = h('table', { class: 'data-table' });
-    tbl.innerHTML = `<thead><tr><th scope="col">기호</th><th scope="col">시각 (${escapeHtml(cd.tz.label)})</th><th scope="col">관측 조위</th><th scope="col">예측 조위</th><th scope="col">잔차<br><span class="small">(관측 − 예측)</span></th><th scope="col">기압</th><th scope="col">풍속</th><th scope="col">풍향<br><span class="small">(불어오는 방향)</span></th><th scope="col"><span class="sr-only">작업</span></th></tr></thead>`;
+    const wxHead = cd.weather ? kindsAvail.map((k) => `<th scope="col">${escapeHtml(weatherLabel(cd, k))}${k === 'windDir' ? '<br><span class="small">(불어오는 방향)</span>' : ''}</th>`).join('') : '<th scope="col">기상</th>';
+    tbl.innerHTML = `<thead><tr><th scope="col">기호</th><th scope="col">시각 (${escapeHtml(cd.tz.label)})</th><th scope="col">관측 조위</th><th scope="col">예측 조위</th><th scope="col">잔차<br><span class="small">(관측 − 예측)</span></th>${wxHead}<th scope="col"><span class="sr-only">작업</span></th></tr></thead>`;
     const tb = h('tbody');
     for (const m of v.marks) {
       const tr = h('tr', { class: m.t === A().cursor ? 'focus' : '' });
+      const wxCells = cd.weather ? kindsAvail.map((k) => `<td class="num">${escapeHtml(fmtWeather(k, m.weather?.[k] ?? null))}</td>`).join('') : '<td>자료 미제공</td>';
       tr.innerHTML = `<th scope="row"><span class="mark-badge">${escapeHtml(m.label)}</span></th>
         <td>${escapeHtml(fmtDateTime(m.t, cd.tz))}</td>
         <td class="num">${escapeHtml(fmtValue(m.obs, 'cm'))}</td>
         <td class="num">${escapeHtml(cd.predicted ? fmtValue(m.pred, 'cm') : '자료 미제공')}</td>
         <td class="num"><b>${escapeHtml(v.residualOk ? fmtSignedValue(m.res, 'cm') : '계산 불가')}</b></td>
-        <td class="num">${escapeHtml(cd.weather ? fmtValue(m.pressure, 'hPa', 1) : '자료 미제공')}</td>
-        <td class="num">${escapeHtml(cd.weather ? fmtValue(m.windSpeed, 'm/s', 1) : '자료 미제공')}</td>
-        <td>${escapeHtml(cd.weather ? fmtWindDir(m.windDir) : '자료 미제공')}</td>`;
+        ${wxCells}`;
       const td = h('td', { class: 'actions' });
       td.append(h('button', { type: 'button', class: 'btn btn-ghost btn-xs', onclick: () => {
         store.update((s) => {
@@ -235,9 +268,10 @@ export function render(app, container) {
 
   function refreshAll() {
     charts.forEach((c) => c.render());
+    wxCharts.forEach((c) => c.render());
     renderTable();
   }
 
   refreshAll();
-  return { destroy() { charts.forEach((c) => c.destroy()); } };
+  return { destroy() { charts.forEach((c) => c.destroy()); wxCharts.forEach((c) => c.destroy()); } };
 }

@@ -79,7 +79,7 @@ export async function buildCaseData(config, readFile) {
   const moon = await tryLoad('moonPhases', async (s) => normalizeMoonPhases(await readFile(s.file), s));
   const typhoon = await tryLoad('typhoon', async (s) => {
     const track = s.track?.file ? normalizeTyphoonTrack(await readFile(s.track.file), s.track) : { track: [], issues: [] };
-    return { name: s.name, year: s.year, note: s.note || '', meta: s.meta || {}, track: track.track, issues: track.issues };
+    return { name: s.name, year: s.year, note: s.note || '', meta: s.meta || {}, trackKind: s.track?.kind || '', trackNote: s.track?.note || '', track: track.track, issues: track.issues };
   });
 
   const residual = predicted ? computeResidual(observed, predicted) : { ok: false, problems: ['예측 조위 자료가 제공되지 않았습니다.'], points: [] };

@@ -1,0 +1,13 @@
+{
+ "source": "https://data.kma.go.kr/tmeta/stn/selectStnDetail.do?pgmNo=82&isSelectStn=Y&stdStnNo=159",
+ "fetchedAt": "2026-11-08T09:37:12.555Z",
+ "stationId": "159",
+ "name": "부산",
+ "address": "부산광역시 중구 복병산길 32번길 5-11 부산기상관측소  (대청동1가)",
+ "lat": 35.10468,
+ "lon": 129.03203,
+ "elevation_m": 69.56,
+ "observationStart": "1904-04-09",
+ "intervalMinutes": 1,
+ "notes": "해발고도는 관측장소의 높이이며 기압계 높이가 아닐 수 있음(페이지에 기압계 높이 표기 없음)."
+}

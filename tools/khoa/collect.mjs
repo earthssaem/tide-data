@@ -39,7 +39,7 @@ if ((process.env.HTTPS_PROXY || process.env.https_proxy) && !process.env.NODE_US
 // ───────── 옵션 ─────────
 function parseArgs(argv) {
   const o = {
-    station: 'DT_0005', stationName: '부산', datasets: ['hourly', 'forecast', 'realtime'],
+    station: 'DT_0005', stationName: '부산', asosStation: '159', datasets: ['hourly', 'forecast', 'realtime'],
     out: join(ROOT, 'data', 'raw', 'khoa'), delayMs: 300, retries: 4, backoffMs: 2000, timeoutMs: 30000,
     retryFailed: false, force: false, baseUrl: null, testDay: null, start: null, end: null,
   };
@@ -47,6 +47,7 @@ function parseArgs(argv) {
     const a = argv[i];
     const v = () => argv[++i];
     if (a === '--station') o.station = v();
+    else if (a === '--asos-station') o.asosStation = v(); // 기상청 ASOS 지점번호(부산 159)
     else if (a === '--station-name') o.stationName = v();
     else if (a === '--datasets') o.datasets = v().split(',').map((s) => s.trim()).filter(Boolean);
     else if (a === '--start') o.start = v();
@@ -74,6 +75,9 @@ function loadKey() {
   if (existsSync(f)) return { key: normalizeServiceKey(readFileSync(f, 'utf8')), from: `파일 ${process.env.DATA_GO_KR_SERVICE_KEY_FILE ? '(DATA_GO_KR_SERVICE_KEY_FILE)' : '.secrets/data-go-kr.key'}` };
   return { key: '', from: null };
 }
+
+/** 자료별 관측소 코드(조위관측소 DT_xxxx / 기상청 ASOS 지점번호) */
+const stationFor = (o, ds) => (ds.stationOption ? o[ds.stationOption] : o.station);
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 class FatalError extends Error {}
@@ -108,7 +112,7 @@ async function fetchOnce(url, timeoutMs) {
 /** 한 페이지 요청(재시도 포함) */
 async function fetchPage(o, ds, key, date, pageNo, ctx) {
   const reqDate = date.replace(/-/g, '');
-  const url = buildUrl(ds, { serviceKey: key, obsCode: o.station, reqDate, pageNo, numOfRows: MAX_ROWS, baseUrl: o.baseUrl });
+  const url = buildUrl(ds, { serviceKey: key, obsCode: stationFor(o, ds), reqDate, pageNo, numOfRows: MAX_ROWS, baseUrl: o.baseUrl });
   let last = null;
   for (let attempt = 1; attempt <= o.retries; attempt++) {
     ctx.calls++;
@@ -122,7 +126,7 @@ async function fetchPage(o, ds, key, date, pageNo, ctx) {
     }
     last = { status, text, r, attempt, url: redactUrl(url) };
     if (r.ok || r.codeName === 'NODATA_ERROR') return last;
-    logFailure(o.out, { dataset: ds.key, station: o.station, date, pageNo, attempt, httpStatus: status, code: r.code, codeName: r.codeName, message: r.message, url: redactUrl(url) });
+    logFailure(o.out, { dataset: ds.key, station: stationFor(o, ds), date, pageNo, attempt, httpStatus: status, code: r.code, codeName: r.codeName, message: r.message, url: redactUrl(url) });
     if (FATAL.has(r.codeName)) { const err = new FatalError(r.message || r.codeName); err.res = last; throw err; }
     if (!RETRYABLE.has(r.codeName) || attempt === o.retries) return last;
     await sleep(o.backoffMs * 2 ** (attempt - 1));
@@ -131,13 +135,13 @@ async function fetchPage(o, ds, key, date, pageNo, ctx) {
 }
 
 function savePage(o, ds, date, pageNo, res) {
-  const dir = join(o.out, ds.key, o.station, date.replace(/-/g, ''));
+  const dir = join(o.out, ds.key, stationFor(o, ds), date.replace(/-/g, ''));
   mkdirSync(dir, { recursive: true });
   const file = join(dir, `page-${pageNo}.json`);
   writeFileSync(file, JSON.stringify({
     request: {
       dataset: ds.key, datasetTitle: ds.title, datasetId: ds.datasetId, endpoint: ds.endpoint,
-      url: res.url, station: o.station, reqDate: date.replace(/-/g, ''), pageNo, numOfRows: MAX_ROWS, attempt: res.attempt,
+      url: res.url, station: stationFor(o, ds), reqDate: date.replace(/-/g, ''), pageNo, numOfRows: MAX_ROWS, attempt: res.attempt,
       fetchedAt: new Date().toISOString(),
     },
     http: { status: res.status },
@@ -174,13 +178,13 @@ async function collectDay(o, ds, key, date, ctx) {
 }
 
 function summarizeTestDay(o, ds, date) {
-  const dir = join(o.out, ds.key, o.station, date.replace(/-/g, ''));
+  const dir = join(o.out, ds.key, stationFor(o, ds), date.replace(/-/g, ''));
   const page = JSON.parse(readFileSync(join(dir, 'page-1.json'), 'utf8'));
   const r = parseResponse(page.rawText);
   const items = r.items;
   const times = items.map((it) => it[ds.timeField]).filter(Boolean).sort();
-  const names = [...new Set(items.map((it) => it.obsvtrNm))];
-  const sample = items.slice(0, 3).map((it) => Object.fromEntries(Object.entries(it).filter(([k]) => ['obsvtrNm', ds.timeField, ...Object.values(ds.valueFields)].includes(k))));
+  const names = [...new Set(items.map((it) => it.obsvtrNm ?? it.stnNm))];
+  const sample = items.slice(0, 3).map((it) => Object.fromEntries(Object.entries(it).filter(([k]) => ['obsvtrNm', 'stnNm', ds.timeField, ...Object.values(ds.valueFields), ...Object.values(ds.qcFields || {})].includes(k))));
   return { resultCode: r.code, resultMsg: r.message, totalCount: r.totalCount, rows: items.length, stationNames: names, firstTime: times[0] || null, lastTime: times[times.length - 1] || null, sameDay: times.length ? times.every((t) => t.startsWith(date)) : null, sample };
 }
 
@@ -199,49 +203,49 @@ async function main() {
   manifest.stationName = o.stationName;
   const ctx = { calls: 0 };
   console.log(`인증키: ${from}에서 읽음(값은 출력하지 않음)`);
-  console.log(`관측소 ${o.station}(${o.stationName}), 기간 ${o.start} ~ ${o.end} (${dates.length}일), 자료: ${o.datasets.join(', ')}`);
+  console.log(`관측소 ${o.station}(${o.stationName})${o.datasets.includes('asos') ? `, ASOS 지점 ${o.asosStation}` : ''}, 기간 ${o.start} ~ ${o.end} (${dates.length}일), 자료: ${o.datasets.join(', ')}`);
   const plannedCalls = dates.length * o.datasets.length;
   if (plannedCalls > DAILY_TRAFFIC_DEV) console.warn(`⚠ 예상 호출 ${plannedCalls}건이 개발계정 일일 트래픽(${DAILY_TRAFFIC_DEV})을 넘습니다. 기간을 나눠 실행하세요.`);
-  let fatal = null;
-  outer: for (const dsKey of o.datasets) {
+  const fatals = {}; // 자료별 중단 사유(인증키 미등록·트래픽 초과는 서비스마다 따로 적용됨)
+  let anyKeyMissing = false;
+  for (const dsKey of o.datasets) {
     const ds = DATASETS[dsKey];
+    const st = stationFor(o, ds);
     for (const date of dates) {
-      const id = `${dsKey}|${o.station}|${date}`;
+      const id = `${dsKey}|${st}|${date}`;
       const prev = manifest.requests[id];
+      if (fatals[dsKey]) {
+        // 같은 서비스는 나머지 날짜도 실패할 것이므로 요청하지 않고 대기로 둔다
+        if (!prev || (prev.status !== 'ok' && prev.status !== 'nodata')) manifest.requests[id] = { dataset: dsKey, station: st, date, status: 'pending', lastError: fatals[dsKey], attempts: prev?.attempts || 0 };
+        continue;
+      }
       // 기본: 이미 성공(ok)했거나 자료없음(nodata)으로 확인된 날은 건너뛰고, 실패·대기·미수집만 요청(이어서 수집)
       if (prev && !o.force && (prev.status === 'ok' || prev.status === 'nodata')) continue;
       try {
         const r = await collectDay(o, ds, key, date, ctx);
-        manifest.requests[id] = { dataset: dsKey, station: o.station, date, ...r, attempts: (prev?.attempts || 0) + 1, at: new Date().toISOString() };
+        manifest.requests[id] = { dataset: dsKey, station: st, date, ...r, attempts: (prev?.attempts || 0) + 1, at: new Date().toISOString() };
         console.log(`${dsKey.padEnd(8)} ${date}  ${r.status.padEnd(6)} 행 ${String(r.items).padStart(4)}${r.totalCount != null ? `/${r.totalCount}` : ''}${r.lastError ? `  (${r.lastError})` : ''}`);
       } catch (e) {
-        if (e instanceof FatalError) {
-          manifest.requests[id] = { dataset: dsKey, station: o.station, date, status: 'failed', lastError: e.message, attempts: (prev?.attempts || 0) + 1, at: new Date().toISOString() };
-          fatal = e.message;
-          saveManifest(o.out, manifest);
-          break outer;
-        }
-        throw e;
+        if (!(e instanceof FatalError)) throw e;
+        manifest.requests[id] = { dataset: dsKey, station: st, date, status: 'failed', lastError: e.message, attempts: (prev?.attempts || 0) + 1, at: new Date().toISOString() };
+        fatals[dsKey] = e.message;
+        if (/SERVICE_KEY_IS_NULL/.test(e.message)) anyKeyMissing = true;
+        console.error(`${dsKey.padEnd(8)} ${date}  중단: ${e.message} — 이 자료의 나머지 날짜는 '대기'로 둡니다.`);
       }
       saveManifest(o.out, manifest);
     }
-  }
-  // 남은 요청은 pending으로 표시
-  if (fatal) {
-    for (const dsKey of o.datasets) for (const date of dates) {
-      const id = `${dsKey}|${o.station}|${date}`;
-      if (!manifest.requests[id]) manifest.requests[id] = { dataset: dsKey, station: o.station, date, status: 'pending', attempts: 0 };
-    }
     saveManifest(o.out, manifest);
-    console.error(`\n수집을 멈췄습니다: ${fatal}\n인증키·활용신청 승인·일일 트래픽을 확인한 뒤 --retry-failed로 다시 실행하세요.`);
+    if (anyKeyMissing) break;
   }
-  const reqs = Object.values(manifest.requests).filter((r) => r.station === o.station && dates.includes(r.date) && o.datasets.includes(r.dataset));
+  const fatal = Object.keys(fatals).length ? Object.entries(fatals).map(([k, m]) => `${k}: ${m}`).join(' / ') : null;
+  if (fatal) console.error(`\n일부 자료 수집을 멈췄습니다 — ${fatal}\n해당 서비스의 활용신청·승인, 인증키, 일일 트래픽을 확인한 뒤 같은 명령을 다시 실행하세요.`);
+  const reqs = Object.values(manifest.requests).filter((r) => r.station === stationFor(o, DATASETS[r.dataset] || {}) && dates.includes(r.date) && o.datasets.includes(r.dataset));
   const count = (s) => reqs.filter((r) => r.status === s).length;
   console.log(`\n요청 ${reqs.length}건: 성공 ${count('ok')}, 자료없음 ${count('nodata')}, 실패 ${count('failed')}, 대기 ${count('pending')} · 이번 실행 API 호출 ${ctx.calls}회`);
-  if (o.testDay && !fatal) {
+  if (o.testDay) {
     console.log('\n── 하루 시험 결과 ──');
     for (const dsKey of o.datasets) {
-      const st = manifest.requests[`${dsKey}|${o.station}|${o.testDay}`];
+      const st = manifest.requests[`${dsKey}|${stationFor(o, DATASETS[dsKey])}|${o.testDay}`];
       if (!st || st.status === 'failed') { console.log(`${dsKey}: 실패 ${st?.lastError || ''}`); continue; }
       console.log(`${dsKey}:`, JSON.stringify(summarizeTestDay(o, DATASETS[dsKey], o.testDay), null, 1));
     }

@@ -50,6 +50,53 @@ export const DATASETS = {
     valueFields: { tide_cm: 'bscTdlvHgt', pred_cm: 'tdlvHgt' },
     unitStated: 'cm',
   },
+  // ── 기상(같은 조위관측소) ── 문서에 단위가 적혀 있지 않음(미확인)
+  airpress: {
+    key: 'airpress',
+    group: 'weather',
+    title: '해양수산부 국립해양조사원_조위관측소 실측 기압 조회',
+    datasetId: '15142509',
+    pageUrl: 'https://www.data.go.kr/data/15142509/openapi.do',
+    kind: 'weather',
+    description: '조위관측소 자동기상관측장비 기반 실시간 기압(단위·기압 종류 문서 미기재)',
+    endpoint: 'https://apis.data.go.kr/1192136/surveyAirPress/GetSurveyAirPressApiService',
+    extraParams: { min: '60' },
+    timeField: 'obsrvnDt',
+    valueFields: { pressure: 'atmpr' },
+    unitStated: null,
+  },
+  wind: {
+    key: 'wind',
+    group: 'weather',
+    title: '해양수산부 국립해양조사원_조위관측소 실측 풍향/풍속 조회',
+    datasetId: '15142518',
+    pageUrl: 'https://www.data.go.kr/data/15142518/openapi.do',
+    kind: 'weather',
+    description: '조위관측소 자동기상관측장비 기반 실시간 풍향·풍속(단위 문서 미기재)',
+    endpoint: 'https://apis.data.go.kr/1192136/surveyWind/GetSurveyWindApiService',
+    extraParams: { min: '60' },
+    timeField: 'obsrvnDt',
+    valueFields: { wind_speed: 'wspd', wind_dir: 'wndrct' },
+    unitStated: null,
+  },
+  // ── 기상청 ASOS(대안) ── 활용가이드: 현지기압 pa(hPa), 해면기압 ps(hPa), 풍속 ws(m/s), 풍향 wd(16방위), QC 0/1/9
+  asos: {
+    key: 'asos',
+    group: 'weather',
+    provider: '기상청',
+    title: '기상청_지상(종관, ASOS) 시간자료 조회서비스',
+    datasetId: '15057210',
+    pageUrl: 'https://www.data.go.kr/data/15057210/openapi.do',
+    kind: 'weather',
+    description: '종관기상관측(ASOS) 시간자료',
+    endpoint: 'https://apis.data.go.kr/1360000/AsosHourlyInfoService/getWthrDataList',
+    stationOption: 'asosStation',
+    params: (ymd, station) => ({ dataType: 'JSON', dataCd: 'ASOS', dateCd: 'HR', startDt: ymd, startHh: '00', endDt: ymd, endHh: '23', stnIds: station }),
+    timeField: 'tm',
+    valueFields: { pressure_station: 'pa', pressure_sea: 'ps', wind_speed: 'ws', wind_dir: 'wd' },
+    qcFields: { pressure_station: 'paQcflg', pressure_sea: 'psQcflg', wind_speed: 'wsQcflg', wind_dir: 'wdQcflg' },
+    unitStated: 'hPa, m/s, 16방위',
+  },
 };
 
 export const MAX_ROWS = 300; // 문서: numOfRows 최댓값 300
@@ -105,7 +152,8 @@ export function redactUrl(url) {
 
 export function buildUrl(ds, { serviceKey, obsCode, reqDate, pageNo, numOfRows = MAX_ROWS, baseUrl }) {
   const u = new URL(baseUrl ? baseUrl.replace(/\/$/, '') + new URL(ds.endpoint).pathname : ds.endpoint);
-  const p = new URLSearchParams({ serviceKey, type: 'json', obsCode, reqDate, pageNo: String(pageNo), numOfRows: String(numOfRows), ...ds.extraParams });
+  const own = ds.params ? ds.params(reqDate, obsCode) : { type: 'json', obsCode, reqDate, ...ds.extraParams };
+  const p = new URLSearchParams({ serviceKey, ...own, pageNo: String(pageNo), numOfRows: String(numOfRows) });
   u.search = p.toString();
   return u.toString();
 }

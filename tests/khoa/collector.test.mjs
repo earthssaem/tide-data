@@ -92,7 +92,7 @@ test('수집 → 원본 보관 → 사례 파일·품질 보고서', async () =>
   const b = spawnSync(process.execPath, [join(ROOT, 'tools/khoa/build-case.mjs'), '--raw', raw, '--cases-dir', cases, '--start', '2022-09-01', '--end', '2022-09-03', '--case-id', 'test-case'], { encoding: 'utf8' });
   assert.equal(b.status, 0, b.stderr + b.stdout);
   const dir = join(cases, 'test-case');
-  assert.deepEqual(readdirSync(dir).sort(), ['case.json', 'moon.csv', 'observed.csv', 'predicted.csv', 'quality-report.json', 'quality-report.md']);
+  assert.deepEqual(readdirSync(dir).sort(), ['case.json', 'moon.csv', 'observed.csv', 'predicted.csv', 'quality-report.json', 'quality-report.md', 'typhoon_forecast.csv', 'typhoon_track.csv']);
   const q = JSON.parse(readFileSync(join(dir, 'quality-report.json'), 'utf8'));
   assert.equal(q.observed.expected, 72);
   assert.equal(q.observed.valid, 72 - 3, '누락 1 + 빈 값 1 + 충돌 1');

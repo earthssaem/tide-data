@@ -393,3 +393,9 @@ textarea:focus { border-color: var(--teal); }
   .rp-h { break-after: avoid; }
   .rp-note { display: none; }
 }
+
+/* 탐구 3 기상 그래프 선택 */
+.wx-select { display: flex; flex-wrap: wrap; gap: .3rem .9rem; font-size: .9rem; font-weight: 700; color: var(--navy); }
+.wx-check { display: inline-flex; align-items: center; gap: .3rem; cursor: pointer; }
+.wx-check input { width: 1.05rem; height: 1.05rem; accent-color: var(--teal); }
+.wx-host .chart-host + .chart-host { margin-top: .2rem; }

@@ -223,7 +223,7 @@ export function layoutChart(spec) {
 
   // ── 왼쪽 여백: y 눈금 라벨 + y축 제목 ──
   const approxPlotH = Hh - top - (spec.x.hideAxisTitle ? 30 : 44);
-  const yTicks = spec.y.ticks || yTicksFor(yDomain, approxPlotH);
+  const yTicks = spec.y.ticks ? [...spec.y.ticks] : yTicksFor(yDomain, approxPlotH);
   const yLabelW = Math.max(...yTicks.map((t) => measure(t.label, small)), measure('000', small));
   const padLeft = spec.padLeft ?? (yLabelW + 8 + (spec.y.label ? small + 8 : 0) + 2);
   const padRight = spec.padRight ?? 14;
@@ -231,6 +231,12 @@ export function layoutChart(spec) {
   const bottom = (small + 4) + (showSub ? small + 3 : 0) + (spec.x.hideAxisTitle ? 4 : small + 10);
   const plot = { x: padLeft, y: top, w: Math.max(40, W - padLeft - padRight), h: Math.max(30, Hh - top - bottom) };
 
+  // 고정 눈금(예: 풍향 북·동·남·서)이 좁은 그래프에서 겹치면 하나 걸러 표시
+  if (spec.y.ticks && yTicks.length > 2 && plot.h / (yTicks.length - 1) < small * 1.7) {
+    const thin = yTicks.filter((_, i) => i % 2 === 0);
+    yTicks.length = 0;
+    yTicks.push(...thin);
+  }
   const tToX = (t) => plot.x + ((t - t0) / (t1 - t0)) * plot.w;
   const xToT = (x) => t0 + ((x - plot.x) / plot.w) * (t1 - t0);
   const vToY = (v) => plot.y + plot.h - ((v - yDomain[0]) / (yDomain[1] - yDomain[0])) * plot.h;

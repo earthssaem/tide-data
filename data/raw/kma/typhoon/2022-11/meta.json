@@ -1,0 +1,54 @@
+{
+ "format": "kma-typhoon-fetch",
+ "fetchedAt": "2026-11-08T09:33:50.229Z",
+ "source": "https://data.kma.go.kr (기상자료개방포털)",
+ "typhoon": "2022년 제11호 태풍 힌남노(HINNAMNOR)",
+ "year": 2022,
+ "no": 11,
+ "files": {
+  "info": {
+   "original": "kma_typhoon_info_original_cp949.csv",
+   "page": "https://data.kma.go.kr/data/typhoonData/typInfoTYList.do?pgmNo=689",
+   "header": [
+    "일시",
+    "",
+    "위도(N)",
+    "경도(E)",
+    "중심기압",
+    "초속(m/s)",
+    "시속(km/h)",
+    "강풍반경(km)[예외반경]",
+    "강도",
+    "크기",
+    "진행방향",
+    "이동속도(km/h)",
+    "70% 확률 반경(km)"
+   ],
+   "rows": 307,
+   "timeZone": "KST (포털 안내 \"발표시간, 예보시간 등 시간 단위: KST\")"
+  },
+  "track": {
+   "original": "kma_typhoon_track_original_cp949.csv",
+   "page": "https://data.kma.go.kr/data/typhoonData/typTrack.do?pgmNo=704",
+   "rows": 44,
+   "timeZone": "파일에 표기 없음",
+   "positionMatchOffsetHours": {
+    "9": 42
+   },
+   "inferred": "UTC로 추정(같은 위치가 태풍정보 KST보다 9시간 이른 시각으로 기록됨)"
+  }
+ },
+ "analysisPoints": 44,
+ "forecastPoints": 263,
+ "announcements": 44,
+ "closestAnalysisToStation": {
+  "time_kst": "2022-09-06 06:00",
+  "lat": 35.2,
+  "lon": 129.2,
+  "dist_km": 18.9,
+  "note": "부산 조위관측소(DT_0005)까지의 거리. 실황 분석 시각(3~6시간 간격) 중 가장 가까운 위치이며 실제 최근접 시각은 그 사이일 수 있음"
+ },
+ "notObtained": [
+  "베스트트랙(사후 재분석): 기상청 API허브 인증키 필요 — 받지 않음"
+ ]
+}

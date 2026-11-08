@@ -11,7 +11,11 @@
     "make-sample": "node tools/make-sample-data.mjs",
     "khoa:test-day": "node tools/khoa/collect.mjs --test-day 2022-09-01",
     "khoa:collect": "node tools/khoa/collect.mjs --start 2022-09-01 --end 2022-09-30",
-    "khoa:build": "node tools/khoa/build-case.mjs --start 2022-09-01 --end 2022-09-30"
+    "khoa:build": "node tools/khoa/build-case.mjs --start 2022-09-01 --end 2022-09-30",
+    "weather:test-day": "node tools/khoa/collect.mjs --test-day 2022-09-01 --datasets airpress,wind,asos",
+    "weather:collect": "node tools/khoa/collect.mjs --start 2022-09-01 --end 2022-09-30 --datasets airpress,wind,asos",
+    "kma:typhoon": "node tools/kma/typhoon.mjs --year 2022 --no 11",
+    "kma:station": "node tools/kma/station-info.mjs --stn 159"
   },
   "license": "UNLICENSED"
 }

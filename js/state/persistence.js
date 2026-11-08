@@ -5,6 +5,7 @@
 import { ALL_QUESTION_IDS } from '../content/questions.js';
 
 export const SCHEMA_VERSION = 1;
+const WEATHER_KEYS = ['pressureSea', 'pressureStation', 'pressure', 'windSpeed', 'windDir'];
 export const SAVE_FORMAT = 'tide-lab-save';
 export const BACKUP_FORMAT = 'tide-lab-backup';
 export const KEY_PREFIX = 'tideLab.';
@@ -27,7 +28,7 @@ export function emptyState(caseId, dataVersion) {
     analysis: {
       inq1: { view: null, points: [], pair: null },
       inq2: { detailView: null, selectedDays: [], focusDay: null, showMoon: false, contextDays: 2, pair: null },
-      inq3: { view: null, marks: [], cursor: null, bottom: 'pressure' },
+      inq3: { view: null, marks: [], cursor: null, bottom: null, panels: null },
     },
     createdAt: now,
     updatedAt: now,
@@ -116,7 +117,8 @@ function sanitizeAnalysis(a) {
       view: range(i3.view),
       marks: labeledTimes(i3.marks),
       cursor: num(i3.cursor),
-      bottom: ['pressure', 'windSpeed', 'windDir'].includes(i3.bottom) ? i3.bottom : 'pressure',
+      bottom: WEATHER_KEYS.includes(i3.bottom) ? i3.bottom : null,
+      panels: Array.isArray(i3.panels) ? [...new Set(i3.panels.filter((k) => WEATHER_KEYS.includes(k)))] : null,
     },
   };
 }
