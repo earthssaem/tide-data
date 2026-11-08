@@ -36,6 +36,7 @@ function shapeSvg(shape, x, y, r, fill, stroke = '#fff') {
 
 /** 지도 SVG(관측소 클릭 가능) */
 export function stationMapSvg(map, stations, currentId, { width = 420 } = {}) {
+  stations = stations.filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lon));
   const box = map?.bbox || { minX: 123.6, maxX: 131.4, minY: 32.6, maxY: 38.9 };
   const kx = Math.cos((36 * Math.PI) / 180);
   const sc = width / ((box.maxX - box.minX) * kx);

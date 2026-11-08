@@ -506,7 +506,11 @@ function onRootClick(e) {
 
 // ───────── 시작 ─────────
 function init() {
-  if (!CFG.enabled) { setPhase('disabled'); return; }
+  // 교사용 설정 화면(?mode=teacher)에는 학생 탐구 화면이 없으므로 평가 모드를 쓰지 않는다
+  // (학생 화면·교사용 미리보기에서는 주소창 매개변수로 끌 수 없음)
+  let teacherScreen = false;
+  try { teacherScreen = new URLSearchParams(location.search).get('mode') === 'teacher'; } catch { /* 무시 */ }
+  if (!CFG.enabled || teacherScreen) { setPhase('disabled'); return; }
   buildDom();
   root.addEventListener('click', onRootClick);
   document.addEventListener('fullscreenchange', onFullscreenChange);

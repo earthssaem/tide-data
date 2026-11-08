@@ -4,6 +4,7 @@
 
 import { h } from '../util/dom.js';
 import { stationCaseData } from '../data/loader.js';
+import { compareCandidates } from '../setup/setup.js';
 
 /**
  * @param {object} o
@@ -18,13 +19,15 @@ export function createCompareControls({ app, key, sameLabel, note, onChange }) {
   const cd = app.cd;
   const A = () => store.state.analysis[key];
   const wrap = h('div', { class: 'compare-controls' });
-  if (!cd.multi || cd.stations.length < 2) return { el: null, cdB: () => null };
+  // 비교 후보: 선생님이 평가에 쓰도록 켠 관측소 중 같은 달을 분석하는 곳
+  const cands = cd.multi ? compareCandidates(cd) : [];
+  if (!cands.length) return { el: null, cdB: () => null, yMode: () => 'separate' };
   const sel = h('select', { id: `cmp-${key}`, 'aria-label': '비교할 관측소' });
   sel.innerHTML = `<option value="">비교 안 함</option>${['서해', '남해', '동해', '']
-    .map((sea) => cd.stations.filter((s) => s.id !== cd.station.id && (sea ? s.sea === sea : !['서해', '남해', '동해'].includes(s.sea))))
+    .map((sea) => cands.filter((s) => (sea ? s.sea === sea : !['서해', '남해', '동해'].includes(s.sea))))
     .flat().map((s) => `<option value="${s.id}">${s.sea ? `[${s.sea}] ` : ''}${s.name} (${s.id})</option>`).join('')}`;
   const cur = A().compare;
-  sel.value = cur && stationCaseData(cd, cur.stationId) ? cur.stationId : '';
+  sel.value = cur && cands.some((c) => c.id === cur.stationId) ? cur.stationId : '';
   const radios = h('div', { class: 'seg', role: 'radiogroup', 'aria-label': '세로축 눈금' });
   for (const [v, label] of [['separate', '개별 눈금'], ['same', sameLabel]]) {
     const id = `cmp-${key}-${v}`;
@@ -49,7 +52,7 @@ export function createCompareControls({ app, key, sameLabel, note, onChange }) {
     el: wrap,
     cdB: () => {
       const c = A().compare;
-      return c ? stationCaseData(cd, c.stationId) : null;
+      return c && cands.some((x) => x.id === c.stationId) ? stationCaseData(cd, c.stationId) : null;
     },
     yMode: () => A().compare?.yMode || 'separate',
   };

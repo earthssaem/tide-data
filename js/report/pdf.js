@@ -4,8 +4,8 @@
 // - 본문은 검색·복사 가능한 텍스트, 그래프는 벡터 도형으로 그려 인쇄해도 선명함
 // - 화면 캡처를 잘라 붙이지 않고 문항·답변·그래프 단위로 배치
 
-import { figurePanels } from '../chart/specs.js';
-import { layoutChart } from '../chart/layout.js';
+import { figurePanels, panelLayout } from '../chart/specs.js';
+import { drawingLayout, isEmptyDrawing } from '../chart/drawing.js';
 import { evidenceTables } from '../state/evidence.js';
 
 const FONT_URL = 'fonts/NotoSansKR-Regular.ttf';
@@ -279,12 +279,14 @@ export async function generatePdf(model, cd, { onProgress = () => {} } = {}) {
 
   function figure(ev) {
     const panels = figurePanels(cd, ev, { width: CW, measure: chartMeasure, fontSize: 9.5 });
-    const layouts = panels.map((p) => layoutChart(p.spec));
+    const layouts = panels.map((p) => panelLayout(p));
     const capTitle = `그림 ${ev.num}  (근거 ${ev.num})`;
-    const capSub = `탐구 ${ev.inquiry} · ${ev.summary}`;
-    const figH = layouts.reduce((a, L) => a + L.height + 6, 0);
+    const capSub = `탐구 ${ev.inquiry} · ${ev.station || ''} · ${ev.summary}`;
     const capH = 30;
-    ensure(capH + figH + 30);
+    // 그림 전체가 한 쪽에 들어가면 함께 두고, 아니면 첫 그래프와 캡션만 같은 쪽에 둔다
+    const figH = layouts.reduce((a, L) => a + L.height + 6, 0);
+    const avail = A4[1] - M.top - M.bottom;
+    ensure(capH + (figH + 30 <= avail ? figH + 30 : (layouts[0]?.height || 0) + 10));
     // 캡션(그림 위)
     y -= 4;
     page.drawRectangle({ x: M.left, y: y - 22, width: CW, height: 22, color: hex(C.light) });
@@ -292,7 +294,8 @@ export async function generatePdf(model, cd, { onProgress = () => {} } = {}) {
     drawText(capSub, M.left + 12 + width(clean(capTitle), 10) + 6, y - 15, { size: 8.6, color: C.muted });
     y -= capH;
     for (const L of layouts) {
-      drawLayout(L, M.left, y);
+      ensure(L.height + 6);
+      drawLayout(L, M.left + Math.max(0, (CW - L.width) / 2), y);
       y -= L.height + 6;
     }
     // 측정값
@@ -315,6 +318,43 @@ export async function generatePdf(model, cd, { onProgress = () => {} } = {}) {
     y -= 10;
   }
 
+  function sideBySide(sb, answer, emptyText) {
+    const gap = 14;
+    const colW = (CW - gap) / 2;
+    const size = 10;
+    const lh = size * 1.55;
+    const L = sb.left.trim() ? wrap(sb.left, size, colW - 10) : [];
+    const R = answer.trim() ? wrap(answer, size, colW - 10) : [];
+    const tl = wrap(sb.leftTitle, 8.6, colW - 4), tr = wrap(sb.rightTitle, 8.6, colW - 4);
+    const th = Math.max(tl.length, tr.length) * 8.6 * 1.4 + 6;
+    ensure(th + lh * 3);
+    page.drawRectangle({ x: M.left, y: y - th, width: colW, height: th, color: hex(C.light) });
+    page.drawRectangle({ x: M.left + colW + gap, y: y - th, width: colW, height: th, color: hex(C.light) });
+    tl.forEach((ln, k) => drawText(ln, M.left + 4, y - 4 - (k + 1) * 8.6 * 1.4 + 3, { size: 8.6, bold: true, color: C.navy }));
+    tr.forEach((ln, k) => drawText(ln, M.left + colW + gap + 4, y - 4 - (k + 1) * 8.6 * 1.4 + 3, { size: 8.6, bold: true, color: C.teal }));
+    y -= th + 2;
+    const rows = Math.max(L.length || 1, R.length || 1);
+    for (let i = 0; i < rows; i++) {
+      ensure(lh);
+      y -= lh;
+      const ty = y + (lh - size) / 2 + size * 0.12;
+      if (i === 0 && !L.length) drawText(emptyText, M.left + 6, ty, { size, color: C.muted });
+      else if (L[i]) drawText(L[i], M.left + 6, ty, { size, color: C.text });
+      if (i === 0 && !R.length) drawText(emptyText, M.left + colW + gap + 6, ty, { size, color: C.muted });
+      else if (R[i]) drawText(R[i], M.left + colW + gap + 6, ty, { size, color: C.text });
+      page.drawLine({ start: { x: M.left + colW + gap / 2, y: y + lh }, end: { x: M.left + colW + gap / 2, y }, thickness: 0.6, color: hex(C.rule) });
+    }
+    y -= 6;
+  }
+
+  function drawingBlock(d) {
+    if (isEmptyDrawing(d)) { paragraph('(그림 없음)', { size: 9.5, color: C.muted, indent: 10, after: 4 }); return; }
+    const L = drawingLayout(d, CW * 0.78);
+    ensure(L.height + 8);
+    drawLayout(L, M.left + 10, y);
+    y -= L.height + 8;
+  }
+
   function questionBlock(q, { kind = '문항' } = {}) {
     const qText = q.text;
     const qH = measureParagraph(qText, 10, CW - 4, 1.5) + 18;
@@ -325,16 +365,26 @@ export async function generatePdf(model, cd, { onProgress = () => {} } = {}) {
     y -= 16;
     paragraph(qText, { size: 10, color: C.text, lead: 1.5, after: 3 });
     if (q.unavailable) paragraph(`※ ${q.unavailable}`, { size: 8.4, color: C.warn, lead: 1.4, after: 3 });
-    ensure(30);
-    drawText('답변', M.left, y - 10, { size: 8.6, bold: true, color: C.teal });
-    y -= 13;
-    if (q.empty) paragraph('(작성하지 않음)', { size: 10, color: C.muted, indent: 10, after: 4 });
-    else {
-      const startY = y;
-      const startPage = page;
-      paragraph(q.answer, { size: 10.5, color: C.text, indent: 10, lead: 1.6, after: 2 });
-      // 답변 왼쪽 세로선(같은 쪽 안에서만)
-      if (page === startPage) page.drawLine({ start: { x: M.left + 3, y: startY - 2 }, end: { x: M.left + 3, y: y + 2 }, thickness: 1.4, color: hex(C.teal) });
+    if (q.lockedNote) paragraph(q.lockedNote, { size: 8.4, color: C.muted, lead: 1.4, after: 3 });
+    if (q.sideBySide) {
+      sideBySide(q.sideBySide, q.answer, '(작성하지 않음)');
+    } else {
+      ensure(30);
+      drawText('답변', M.left, y - 10, { size: 8.6, bold: true, color: C.teal });
+      y -= 13;
+      if (q.empty) paragraph(q.waitNote ? `(${q.waitNote})` : '(작성하지 않음)', { size: 10, color: C.muted, indent: 10, after: 4 });
+      else {
+        const startY = y;
+        const startPage = page;
+        paragraph(q.answer, { size: 10.5, color: C.text, indent: 10, lead: 1.6, after: 2 });
+        if (page === startPage) page.drawLine({ start: { x: M.left + 3, y: startY - 2 }, end: { x: M.left + 3, y: y + 2 }, thickness: 1.4, color: hex(C.teal) });
+      }
+    }
+    if ('drawing' in q) {
+      ensure(30);
+      drawText('그림', M.left, y - 10, { size: 8.6, bold: true, color: C.teal });
+      y -= 14;
+      drawingBlock(q.drawing);
     }
     paragraph(`연결 근거: ${q.linkedNums.length ? q.linkedNums.map((n) => `그림 ${n}`).join(', ') : '없음'}`, { size: 8.6, color: C.muted, lead: 1.4, after: 6 });
     for (const ev of q.figures || []) figure(ev);
@@ -366,29 +416,32 @@ export async function generatePdf(model, cd, { onProgress = () => {} } = {}) {
     paragraph(txt, { size: 9.5, color: C.warn, bold: true, indent: 10, lead: 1.45, maxW: CW - 20, after: 0 });
     y -= 10;
   }
-  paragraph('분석 관측소·기간·사례', { size: 10.5, bold: true, color: C.navy, after: 2 });
+  paragraph('학생 정보와 관측소·기간', { size: 10.5, bold: true, color: C.navy, after: 2 });
   table(['항목', '내용'], model.caseInfo, { size: 8.8 });
 
-  // ───────── 탐구 1~3 ─────────
-  for (const sec of model.sections) {
-    sectionHeading(sec.title, `탐구 목표: ${sec.goal}`);
+  // ───────── 탐구 1~5(보고서 구성 순서) ─────────
+  for (const sec of model.parts) {
+    sectionHeading(sec.title, sec.sub);
     for (const q of sec.blocks) questionBlock(q);
-    if (sec.unlinked.length) {
+    if (sec.table) {
+      ensure(40);
+      paragraph(sec.table.title, { size: 9.5, bold: true, color: C.text, after: 2 });
+      table(sec.table.head, sec.table.rows);
+    }
+    if (sec.unlinked?.length) {
       ensure(40);
       paragraph('문항에 연결하지 않은 근거', { size: 10, bold: true, color: C.navy, after: 2 });
       for (const ev of sec.unlinked) figure(ev);
     }
-    if (!sec.blocks.some((b) => b.figures.length) && !sec.unlinked.length) {
-      paragraph('(첨부한 근거 없음)', { size: 9, color: C.muted, after: 6 });
-    }
+    if (sec.noEvidence) paragraph('(첨부한 근거 없음)', { size: 9, color: C.muted, after: 6 });
   }
 
   // ───────── 종합 결론 ─────────
-  sectionHeading(model.conclusion.title, '세 탐구의 근거를 바탕으로 정리한 결론');
+  sectionHeading(model.conclusion.title, '다섯 탐구의 근거를 바탕으로 정리한 결론');
   for (const q of model.conclusion.blocks) questionBlock(q, { kind: '결론' });
 
   // ───────── 자료 출처 ─────────
-  sectionHeading('자료 출처와 관측 간격', model.isSample ? '이 보고서의 자료는 기능 확인용 예시 데이터입니다. 실제 관측값이 아닙니다.' : '');
+  sectionHeading('자료 출처와 분석의 한계', model.isSample ? '이 보고서의 자료는 기능 확인용 예시 데이터입니다. 실제 관측값이 아닙니다.' : '');
   for (const s of model.sources) {
     ensure(30);
     paragraph(s.role, { size: 9.5, bold: true, color: C.text, after: 1, lead: 1.45 });
@@ -396,7 +449,7 @@ export async function generatePdf(model, cd, { onProgress = () => {} } = {}) {
     y -= 4;
   }
   ensure(30);
-  paragraph('자료 처리 기준', { size: 9.5, bold: true, color: C.text, after: 1 });
+  paragraph('자료 처리 기준과 분석의 한계', { size: 9.5, bold: true, color: C.text, after: 1 });
   for (const l of model.processing) paragraph(`· ${l}`, { size: 8.8, indent: 8, lead: 1.42, after: 0 });
   if (model.dataVersionMismatch.length) {
     y -= 4;

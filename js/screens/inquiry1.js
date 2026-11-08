@@ -7,10 +7,11 @@ import { ViewController, ChartView, createToolbar, tipRow } from '../chart/inter
 import { inq1Spec, inq1CompareSpec, sameSpanDomains } from '../chart/specs.js';
 import { createCompareControls } from './compare.js';
 import { nearestValid, stepValid, dataDomain } from '../analysis/series.js';
-import { inq1Values, effectivePair } from '../state/evidence.js';
+import { inq1Values, effectivePair, KIND_LABEL } from '../state/evidence.js';
 import { inquiryHeader, createQuestionPanel, addEvidenceBar, nextLetter } from './common.js';
 
-const MAX_POINTS = 8;
+const MAX_POINTS = 12;
+const KINDS = [['', '—'], ['high', '만조'], ['low', '간조']];
 const QUALITY = { ok: '정상', suspect: '의심', bad: '오류', missing: '결측' };
 
 export function render(app, container) {
@@ -35,7 +36,7 @@ export function render(app, container) {
 
   const card = h('div', { class: 'card chart-card' });
   card.append(h('div', { class: 'card-head' },
-    h('h2', {}, `관측 조위 — ${cd.station.name}`),
+    h('h2', {}, `며칠간의 관측 조위 — ${cd.station.name}`),
     h('p', { class: 'data-line' }, `관측 간격 ${obs.intervalMs / 3600e3}시간 · 단위 cm · 높이 기준면: ${obs.datumLabel} · 시간대 ${cd.tz.name || cd.tz.label}`)));
   card.append(createToolbar(controller, { label: '관측 조위 그래프' }));
   const chartEl = h('div', { class: 'chart-host' });
@@ -43,7 +44,7 @@ export function render(app, container) {
   card.append(h('p', { class: 'chart-help' },
     '그래프의 자료점(●)을 누르면 A, B, C … 순서로 선택됩니다. 그래프를 좌우로 끌면 이동합니다. ',
     h('span', { class: 'kbd-help' }, '키보드: 그래프를 선택(Tab)한 뒤 ←/→로 자료점 이동, Enter로 선택, +/−로 확대·축소')));
-  card.append(h('p', { class: 'notice notice-info' }, '이 자료는 1시간 간격 관측값입니다. 실제 만조·간조의 시각과 높이는 관측 시각 사이에 있을 수 있으므로, 선택한 값은 “관측값 중 가장 높은(낮은) 값”으로 해석하세요.'));
+  card.append(h('p', { class: 'notice notice-info' }, '이 자료는 1시간 간격 관측값입니다. 실제 만조·간조의 시각과 높이는 관측 시각 사이에 있을 수 있으므로, 선택한 값은 “관측값 중 가장 높은(낮은) 값”으로 해석하세요. 만조·간조인지는 여러분이 판단해 표에 표시합니다.'));
   left.append(card);
 
   const chart = new ChartView({
@@ -142,7 +143,7 @@ export function render(app, container) {
     if (pts.length >= MAX_POINTS) { toast(`지점은 최대 ${MAX_POINTS}개까지 선택할 수 있습니다.`); return; }
     const label = nextLetter(pts.map((p) => p.label));
     store.update((s) => {
-      s.analysis.inq1.points.push({ label, t: tg.t });
+      s.analysis.inq1.points.push({ label, t: tg.t, kind: '' });
       s.analysis.inq1.points.sort((a, b) => a.label.localeCompare(b.label));
     }, { topic: 'analysis' });
     refresh();
@@ -163,15 +164,22 @@ export function render(app, container) {
     if (replaceLabel) replaceNote.textContent = `그래프에서 새 자료점을 누르면 ${replaceLabel} 지점이 그 지점으로 바뀝니다.`;
     clearBtn.disabled = !v.points.length;
     if (!v.points.length) {
-      selTable.innerHTML = '<p class="muted">아직 선택한 지점이 없습니다. 만조라고 판단한 자료점을 그래프에서 눌러 보세요.</p>';
+      selTable.innerHTML = '<p class="muted">아직 선택한 지점이 없습니다. 만조나 간조라고 판단한 자료점을 그래프에서 눌러 보세요.</p>';
     } else {
       selTable.innerHTML = '';
       const tbl = h('table', { class: 'data-table' });
-      tbl.innerHTML = `<caption class="sr-only">선택한 지점 목록</caption><thead><tr><th scope="col">기호</th><th scope="col">시각 (${escapeHtml(cd.tz.label)})</th><th scope="col">조위</th><th scope="col">품질</th><th scope="col"><span class="sr-only">작업</span></th></tr></thead>`;
+      tbl.innerHTML = `<caption class="sr-only">선택한 지점 목록</caption><thead><tr><th scope="col">기호</th><th scope="col">시각 (${escapeHtml(cd.tz.label)})</th><th scope="col">조위</th><th scope="col">내 판단</th><th scope="col">품질</th><th scope="col"><span class="sr-only">작업</span></th></tr></thead>`;
       const tb = h('tbody');
       for (const p of v.points) {
         const tr = h('tr', { class: replaceLabel === p.label ? 'replacing' : '' });
-        tr.innerHTML = `<th scope="row"><span class="mark-badge">${escapeHtml(p.label)}</span></th><td>${escapeHtml(fmtDateTime(p.t, cd.tz))}</td><td class="num">${escapeHtml(fmtValue(p.v, 'cm'))}</td><td>${escapeHtml(QUALITY[p.q] || '—')}</td>`;
+        tr.innerHTML = `<th scope="row"><span class="mark-badge">${escapeHtml(p.label)}</span></th><td>${escapeHtml(fmtDateTime(p.t, cd.tz))}</td><td class="num">${escapeHtml(fmtValue(p.v, 'cm'))}</td>`;
+        const kindTd = h('td');
+        const ks = h('select', { class: 'kind-sel', 'aria-label': `${p.label} 지점 판단(만조·간조)` });
+        ks.innerHTML = KINDS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+        ks.value = p.kind || '';
+        ks.addEventListener('change', () => { store.update((s) => { const x = s.analysis.inq1.points.find((y) => y.label === p.label); if (x) x.kind = ks.value; }, { topic: 'analysis' }); refresh(); });
+        kindTd.append(ks);
+        tr.append(kindTd, h('td', {}, QUALITY[p.q] || '—'));
         const td = h('td', { class: 'actions' });
         td.append(
           h('button', { type: 'button', class: 'btn btn-ghost btn-xs', 'aria-pressed': replaceLabel === p.label ? 'true' : 'false', onclick: () => { replaceLabel = replaceLabel === p.label ? null : p.label; refresh(); } }, replaceLabel === p.label ? '변경 취소' : '변경'),
@@ -205,6 +213,11 @@ export function render(app, container) {
       const onPair = () => { store.update((s) => { s.analysis.inq1.pair = [sa.value, sb.value]; }, { topic: 'analysis' }); refresh(); };
       sa.addEventListener('change', onPair); sb.addEventListener('change', onPair);
       diffHost.append(row);
+    }
+    if (v.kindDiffs.length) {
+      const t2 = h('table', { class: 'data-table', id: 'inq1-kind-diffs' });
+      t2.innerHTML = `<caption>내가 같은 종류로 표시한 지점끼리의 차이(시각 순서)</caption><thead><tr><th scope="col">종류</th><th scope="col">구간</th><th scope="col">시간 차이</th><th scope="col">높이 차이</th></tr></thead><tbody>${v.kindDiffs.map((d) => `<tr><th scope="row">${KIND_LABEL[d.kind]}</th><td>${escapeHtml(d.from)} → ${escapeHtml(d.to)}</td><td class="num">${escapeHtml(fmtDuration(d.dtMs))} <span class="muted">(${escapeHtml(hoursDecimal(d.dtMs))}시간)</span></td><td class="num">${escapeHtml(fmtSignedValue(d.dv, 'cm'))}</td></tr>`).join('')}</tbody>`;
+      diffHost.append(t2);
     }
   }
 

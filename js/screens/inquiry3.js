@@ -1,31 +1,24 @@
-// 탐구 3 — 태풍의 영향 찾기
+// 탐구 3 — 집중 관찰 구간
+// 선생님이 지정한 구간을 확대해서 보여 준다. 이 단계에서는 원인(기상·태풍) 정보나 '비정상' 같은 결론을 붙이지 않는다.
 import { h, toast } from '../util/dom.js';
-import { escapeHtml, fmtValue, fmtSignedValue, fmtWindDir, fmtNum } from '../util/format.js';
-import { fmtDateTime, fmtRange, DAY } from '../util/time.js';
+import { escapeHtml, fmtValue, fmtSignedValue, fmtNum } from '../util/format.js';
+import { fmtDateTime, fmtDateKo, fmtTime, fmtDuration, hoursDecimal, fmtRange, DAY } from '../util/time.js';
 import { INQUIRIES } from '../content/questions.js';
 import { ViewController, ChartView, createToolbar, tipRow } from '../chart/interactive.js';
-import {
-  inq3TideSpec, inq3ResidualSpec, inq3WeatherSpec, WEATHER_KINDS, weatherKinds, inq3Panels, weatherLabel, fmtWeather, obsAt, predAt, residualAt, weatherAt,
-} from '../chart/specs.js';
-import { lowerBound, dataDomain } from '../analysis/series.js';
-import { haversineKm, fmtLatLon } from '../analysis/geo.js';
-import { inq3Values } from '../state/evidence.js';
-import { inquiryHeader, createQuestionPanel, addEvidenceBar, nextLetter, unavailableText } from './common.js';
+import { focusSpec, monthContextSpec, dayStats } from '../chart/specs.js';
+import { nearestValid, stepValid } from '../analysis/series.js';
+import { inq3Values, effectivePair } from '../state/evidence.js';
+import { inquiryHeader, createQuestionPanel, addEvidenceBar, nextLetter } from './common.js';
 
-const MAX_MARKS = 8;
-
-function nearestAny(points, t, t0, t1) {
-  const i = lowerBound(points, t);
-  const cand = [points[i - 1], points[i]].filter((p) => p && p.t >= t0 && p.t <= t1);
-  if (!cand.length) return null;
-  return cand.reduce((a, b) => (Math.abs(a.t - t) <= Math.abs(b.t - t) ? a : b));
-}
+const MAX_POINTS = 12;
+const QUALITY = { ok: '정상', suspect: '의심', bad: '오류', missing: '결측' };
 
 export function render(app, container) {
   const { cd, store } = app;
   const def = INQUIRIES[2];
   const A = () => store.state.analysis.inq3;
   const obs = cd.observed;
+  const R = cd.ranges;
 
   container.append(inquiryHeader(def));
   const ws = h('div', { class: 'workspace' });
@@ -33,99 +26,84 @@ export function render(app, container) {
   ws.append(left);
   container.append(ws);
 
-  // ── 사례 정보 ──
-  const info = h('div', { class: 'card info-card' });
-  const ty = cd.typhoon;
-  const wx = cd.weather;
-  const [r0, r1] = cd.ranges.inq3;
-  info.innerHTML = `
-    <div class="info-grid">
-      <div><h2 class="h-sm">태풍 사례</h2><p>${ty ? `<b>${escapeHtml(ty.name)}</b> (${escapeHtml(String(ty.year))}년)${ty.note ? `<br><span class="muted small">${escapeHtml(ty.note)}</span>` : ''}` : '태풍 정보 미제공'}</p></div>
-      <div><h2 class="h-sm">분석 구간(교사 설정)</h2><p>${escapeHtml(fmtRange(r0, r1, cd.tz))}</p>
-        ${cd.keyTimes.length ? `<ul class="key-times">${cd.keyTimes.map((k) => `<li><span class="key-swatch" aria-hidden="true"></span>${escapeHtml(k.label)}: ${escapeHtml(fmtDateTime(k.t, cd.tz))}</li>`).join('')}</ul>` : ''}</div>
-      <div><h2 class="h-sm">관측 위치</h2>
-        <p>조위: ${escapeHtml(cd.station.name)} <span class="muted small">(${escapeHtml(fmtLatLon(cd.station.lat, cd.station.lon))})</span></p>
-        <p>기상: ${wx ? `${escapeHtml(wx.station?.name || '—')} <span class="muted small">(${escapeHtml(fmtLatLon(wx.station?.lat, wx.station?.lon))})</span>` : '자료 미제공'}</p>
-        ${cd.weatherDistanceKm != null ? (cd.weatherDistanceKm < 0.1 ? '<p class="notice notice-info small">기상 자료는 조위 관측소와 같은 지점에서 관측되었습니다.</p>' : `<p class="notice notice-info small">기상 자료는 조위 관측소에서 약 <b>${cd.weatherDistanceKm.toFixed(1)} km</b> 떨어진 지점${wx?.station?.elevation_m != null ? `(해발 ${wx.station.elevation_m} m)` : ''}에서 관측되었습니다. 두 위치의 기압·바람이 같다고 단정할 수 없습니다.</p>`) : ''}
-      </div>
-    </div>`;
-  if (ty && ty.track.length) {
-    const det = h('details', { class: 'track' });
-    det.innerHTML = `<summary>태풍 경로 자료 보기 (${ty.track.length}개 시각${ty.trackKind ? ` · ${escapeHtml(ty.trackKind)}` : ''})</summary>
-      <p class="muted small">${escapeHtml(ty.trackNote || '태풍 중심의 위치입니다.')} 중심기압은 태풍 중심의 기압으로, 부산에서 관측한 기압이 아닙니다.</p>
-      <div class="table-host"><table class="data-table compact"><thead><tr><th scope="col">시각</th><th scope="col">중심 위치</th><th scope="col">태풍 중심기압</th><th scope="col">중심 최대풍속</th><th scope="col">조위 관측소까지 거리</th></tr></thead>
-      <tbody>${ty.track.map((p) => {
-        const d = haversineKm(cd.station.lat, cd.station.lon, p.lat, p.lon);
-        return `<tr><th scope="row">${escapeHtml(fmtDateTime(p.t, cd.tz))}</th><td>${escapeHtml(fmtLatLon(p.lat, p.lon))}</td><td class="num">${p.pressure != null ? `${fmtNum(p.pressure)} hPa` : '자료 없음'}</td><td class="num">${p.maxWind != null ? `${fmtNum(p.maxWind)} m/s` : '자료 없음'}</td><td class="num">${d != null ? `${d.toFixed(0)} km` : '—'}</td></tr>`;
-      }).join('')}</tbody></table></div>
-      <p class="muted small">출처: ${escapeHtml(ty.meta.provider || '사례 설정 자료')} (${escapeHtml(ty.meta.identifier || '')})</p>`;
-    info.append(det);
-  }
-  left.append(info);
-
-  // ── 공유 시간축 ──
-  const d0 = dataDomain(obs.points);
-  const domain = [Math.max(d0[0], r0 - 2 * DAY), Math.min(d0[1], r1 + 2 * DAY)];
+  const domain = [Math.min(R.inq2[0], R.inq1[0], R.inq3[0]), Math.max(R.inq2[1], R.inq1[1], R.inq3[1])];
   const controller = new ViewController({
-    domain, initial: cd.ranges.inq3,
+    domain, initial: R.inq3, minSpan: 6 * 3600e3,
     onChange: (v) => store.update((s) => { s.analysis.inq3.view = v; }, { topic: 'analysis' }),
   });
   if (A().view) controller.set(A().view[0], A().view[1], true);
 
   const card = h('div', { class: 'card chart-card' });
   card.append(h('div', { class: 'card-head' },
-    h('h2', {}, '같은 시간축 비교'),
-    h('p', { class: 'data-line' }, `모든 그래프는 확대·이동이 함께 움직입니다. 그래프를 누르면 그 시각이 A, B, C … 로 표시되고 모든 그래프에 같은 시각선이 나타납니다.`)));
-  card.append(createToolbar(controller, { label: '태풍 비교 그래프' }));
-  const chartHosts = [h('div', { class: 'chart-host' }), h('div', { class: 'chart-host' })];
-  const panelTitle = (t, sub) => h('div', { class: 'panel-title' }, h('h3', {}, t), sub ? h('span', { class: 'muted small' }, sub) : null);
-  card.append(panelTitle('① 관측 조위와 천문조 예측 조위', `기준면: ${obs.datumLabel} · 단위 cm`), chartHosts[0]);
-  if (!cd.availability.predicted) card.append(h('p', { class: 'notice notice-warn' }, '이 사례에는 천문조 예측 조위 자료가 제공되지 않았습니다. 예측값을 만들어 채우지 않습니다.'));
-  card.append(panelTitle('② 조위 잔차', '잔차 = 같은 시각의 관측 조위 − 예측 조위. 잔차에는 태풍 외의 요인(관측 오차, 다른 기상 효과, 예측 오차 등)도 포함될 수 있습니다.'), chartHosts[1]);
-  if (!cd.availability.residual) card.append(h('p', { class: 'notice notice-warn' }, unavailableText(cd, { needs: ['residual'] })));
-
-  // ③ 기상 자료: 항목마다 별도 그래프(같은 시간축). 서로 다른 기압 종류는 다른 그래프로 둔다.
-  const kindsAvail = weatherKinds(cd);
-  const wxSel = h('div', { class: 'wx-select', role: 'group', 'aria-label': '표시할 기상 그래프 선택' });
-  const syncChecks = () => {
-    const sel = inq3Panels(cd, A());
-    wxSel.querySelectorAll('input').forEach((inp) => { inp.checked = sel.includes(inp.value); });
-  };
-  for (const k of kindsAvail) {
-    const id = `wx-${k}`;
-    const inp = h('input', { type: 'checkbox', id, value: k });
-    inp.addEventListener('change', () => {
-      const cur = new Set(inq3Panels(cd, A()));
-      if (inp.checked) cur.add(k); else cur.delete(k);
-      const ordered = kindsAvail.filter((x) => cur.has(x));
-      store.update((s) => { s.analysis.inq3.panels = ordered; }, { topic: 'analysis' });
-      buildWeatherCharts();
-    });
-    wxSel.append(h('label', { class: 'wx-check', for: id }, inp, ` ${weatherLabel(cd, k)} (${WEATHER_KINDS[k].unit})`));
-  }
-  syncChecks();
-  card.append(h('div', { class: 'panel-title' }, h('h3', {}, `③ 기상 자료${wx ? ` — ${wx.station?.name || ''}` : ''}`), kindsAvail.length ? wxSel : null));
-  if (wx) {
-    const notes = kindsAvail.map((k) => `${weatherLabel(cd, k)}: ${wx.fields[k].note || WEATHER_KINDS[k].desc}`).join(' · ');
-    card.append(h('p', { class: 'muted small' }, `${notes}. 단위나 종류가 다른 자료는 한 축에 섞지 않고 각각 따로 그립니다. 태풍 중심기압은 이 그래프에 넣지 않습니다(부산의 관측 기압이 아님).`));
-  }
-  const wxHost = h('div', { class: 'wx-host' });
-  card.append(wxHost);
-  if (!cd.availability.weather) card.append(h('p', { class: 'notice notice-warn' }, unavailableText(cd, { needs: ['weather'] })));
-  card.append(h('p', { class: 'notice notice-info small' }, '풍향은 바람이 불어오는 방향입니다. 예: 풍향 90°(동풍)는 동쪽에서 서쪽으로 부는 바람입니다.'));
+    h('h2', {}, `집중 관찰 구간 — ${cd.station.name}`),
+    h('p', { class: 'data-line' }, `선생님 지정 구간 ${fmtRange(R.inq3[0], R.inq3[1], cd.tz)} · 관측 간격 ${obs.intervalMs / 3600e3}시간 · 단위 cm · 높이 기준면: ${obs.datumLabel}`)));
+  const extra = `<span class="tool-sep" aria-hidden="true"></span>
+    <button type="button" class="tool" data-go="focus" title="선생님이 지정한 집중 관찰 구간">집중 관찰 구간</button>
+    <button type="button" class="tool" data-go="basic" title="탐구 1의 기본 관찰 구간">기본 관찰 구간</button>
+    <button type="button" class="tool" data-go="month" title="탐구 2의 한 달 전체">한 달 전체</button>`;
+  const tb = createToolbar(controller, { label: '집중 관찰 구간 그래프', extra });
+  tb.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-go]');
+    if (!b) return;
+    const r = b.dataset.go === 'basic' ? R.inq1 : b.dataset.go === 'month' ? R.inq2 : R.inq3;
+    controller.set(r[0], r[1]);
+  });
+  card.append(tb);
+  const chartEl = h('div', { class: 'chart-host' });
+  card.append(chartEl);
+  card.append(h('p', { class: 'chart-help' },
+    '자료점(●)을 누르면 A, B, C … 순서로 선택됩니다. 그래프를 좌우로 끌면 이동합니다. ',
+    h('span', { class: 'kbd-help' }, '키보드: 그래프를 선택(Tab)한 뒤 ←/→로 자료점 이동, Enter로 선택, +/−로 확대·축소')));
+  card.append(h('p', { class: 'notice notice-info' }, '해수면이 전체적으로 높아진 것(최고값·최저값·평균이 함께 달라짐)과 해수면 변동 폭이 커진 것(최고값 − 최저값이 달라짐)을 구분해서 관찰하세요. 뚜렷한 차이가 없다고 판단해도 근거를 들어 쓰면 됩니다.'));
   left.append(card);
 
-  // ── 선택 시각 표 ──
-  const tblCard = h('div', { class: 'card' });
+  const chart = new ChartView({
+    el: chartEl, controller, height: 400, ariaLabel: `${cd.station.name} 집중 관찰 구간 관측 조위 그래프`,
+    build: (ctx) => focusSpec({ ...ctx, cd }, { ...A(), view: controller.view }),
+    pick: (t) => { const p = nearestValid(obs.points, t, { t0: controller.view[0], t1: controller.view[1] }); return p ? { t: p.t, v: p.v, q: p.q } : null; },
+    step: (tg, dir) => { const p = stepValid(obs.points, tg.t, dir); return p ? { t: p.t, v: p.v, q: p.q } : null; },
+    describe: (tg) => {
+      const sel = A().points.find((p) => p.t === tg.t);
+      return `<div class="tip-title">${escapeHtml(fmtDateTime(tg.t, cd.tz))}</div>${tipRow('조위', fmtValue(tg.v, 'cm'))}${tipRow('품질', QUALITY[tg.q] || tg.q)}${sel ? tipRow('선택', sel.label) : '<div class="tip-hint">누르면 선택</div>'}`;
+    },
+    onSelect: (tg) => select(tg),
+  });
+
+  // ── 한 달 그래프에서의 위치 ──
+  const monthCtl = new ViewController({ domain: R.inq2, initial: R.inq2, minSpan: DAY });
+  const monthCard = h('div', { class: 'card chart-card' });
+  monthCard.append(h('div', { class: 'card-head' }, h('h2', {}, '한 달 관측 조위에서의 위치'), h('p', { class: 'data-line' }, '띠는 위 그래프에서 보고 있는 범위입니다. 한 달 그래프를 누르면 그 날짜 쪽으로 위 그래프가 이동합니다.')));
+  const monthEl = h('div', { class: 'chart-host' });
+  monthCard.append(monthEl);
+  left.append(monthCard);
+  const monthChart = new ChartView({
+    el: monthEl, controller: monthCtl, height: 220, ariaLabel: '한 달 관측 조위에서 집중 관찰 구간의 위치',
+    build: (ctx) => monthContextSpec({ ...ctx, cd }, controller.view),
+    pick: (t) => ({ t }),
+    step: (tg, dir) => ({ t: tg.t + dir * DAY }),
+    describe: (tg) => `<div class="tip-title">${escapeHtml(fmtDateKo(tg.t, cd.tz))}</div><div class="tip-hint">누르면 위 그래프를 이 날짜 쪽으로 이동</div>`,
+    onSelect: (tg) => { const [a, b] = controller.view; const half = (b - a) / 2; controller.set(tg.t - half, tg.t + half); },
+  });
+  monthChart.hoverValue = () => null;
+
+  // ── 날짜별 통계 ──
+  const statCard = h('div', { class: 'card' });
+  statCard.append(h('div', { class: 'card-head' }, h('h2', {}, '날짜별 관측 최고값·최저값·평균과 변동 폭'), h('p', { class: 'data-line' }, '위 그래프에서 보고 있는 범위에 걸친 날짜입니다. 변동 폭 = 그날 관측 최고값 − 관측 최저값, 평균 = 그날 1시간 간격 관측값의 평균.')));
+  const statHost = h('div', { class: 'table-host', id: 'inq3-days' });
+  statCard.append(statHost);
+  left.append(statCard);
+
+  // ── 선택 지점 ──
+  const selCard = h('div', { class: 'card' });
   const clearBtn = h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => {
-    store.update((s) => { s.analysis.inq3.marks = []; s.analysis.inq3.cursor = null; }, { topic: 'analysis' });
-    refreshAll();
+    store.update((s) => { s.analysis.inq3.points = []; s.analysis.inq3.pair = null; }, { topic: 'analysis' });
+    refresh();
   } }, '선택 모두 해제');
-  tblCard.append(h('div', { class: 'card-head row' }, h('h2', {}, '선택 시각의 값'), clearBtn));
-  const tblHost = h('div', { class: 'table-host wide' });
-  tblCard.append(tblHost);
-  tblCard.append(h('p', { class: 'muted small' }, '“자료 없음”은 그 시각에 값이 없거나(결측) 그 시각의 관측 기록이 없다는 뜻입니다. 앱은 가까운 시각의 값을 대신 넣거나 보간하지 않습니다. 관측 조위의 최고값은 1시간 간격 관측값 중의 최고값입니다.'));
-  left.append(tblCard);
+  selCard.append(h('div', { class: 'card-head row' }, h('h2', {}, '선택한 지점'), clearBtn));
+  const selTable = h('div', { class: 'table-host', id: 'inq3-points' });
+  const diffHost = h('div', { class: 'table-host', id: 'inq3-diffs' });
+  selCard.append(selTable, h('h3', { class: 'sub-h' }, '두 지점 사이의 차이'), diffHost);
+  left.append(selCard);
   left.append(addEvidenceBar({ onAdd: () => { app.addEvidence(3, { ...A(), view: controller.view }); panel.renderEvidence(); } }));
 
   const panel = createQuestionPanel({
@@ -133,145 +111,85 @@ export function render(app, container) {
     getAnalysis: () => ({ ...A(), view: controller.view }),
     applyState: (st) => {
       store.update((s) => { s.analysis.inq3 = { ...s.analysis.inq3, ...st }; }, { topic: 'analysis' });
-      if (!Array.isArray(st.panels) && st.bottom) store.update((s) => { s.analysis.inq3.panels = [st.bottom]; }, { topic: 'analysis' });
-      syncChecks();
-      buildWeatherCharts();
       if (st.view) controller.set(st.view[0], st.view[1], true);
-      refreshAll();
+      refresh();
       toast('근거의 분석 상태를 그래프에 다시 열었습니다. 근거 자체는 바뀌지 않습니다.');
     },
   });
   ws.append(panel.el);
 
-  // ── 그래프 ──
-  const fs = 13.5;
-  const padFor = (measure) => Math.max(measure('0000', fs - 1.5), measure('북 360°', fs - 1.5)) + fs + 18;
-  const pick = (t) => {
-    const p = nearestAny(obs.points, t, controller.view[0], controller.view[1]);
-    return p ? { t: p.t } : null;
-  };
-  const step = (tg, dir) => {
-    const i = lowerBound(obs.points, tg.t) + (dir > 0 ? 1 : -1);
-    const p = obs.points[i];
-    return p ? { t: p.t } : null;
-  };
-  const describe = (tg) => {
-    const w = weatherAt(cd, tg.t);
-    const res = residualAt(cd, tg.t);
-    return `<div class="tip-title">${escapeHtml(fmtDateTime(tg.t, cd.tz))}</div>
-      ${tipRow('관측 조위', fmtValue(obsAt(cd, tg.t), 'cm'))}
-      ${tipRow('예측 조위', cd.predicted ? fmtValue(predAt(cd, tg.t), 'cm') : '자료 미제공')}
-      ${tipRow('잔차', cd.residual?.ok ? fmtSignedValue(res, 'cm') : '계산 불가')}
-      ${cd.weather ? kindsAvail.map((k) => tipRow(weatherLabel(cd, k), fmtWeather(k, w?.[k] ?? null))).join('') : tipRow('기상 자료', '자료 미제공')}
-      <div class="tip-hint">누르면 이 시각을 표시</div>`;
-  };
-  const view = () => ({ ...A(), view: controller.view });
-  const builders = [
-    (ctx) => inq3TideSpec({ ...ctx, cd, padLeft: padFor(ctx.measure), hideXTitle: true }, view()),
-    (ctx) => inq3ResidualSpec({ ...ctx, cd, padLeft: padFor(ctx.measure), hideXTitle: true }, view()),
-  ];
-  const hoverVals = [
-    (t) => ({ v: obsAt(cd, t) }),
-    (t) => ({ v: residualAt(cd, t) }),
-  ];
-  const labels = ['관측·예측 조위 그래프', '조위 잔차 그래프'];
-  const heights = [320, 230];
-  const charts = chartHosts.map((el, i) => {
-    const c = new ChartView({
-      el, controller, height: heights[i], fontSize: fs, ariaLabel: labels[i],
-      build: builders[i], pick, step, describe, onSelect: (tg) => mark(tg.t),
-    });
-    c.hoverValue = hoverVals[i];
-    return c;
-  });
-  let wxCharts = [];
-  function buildWeatherCharts() {
-    wxCharts.forEach((c) => c.destroy());
-    wxHost.innerHTML = '';
-    let kinds = inq3Panels(cd, A());
-    if (!cd.weather) kinds = ['pressure']; // '기상 자료 미제공' 그래프 하나
-    if (cd.weather && !kinds.length) {
-      wxHost.append(h('p', { class: 'muted small' }, '표시할 기상 그래프를 위에서 고르세요.'));
-      wxCharts = [];
-      return;
-    }
-    wxCharts = kinds.map((k, i) => {
-      const el = h('div', { class: 'chart-host' });
-      wxHost.append(el);
-      const c = new ChartView({
-        el, controller, height: 210, fontSize: fs, ariaLabel: `${cd.weather ? weatherLabel(cd, k) : '기상 자료'} 그래프`,
-        build: (ctx) => inq3WeatherSpec({ ...ctx, cd, padLeft: padFor(ctx.measure), hideXTitle: i < kinds.length - 1 }, view(), k),
-        pick, step, describe, onSelect: (tg) => mark(tg.t),
-      });
-      c.hoverValue = (t) => ({ v: weatherAt(cd, t)?.[k] ?? null });
-      c.render();
-      return c;
-    });
-  }
-  buildWeatherCharts();
-
-  function mark(t) {
-    const marks = A().marks;
-    const ex = marks.find((m) => m.t === t);
-    if (ex) {
-      store.update((s) => { s.analysis.inq3.cursor = t; }, { topic: 'analysis' });
-      toast(`이미 ${ex.label}로 표시된 시각입니다.`);
-    } else if (marks.length >= MAX_MARKS) {
-      toast(`시각은 최대 ${MAX_MARKS}개까지 표시할 수 있습니다.`);
-      store.update((s) => { s.analysis.inq3.cursor = t; }, { topic: 'analysis' });
-    } else {
-      const label = nextLetter(marks.map((m) => m.label));
-      store.update((s) => {
-        s.analysis.inq3.marks.push({ label, t });
-        s.analysis.inq3.marks.sort((a, b) => a.label.localeCompare(b.label));
-        s.analysis.inq3.cursor = t;
-      }, { topic: 'analysis' });
-    }
-    refreshAll();
+  function select(tg) {
+    const pts = A().points;
+    const dup = pts.find((p) => p.t === tg.t);
+    if (dup) { toast(`이미 ${dup.label}로 선택된 지점입니다. 해제하려면 표에서 [해제]를 누르세요.`); return; }
+    if (pts.length >= MAX_POINTS) { toast(`지점은 최대 ${MAX_POINTS}개까지 선택할 수 있습니다.`); return; }
+    const label = nextLetter(pts.map((p) => p.label));
+    store.update((s) => {
+      s.analysis.inq3.points.push({ label, t: tg.t });
+      s.analysis.inq3.points.sort((a, b) => a.label.localeCompare(b.label));
+    }, { topic: 'analysis' });
+    refresh();
   }
 
-  function renderTable() {
-    const v = inq3Values(cd, A());
-    clearBtn.disabled = !v.marks.length;
-    tblHost.innerHTML = '';
-    if (!v.marks.length) {
-      tblHost.innerHTML = '<p class="muted">그래프에서 시각을 누르면 그 시각의 관측·예측 조위, 잔차, 기압, 풍속, 풍향이 이 표에 나타납니다.</p>';
-      return;
+  function renderStats() {
+    const [a, b] = controller.view;
+    const days = dayStats(cd, a, b);
+    statHost.innerHTML = '';
+    const tbl = h('table', { class: 'data-table compact' });
+    tbl.innerHTML = `<thead><tr><th scope="col">날짜</th><th scope="col">관측 최고값 (시각)</th><th scope="col">관측 최저값 (시각)</th><th scope="col">관측값 평균</th><th scope="col">변동 폭</th><th scope="col">자료</th></tr></thead>
+      <tbody>${days.map((d) => `<tr><th scope="row">${escapeHtml(fmtDateKo(d.start, cd.tz))}</th>
+        <td class="num">${d.max ? `${escapeHtml(fmtNum(d.max.v))} cm (${escapeHtml(fmtTime(d.max.t, cd.tz))})` : '자료 없음'}</td>
+        <td class="num">${d.min ? `${escapeHtml(fmtNum(d.min.v))} cm (${escapeHtml(fmtTime(d.min.t, cd.tz))})` : '자료 없음'}</td>
+        <td class="num">${d.mean == null ? '—' : `${escapeHtml(fmtNum(d.mean, 1))} cm`}</td>
+        <td class="num"><b>${d.range == null ? '자료 없음' : `${escapeHtml(fmtNum(d.range))} cm`}</b></td>
+        <td>${d.complete ? `완전 ${d.valid}/${d.expected}` : `<span class="warn-text">불완전 ${d.valid}/${d.expected}</span>`}</td></tr>`).join('')}</tbody>`;
+    statHost.append(tbl);
+    if (days.some((d) => !d.complete)) statHost.append(h('p', { class: 'muted small' }, '자료가 빠진 날은 최고·최저·평균이 실제와 다를 수 있으니 다른 날과 같은 조건으로 비교하지 마세요. 그래프의 끊긴 부분도 확인하세요.'));
+  }
+
+  function refresh() {
+    chart.render();
+    monthChart.render();
+    renderStats();
+    const v = inq3Values(cd, { ...A(), view: controller.view });
+    clearBtn.disabled = !v.points.length;
+    selTable.innerHTML = '';
+    if (!v.points.length) selTable.innerHTML = '<p class="muted">아직 선택한 지점이 없습니다. 특징이 잘 드러난다고 생각하는 자료점을 눌러 보세요.</p>';
+    else {
+      const tbl = h('table', { class: 'data-table' });
+      tbl.innerHTML = `<thead><tr><th scope="col">기호</th><th scope="col">시각 (${escapeHtml(cd.tz.label)})</th><th scope="col">조위</th><th scope="col">품질</th><th scope="col"><span class="sr-only">작업</span></th></tr></thead>`;
+      const tbody = h('tbody');
+      for (const p of v.points) {
+        const tr = h('tr');
+        tr.innerHTML = `<th scope="row"><span class="mark-badge">${escapeHtml(p.label)}</span></th><td>${escapeHtml(fmtDateTime(p.t, cd.tz))}</td><td class="num">${escapeHtml(fmtValue(p.v, 'cm'))}</td><td>${escapeHtml(QUALITY[p.q] || '—')}</td>`;
+        const td = h('td', { class: 'actions' });
+        td.append(h('button', { type: 'button', class: 'btn btn-ghost btn-xs', onclick: () => {
+          store.update((s) => { s.analysis.inq3.points = s.analysis.inq3.points.filter((x) => x.label !== p.label); }, { topic: 'analysis' });
+          refresh();
+        } }, '해제'));
+        tr.append(td);
+        tbody.append(tr);
+      }
+      tbl.append(tbody);
+      selTable.append(tbl);
     }
+    diffHost.innerHTML = '';
+    if (v.points.length < 2) { diffHost.innerHTML = '<p class="muted">두 지점 이상 선택하면 시간 차이와 높이 차이(뒤 지점 − 앞 지점)가 계산됩니다.</p>'; return; }
     const tbl = h('table', { class: 'data-table' });
-    const wxHead = cd.weather ? kindsAvail.map((k) => `<th scope="col">${escapeHtml(weatherLabel(cd, k))}${k === 'windDir' ? '<br><span class="small">(불어오는 방향)</span>' : ''}</th>`).join('') : '<th scope="col">기상</th>';
-    tbl.innerHTML = `<thead><tr><th scope="col">기호</th><th scope="col">시각 (${escapeHtml(cd.tz.label)})</th><th scope="col">관측 조위</th><th scope="col">예측 조위</th><th scope="col">잔차<br><span class="small">(관측 − 예측)</span></th>${wxHead}<th scope="col"><span class="sr-only">작업</span></th></tr></thead>`;
-    const tb = h('tbody');
-    for (const m of v.marks) {
-      const tr = h('tr', { class: m.t === A().cursor ? 'focus' : '' });
-      const wxCells = cd.weather ? kindsAvail.map((k) => `<td class="num">${escapeHtml(fmtWeather(k, m.weather?.[k] ?? null))}</td>`).join('') : '<td>자료 미제공</td>';
-      tr.innerHTML = `<th scope="row"><span class="mark-badge">${escapeHtml(m.label)}</span></th>
-        <td>${escapeHtml(fmtDateTime(m.t, cd.tz))}</td>
-        <td class="num">${escapeHtml(fmtValue(m.obs, 'cm'))}</td>
-        <td class="num">${escapeHtml(cd.predicted ? fmtValue(m.pred, 'cm') : '자료 미제공')}</td>
-        <td class="num"><b>${escapeHtml(v.residualOk ? fmtSignedValue(m.res, 'cm') : '계산 불가')}</b></td>
-        ${wxCells}`;
-      const td = h('td', { class: 'actions' });
-      td.append(h('button', { type: 'button', class: 'btn btn-ghost btn-xs', onclick: () => {
-        store.update((s) => {
-          s.analysis.inq3.marks = s.analysis.inq3.marks.filter((x) => x.label !== m.label);
-          if (s.analysis.inq3.cursor === m.t) s.analysis.inq3.cursor = null;
-        }, { topic: 'analysis' });
-        refreshAll();
-      } }, '해제'));
-      tr.append(td);
-      tb.append(tr);
-    }
-    tbl.append(tb);
-    tblHost.append(tbl);
+    tbl.innerHTML = `<thead><tr><th scope="col">구간</th><th scope="col">시간 차이</th><th scope="col">높이 차이 (뒤 − 앞)</th></tr></thead><tbody>${v.diffs.map((d) => `<tr${d.custom ? ' class="custom"' : ''}><th scope="row">${escapeHtml(d.from)} → ${escapeHtml(d.to)}</th><td class="num">${escapeHtml(fmtDuration(d.dtMs))} <span class="muted">(${escapeHtml(hoursDecimal(d.dtMs))}시간)</span></td><td class="num">${escapeHtml(fmtSignedValue(d.dv, 'cm'))}</td></tr>`).join('')}</tbody>`;
+    diffHost.append(tbl);
+    const opts = v.points.map((p) => `<option value="${escapeHtml(p.label)}">${escapeHtml(p.label)}</option>`).join('');
+    const pair = effectivePair(A().pair, v.points);
+    const row = h('div', { class: 'pair-row' });
+    row.innerHTML = `<label>다른 두 지점 비교: <select class="sel-a" aria-label="앞 지점">${opts}</select></label> → <select class="sel-b" aria-label="뒤 지점">${opts}</select>`;
+    const sa = row.querySelector('.sel-a'), sb = row.querySelector('.sel-b');
+    sa.value = pair[0]; sb.value = pair[1];
+    const onPair = () => { store.update((s) => { s.analysis.inq3.pair = [sa.value, sb.value]; }, { topic: 'analysis' }); refresh(); };
+    sa.addEventListener('change', onPair); sb.addEventListener('change', onPair);
+    diffHost.append(row);
   }
 
-  function refreshAll() {
-    charts.forEach((c) => c.render());
-    wxCharts.forEach((c) => c.render());
-    renderTable();
-  }
-
-  refreshAll();
-  return { destroy() { charts.forEach((c) => c.destroy()); wxCharts.forEach((c) => c.destroy()); } };
+  controller.subscribe((k) => { if (k === 'view') { monthChart.render(); renderStats(); } });
+  refresh();
+  return { destroy() { chart.destroy(); monthChart.destroy(); } };
 }

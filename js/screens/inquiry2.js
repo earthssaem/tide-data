@@ -7,15 +7,20 @@ import { ViewController, ChartView, createToolbar, tipRow } from '../chart/inter
 import { inq2MonthSpec, inq2DailySpec, inq2DetailSpec, inq2Days, inq2DetailView, sameDailyDomain } from '../chart/specs.js';
 import { createCompareControls } from './compare.js';
 import { nearestValid, stepValid, dataDomain } from '../analysis/series.js';
-import { inq2Values, effectivePair } from '../state/evidence.js';
+import { inq2Values, effectivePair, KIND_LABEL } from '../state/evidence.js';
 import { inquiryHeader, createQuestionPanel, addEvidenceBar, nextLetter, unavailableText } from './common.js';
 
-const MAX_DAYS = 8;
+const MAX_DAYS = 10;
+const KINDS = [['', '—'], ['spring', '대조'], ['neap', '소조']];
 
 export function render(app, container) {
   const { cd, store } = app;
   const def = INQUIRIES[1];
-  const A = () => store.state.analysis.inq2;
+  const A0 = () => store.state.analysis.inq2;
+  // 달의 위상은 [달의 위상 자료 확인]을 누른 뒤에만 그래프·표에 나타난다
+  const moonAvail = cd.availability.moonPhases;
+  const revealed = () => !!store.state.reveals.moon;
+  const A = () => ({ ...A0(), showMoon: moonAvail && revealed() && A0().showMoon !== false });
   const days = inq2Days(cd);
   const dayAt = (t) => days.find((d) => t >= d.start && t < d.end) || null;
   const obs = cd.observed;
@@ -29,18 +34,20 @@ export function render(app, container) {
   // ── 한 달 보기 컨트롤러(고정) ──
   const monthCtl = new ViewController({ domain: cd.ranges.inq2, initial: cd.ranges.inq2, minSpan: DAY });
 
-  // ── 달의 위상 토글 ──
-  const moonAvail = cd.availability.moonPhases;
+  // ── 달의 위상: 공개 전에는 아무것도 보이지 않음 ──
   const moonBox = h('div', { class: 'moon-box' });
-  const moonToggle = h('input', { type: 'checkbox', id: 'moon-toggle', role: 'switch', disabled: !moonAvail });
-  moonToggle.checked = !!A().showMoon && moonAvail;
-  moonToggle.addEventListener('change', () => {
-    store.update((s) => { s.analysis.inq2.showMoon = moonToggle.checked; }, { topic: 'analysis' });
-    refreshAll();
-  });
-  moonBox.append(h('label', { class: 'switch', for: 'moon-toggle' }, moonToggle, h('span', { class: 'switch-ui', 'aria-hidden': 'true' }), h('span', {}, '달의 위상 표시')));
   const moonInfo = h('div', { class: 'moon-info' });
-  moonBox.append(moonInfo);
+  let moonToggle = null;
+  if (revealed() && moonAvail) {
+    moonToggle = h('input', { type: 'checkbox', id: 'moon-toggle', role: 'switch' });
+    moonToggle.checked = A().showMoon;
+    moonToggle.addEventListener('change', () => {
+      store.update((s) => { s.analysis.inq2.showMoon = moonToggle.checked; }, { topic: 'analysis' });
+      refreshAll();
+    });
+    moonBox.append(h('label', { class: 'switch', for: 'moon-toggle' }, moonToggle, h('span', { class: 'switch-ui', 'aria-hidden': 'true' }), h('span', {}, '달의 위상 표시')));
+    moonBox.append(moonInfo);
+  }
 
   // ── 1. 한 달 관측 조위 ──
   const monthCard = h('div', { class: 'card chart-card' });
@@ -135,6 +142,7 @@ export function render(app, container) {
   const intHost = h('div', { class: 'table-host', id: 'inq2-intervals' });
   selCard.append(selHost, h('h3', { class: 'sub-h' }, '선택 날짜 사이의 간격'), intHost);
   left.append(selCard);
+  left.append(revealCard());
   left.append(addEvidenceBar({ onAdd: () => { app.addEvidence(2, { ...A(), detailView: detailCtl.view }); panel.renderEvidence(); } }));
 
   const panel = createQuestionPanel({
@@ -142,7 +150,7 @@ export function render(app, container) {
     getAnalysis: () => ({ ...A(), detailView: detailCtl.view }),
     applyState: (st) => {
       store.update((s) => { s.analysis.inq2 = { ...s.analysis.inq2, ...st }; }, { topic: 'analysis' });
-      moonToggle.checked = !!st.showMoon && moonAvail;
+      if (moonToggle) moonToggle.checked = A().showMoon;
       ctxSel.value = String(st.contextDays || 2);
       if (st.detailView) detailCtl.set(st.detailView[0], st.detailView[1], true);
       refreshAll();
@@ -204,7 +212,7 @@ export function render(app, container) {
       else {
         const label = nextLetter(sel.map((s) => s.label));
         store.update((s) => {
-          s.analysis.inq2.selectedDays.push({ label, day });
+          s.analysis.inq2.selectedDays.push({ label, day, kind: '' });
           s.analysis.inq2.selectedDays.sort((a, b) => a.label.localeCompare(b.label));
         }, { topic: 'analysis' });
         const d = days.find((x) => x.day === day);
@@ -216,18 +224,30 @@ export function render(app, container) {
 
   function renderMoonInfo() {
     moonInfo.innerHTML = '';
-    if (!moonAvail) {
-      moonInfo.append(h('p', { class: 'notice notice-warn' }, unavailableText(cd, { needs: ['moonPhases'] })));
-      return;
-    }
-    if (!A().showMoon) {
-      moonInfo.append(h('p', { class: 'muted small' }, '달의 위상은 숨겨져 있습니다. 변동 폭이 큰 시기와 작은 시기를 먼저 찾은 뒤 켜서 비교해 보세요.'));
-      return;
-    }
+    if (!moonToggle) return;
+    if (!A().showMoon) { moonInfo.append(h('p', { class: 'muted small' }, '달의 위상 표시를 껐습니다.')); return; }
     const [t0, t1] = cd.ranges.inq2;
     const list = cd.moon.phases.filter((p) => p.t >= t0 - 3 * DAY && p.t <= t1 + 3 * DAY);
     moonInfo.append(h('p', { class: 'small moon-list' }, ...list.map((p) => h('span', { class: 'moon-item' }, `${p.label} ${fmtDateTime(p.t, cd.tz, { year: false })}${p.lunar ? ` (음력 ${p.lunar})` : ''}`))));
-    moonInfo.append(h('p', { class: 'muted small' }, `출처: ${cd.moon.meta.provider || '사례 설정 자료'}. 음력 날짜: ${list.some((p) => p.lunar) ? '자료 제공' : '자료 미제공'}`));
+    moonInfo.append(h('p', { class: 'muted small' }, `출처: ${cd.moon.meta.provider || '사례 설정 자료'}${cd.moon.meta.note ? ` — ${cd.moon.meta.note}` : ''}. 음력 날짜: ${list.some((p) => p.lunar) ? '자료 제공' : '자료 미제공'}`));
+  }
+
+  function revealCard() {
+    const c = h('section', { class: 'card reveal-card', id: 'moon-reveal', 'aria-labelledby': 'moon-reveal-h' });
+    c.append(h('h2', { id: 'moon-reveal-h' }, '달의 위상 자료 확인'));
+    const r = store.state.reveals.moon;
+    if (!moonAvail) {
+      c.append(h('p', { class: 'notice notice-warn' }, unavailableText(cd, { needs: ['moonPhases'] })));
+      return c;
+    }
+    if (r) {
+      c.append(h('p', { class: 'ok-text' }, `✓ 달의 위상 자료를 확인했습니다 (${fmtDateTime(r.at, { offsetMinutes: -new Date().getTimezoneOffset() })}). 공개 전에 쓴 답(문항 1~4와 그림)은 그대로 보관되어 고칠 수 없습니다. 비교한 내용은 문항 5에 쓰세요.`));
+      return c;
+    }
+    c.append(h('p', {}, '먼저 문항 1~4(대조·소조 시기, 간격, 달·태양·지구의 위치 관계)를 작성하세요. 작성한 답은 자동으로 저장됩니다.'),
+      h('p', { class: 'small muted' }, '버튼을 누르면 한 달 그래프에 실제 달의 위상(삭·상현·망·하현) 시각이 나타나고, 문항 1~4의 답과 그림은 공개 전 답으로 고정됩니다.'),
+      h('button', { type: 'button', class: 'btn btn-primary', id: 'btn-reveal-moon', onclick: () => app.reveal('moon') }, '달의 위상 자료 확인'));
+    return c;
   }
 
   function renderDayBox() {
@@ -276,16 +296,22 @@ export function render(app, container) {
       selHost.innerHTML = '<p class="muted">아직 선택한 날짜가 없습니다. 일별 변동 폭 막대를 눌러 선택하세요.</p>';
     } else {
       const tbl = h('table', { class: 'data-table' });
-      tbl.innerHTML = `<thead><tr><th scope="col">기호</th><th scope="col">날짜</th><th scope="col">변동 폭</th><th scope="col">관측 최고값 (시각)</th><th scope="col">관측 최저값 (시각)</th><th scope="col">자료</th><th scope="col"><span class="sr-only">작업</span></th></tr></thead>`;
+      tbl.innerHTML = `<thead><tr><th scope="col">기호</th><th scope="col">날짜</th><th scope="col">내 판단</th><th scope="col">변동 폭</th><th scope="col">관측 최고값 (시각)</th><th scope="col">관측 최저값 (시각)</th><th scope="col">자료</th><th scope="col"><span class="sr-only">작업</span></th></tr></thead>`;
       const tb = h('tbody');
       for (const d of v.days) {
         const tr = h('tr', { class: d.day === A().focusDay ? 'focus' : '' });
         tr.innerHTML = `<th scope="row"><span class="mark-badge">${escapeHtml(d.label)}</span></th>
           <td>${escapeHtml(d.start != null ? fmtDateKo(d.start, cd.tz) : d.day)}</td>
+          <td class="kind-cell"></td>
           <td class="num"><b>${d.range == null ? '자료 없음' : `${escapeHtml(fmtNum(d.range))} cm`}</b></td>
           <td class="num">${d.max ? `${escapeHtml(fmtNum(d.max.v))} cm (${escapeHtml(fmtTime(d.max.t, cd.tz))})` : '—'}</td>
           <td class="num">${d.min ? `${escapeHtml(fmtNum(d.min.v))} cm (${escapeHtml(fmtTime(d.min.t, cd.tz))})` : '—'}</td>
           <td>${d.complete ? '완전' : '<span class="warn-text">불완전</span>'} ${d.valid}/${d.expected}</td>`;
+        const ks = h('select', { class: 'kind-sel', 'aria-label': `${d.label} 날짜 판단(대조·소조)` });
+        ks.innerHTML = KINDS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+        ks.value = d.kind || '';
+        ks.addEventListener('change', () => { store.update((s) => { const x = s.analysis.inq2.selectedDays.find((y) => y.day === d.day); if (x) x.kind = ks.value; }, { topic: 'analysis' }); refreshAll(); });
+        tr.querySelector('.kind-cell').append(ks);
         const td = h('td', { class: 'actions' });
         td.append(
           h('button', { type: 'button', class: 'btn btn-ghost btn-xs', onclick: () => focusDay(d.day) }, '보기'),
@@ -316,6 +342,11 @@ export function render(app, container) {
       const onPair = () => { store.update((s) => { s.analysis.inq2.pair = [sa.value, sb.value]; }, { topic: 'analysis' }); renderSelected(); };
       sa.addEventListener('change', onPair); sb.addEventListener('change', onPair);
       intHost.append(row);
+    }
+    if (v.kindIntervals.length) {
+      const t2 = h('table', { class: 'data-table', id: 'inq2-kind-intervals' });
+      t2.innerHTML = `<caption>내가 같은 종류로 표시한 날짜끼리의 간격</caption><thead><tr><th scope="col">종류</th><th scope="col">구간</th><th scope="col">날짜 간격</th></tr></thead><tbody>${v.kindIntervals.map((d) => `<tr><th scope="row">${KIND_LABEL[d.kind]}</th><td>${escapeHtml(d.from)} → ${escapeHtml(d.to)}</td><td class="num">${d.days}일</td></tr>`).join('')}</tbody>`;
+      intHost.append(t2);
     }
   }
 

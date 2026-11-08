@@ -1,12 +1,15 @@
 // 탐구별 그래프 설명(spec) 만들기
 // 같은 함수를 화면(현재 분석 상태)과 근거·PDF(고정된 분석 상태)에 함께 사용한다.
 
-import { MARK_SHAPES } from './layout.js';
+import { MARK_SHAPES, layoutChart } from './layout.js';
+import { trackMapLayout, koreaMapSync } from './map.js';
 import { pointAt, extent } from '../analysis/series.js';
 import { stationCaseData } from '../data/loader.js';
 import { dailyRanges } from '../analysis/daily.js';
 import { fmtRange, fmtDateTime, fmtDateKo, DAY } from '../util/time.js';
 import { fmtValue, fmtWindDir } from '../util/format.js';
+
+const KIND_SHORT = { high: '만조', low: '간조', spring: '대조', neap: '소조' };
 
 export const COLORS = {
   obs: '#1f3a68',
@@ -95,14 +98,14 @@ export function inq1Spec(ctx, a) {
   const { cd } = ctx;
   const view = a.view || cd.ranges.inq1;
   const marks = (a.points || []).map((p, i) => ({
-    t: p.t, v: obsAt(cd, p.t), label: p.label, shape: MARK_SHAPES[i % MARK_SHAPES.length], color: COLORS.accent,
+    t: p.t, v: obsAt(cd, p.t), label: `${p.label}${KIND_SHORT[p.kind] ? ` ${KIND_SHORT[p.kind]}` : ''}`, shape: MARK_SHAPES[i % MARK_SHAPES.length], color: COLORS.accent,
   }));
   const legend = obsLegend(cd, view[0], view[1]);
   if (marks.length) legend.push({ kind: 'marker', marker: 'circle', label: '선택 지점 (A, B, C … 기호와 모양으로 구분)', color: COLORS.accent });
   return {
     ...base(ctx, view),
     header: ctx.header ? {
-      title: `관측 조위 — ${cd.station.name}`,
+      title: `${ctx.title || '관측 조위'} — ${cd.station.name}`,
       subtitle: `${fmtRange(view[0], view[1], cd.tz)} · 높이 기준면: ${cd.observed.datumLabel}${sampleTag(cd)}`,
     } : null,
     legend,
@@ -197,9 +200,10 @@ export function inq2DailySpec(ctx, a) {
   const view = cd.ranges.inq2;
   const days = inq2Days(cd);
   const sel = new Map((a.selectedDays || []).map((s) => [s.day, s.label]));
+  const kindOf = new Map((a.selectedDays || []).map((s) => [s.day, s.kind]));
   const bars = days.map((d) => ({
     t0: d.start, t1: d.end, v: d.range, hollow: !d.complete,
-    selected: sel.has(d.day), label: sel.get(d.day) || null, focus: d.day === a.focusDay,
+    selected: sel.has(d.day), label: sel.has(d.day) ? `${sel.get(d.day)}${KIND_SHORT[kindOf.get(d.day)] ? ` ${KIND_SHORT[kindOf.get(d.day)]}` : ''}` : null, focus: d.day === a.focusDay,
     color: sel.has(d.day) ? COLORS.dailySel : COLORS.daily,
   }));
   const legend = [{ kind: 'bar', label: '일별 해수면 변동 폭 = 그날 관측 최고값 − 관측 최저값', color: COLORS.daily }];
@@ -259,6 +263,41 @@ export function inq2DetailSpec(ctx, a, view) {
     bands,
     vlines: [...dayLines, ...moonLines(cd, a.showMoon)],
   };
+}
+
+// ───────────────────────── 탐구 3: 집중 관찰 구간 ─────────────────────────
+/** 표시 범위에 걸친 날짜별 관측 최고·최저·평균·변동 폭(평균은 그날 관측값의 산술 평균) */
+export function dayStats(cd, t0, t1) {
+  const days = dailyRanges(cd.observed.points, cd.tz, cd.observed.intervalMs, t0, t1);
+  return days.map((d) => {
+    let sum = 0, n = 0;
+    for (const p of cd.observed.points) {
+      if (p.t >= d.start && p.t < d.end && p.v != null && p.q !== 'bad' && p.q !== 'missing') { sum += p.v; n++; }
+    }
+    return { ...d, mean: n ? sum / n : null };
+  });
+}
+
+/** 집중 관찰 구간 그래프: 원인 설명이나 태풍 정보 없이 관측 조위만 보여 준다 */
+export function focusSpec(ctx, a) {
+  const { cd } = ctx;
+  const view = a.view || cd.ranges.inq3;
+  const s = inq1Spec({ ...ctx, title: '집중 관찰 구간 관측 조위' }, { ...a, view });
+  const [f0, f1] = cd.ranges.inq3;
+  if (view[0] < f0 - 3600e3 || view[1] > f1 + 3600e3) {
+    s.bands = [{ t0: f0, t1: f1, fill: COLORS.band, opacity: 0.08, stroke: COLORS.band, strokeWidth: 1, dash: [3, 2] }];
+    s.legend.push({ kind: 'barHollow', label: '집중 관찰 구간(선생님 지정)', color: COLORS.band });
+  }
+  return s;
+}
+
+/** 한 달 그래프 위에 지금 보는 범위를 띠로 표시(집중 관찰 구간 위치 확인용) */
+export function monthContextSpec(ctx, view) {
+  const { cd } = ctx;
+  const s = inq2MonthSpec(ctx, { selectedDays: [], showMoon: false }, view);
+  s.legend = s.legend.map((L) => (L.kind === 'barHollow' ? { ...L, label: '위 그래프에서 보는 범위' } : L));
+  if (s.header) s.header.title = `한 달 관측 조위에서의 위치 — ${cd.station.name}`;
+  return s;
 }
 
 // ───────────────────────── 탐구 3 ─────────────────────────
@@ -408,7 +447,7 @@ export function inq3BottomSpec(ctx, a) {
   return inq3WeatherSpec(ctx, a, a.bottom || inq3Panels(ctx.cd, a)[0] || 'pressure');
 }
 
-/** 근거·PDF용 그림 구성: 패널 목록 */
+/** 근거·PDF용 그림 구성: 패널 목록({spec} 또는 이미 배치한 {layout}) */
 export function figurePanels(cd0, ev, { width, measure, fontSize = 9.5, scale = 1 }) {
   const st = ev.state;
   // 근거를 만든 관측소의 자료로 그린다(지금 화면에서 고른 관측소와 다를 수 있음)
@@ -437,20 +476,38 @@ export function figurePanels(cd0, ev, { width, measure, fontSize = 9.5, scale = 
       { spec: inq2DetailSpec({ ...ctxBase, height: H(cdB ? 0.38 : 0.44), header: true }, st, dv) },
     ];
   }
+  if (ev.inquiry === 3) {
+    const view = st.view || cd.ranges.inq3;
+    return [
+      { spec: focusSpec({ ...ctxBase, height: H(0.46), header: true }, st) },
+      { spec: monthContextSpec({ ...ctxBase, height: H(0.24), header: true }, view) },
+    ];
+  }
+  // 탐구 5: 조위(+예측), 잔차(계산 가능할 때만), 기상 항목별 그래프, 태풍 경로 지도
   const padLeft = measure('0000', fontSize - 1.5) + fontSize + 18;
   const pad = Math.max(padLeft, measure('북 360°', fontSize - 1.5) + fontSize + 18);
-  // 근거 당시 고른 기상 그래프(옛 근거는 bottom 하나). 자료가 없으면 '자료 미제공' 그래프 하나
-  let kinds = Array.isArray(st.panels) ? st.panels.filter((k) => cd.weather?.fields?.[k]) : st.bottom ? [st.bottom] : inq3Panels(cd, st);
-  if (!kinds.length) kinds = ['pressure'];
-  // 한 그림이 A4 한 쪽에 들어가도록 높이 비율을 줄인다(그래프와 캡션이 떨어지지 않게)
-  const ratios = [0.4, 0.27, ...kinds.map(() => 0.22)];
+  let kinds = Array.isArray(st.panels) ? st.panels.filter((k) => cd.weather?.fields?.[k]) : inq3Panels(cd, st);
+  if (!cd.weather) kinds = ['pressure'];
+  const withRes = !!cd.residual?.ok;
+  // 기상 그래프도 읽을 수 있는 높이를 확보하되, 그림 전체가 A4 한 쪽(폭의 약 1.35배)을 넘지 않게 줄인다
+  const ratios = [0.42, ...(withRes ? [0.28] : []), ...kinds.map(() => 0.3)];
   const total = ratios.reduce((x, y) => x + y, 0);
-  const f = Math.min(1, 1.3 / total);
-  return [
+  const f = Math.min(1, 1.35 / total);
+  const out = [
     { spec: inq3TideSpec({ ...ctxBase, height: H(ratios[0] * f), header: true, padLeft: pad }, st) },
-    { spec: inq3ResidualSpec({ ...ctxBase, height: H(ratios[1] * f), header: true, padLeft: pad }, st) },
-    ...kinds.map((k) => ({ spec: inq3WeatherSpec({ ...ctxBase, height: H(0.22 * f), header: true, padLeft: pad }, st, k) })),
+    ...(withRes ? [{ spec: inq3ResidualSpec({ ...ctxBase, height: H(0.28 * f), header: true, padLeft: pad }, st) }] : []),
+    ...kinds.map((k) => ({ spec: inq3WeatherSpec({ ...ctxBase, height: H(0.3 * f), header: true, padLeft: pad }, st, k) })),
   ];
+  const map = koreaMapSync();
+  if (cd.typhoon?.track?.length && map) {
+    out.push({ layout: trackMapLayout({ map, cd, view: st.view || cd.ranges.inq3, width: Math.min(width, Math.round(width * 0.62)), measure, fontSize }) });
+  }
+  return out;
+}
+
+/** 패널을 그리기 목록으로 */
+export function panelLayout(p) {
+  return p.layout || layoutChart(p.spec);
 }
 
 export function dayLabel(cd, dayKey, days) {

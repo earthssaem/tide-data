@@ -3,6 +3,8 @@ import { h, confirmDialog, downloadBlob } from '../util/dom.js';
 import { escapeHtml } from '../util/format.js';
 import { buildReport, pdfFilename } from '../report/model.js';
 import { evidenceFigureSVG, evidenceTablesHTML } from './common.js';
+import { drawingLayout, isEmptyDrawing } from '../chart/drawing.js';
+import { itemsToSVG, SCREEN_FONT } from '../chart/svg.js';
 
 export function render(app, container) {
   const { cd, store } = app;
@@ -39,6 +41,7 @@ export function render(app, container) {
     if (m.noLink.length) {
       items.push(h('li', { class: 'info' }, `근거를 연결하지 않은 문항 ${m.noLink.length}개`, h('ul', {}, ...m.noLink.map((a) => h('li', {}, h('button', { type: 'button', class: 'link-btn', onclick: () => goto(a.step, a.qid) }, a.label))))));
     }
+    if (m.reveals.length) items.push(h('li', { class: 'info' }, '자료 확인 단계: ', ...m.reveals.map((a, i) => [i ? ', ' : '', h('button', { type: 'button', class: 'link-btn', onclick: () => goto(a.step) }, a.label)])));
     if (model.dataVersionMismatch.length) items.push(h('li', { class: 'info' }, `근거 ${model.dataVersionMismatch.join(', ')}은(는) 다른 자료 버전에서 기록되었습니다.`));
     if (!items.length) check.append(h('p', { class: 'ok-text' }, '✓ 모든 문항을 작성했고 각 탐구에 근거가 있습니다.'));
     else check.append(h('ul', { class: 'check-list' }, ...items));
@@ -117,14 +120,21 @@ export function render(app, container) {
 }
 
 function answerHtml(q) {
+  if (q.waitNote && q.empty) return `<p class="rp-empty">(${escapeHtml(q.waitNote)})</p>`;
   return q.empty
     ? '<p class="rp-empty">(작성하지 않음)</p>'
     : `<p class="rp-answer">${escapeHtml(q.answer)}</p>`;
 }
 
+function drawingHtml(d) {
+  if (isEmptyDrawing(d)) return '<p class="rp-empty">(그림 없음)</p>';
+  const L = drawingLayout(d, 520);
+  return `<div class="rp-drawing"><svg viewBox="0 0 ${L.width} ${L.height}" width="${L.width}" height="${L.height}" font-family='${SCREEN_FONT}' role="img" aria-label="학생이 그린 그림">${itemsToSVG(L.items)}</svg></div>`;
+}
+
 function figureHtml(cd, ev) {
   return `<figure class="rp-figure" id="fig-${escapeHtml(ev.num)}">
-    <figcaption><b>그림 ${escapeHtml(ev.num)}</b> (근거 ${escapeHtml(ev.num)}) <span class="muted">탐구 ${ev.inquiry} · ${escapeHtml(ev.summary)}</span></figcaption>
+    <figcaption><b>그림 ${escapeHtml(ev.num)}</b> (근거 ${escapeHtml(ev.num)}) <span class="muted">탐구 ${ev.inquiry} · ${escapeHtml(ev.station || '')} · ${escapeHtml(ev.summary)}</span></figcaption>
     <div class="rp-fig-svg">${evidenceFigureSVG(cd, ev, 700, 11.5)}</div>
     <div class="rp-fig-tables">${evidenceTablesHTML(cd, ev)}</div>
     ${ev.memo && ev.memo.trim() ? `<p class="rp-memo"><b>학생 메모:</b> ${escapeHtml(ev.memo)}</p>` : ''}
@@ -132,12 +142,17 @@ function figureHtml(cd, ev) {
 }
 
 function questionHtml(cd, q, kind = '문항') {
-  return `<section class="rp-q">
+  const side = q.sideBySide ? `<div class="rp-side">
+      <div><p class="rp-label">${escapeHtml(q.sideBySide.leftTitle)}</p>${q.sideBySide.left.trim() ? `<p class="rp-answer">${escapeHtml(q.sideBySide.left)}</p>` : '<p class="rp-empty">(작성하지 않음)</p>'}</div>
+      <div><p class="rp-label">${escapeHtml(q.sideBySide.rightTitle)}</p>${answerHtml(q)}</div>
+    </div>` : '';
+  return `<section class="rp-q" id="rp-${escapeHtml(q.id)}">
     <h4>${kind} ${q.no}</h4>
     <p class="rp-qtext">${escapeHtml(q.text)}</p>
     ${q.unavailable ? `<p class="rp-unavail">※ ${escapeHtml(q.unavailable)}</p>` : ''}
-    <p class="rp-label">답변</p>
-    ${answerHtml(q)}
+    ${q.lockedNote ? `<p class="rp-note-lock">${escapeHtml(q.lockedNote)}</p>` : ''}
+    ${side || `<p class="rp-label">답변</p>${answerHtml(q)}`}
+    ${'drawing' in q ? `<p class="rp-label">그림</p>${drawingHtml(q.drawing)}` : ''}
     <p class="rp-links">연결 근거: ${q.linkedNums.length ? q.linkedNums.map((n) => `그림 ${escapeHtml(n)}`).join(', ') : '없음'}</p>
     ${(q.figures || []).map((ev) => figureHtml(cd, ev)).join('')}
   </section>`;
@@ -151,25 +166,26 @@ function renderPaper(paper, model, cd) {
       <p class="rp-date muted small">작성일 ${escapeHtml(model.createdText)} · ${escapeHtml(model.appName)}</p>
     </header>
     ${model.isSample ? `<p class="rp-sample">기능 확인용 예시 데이터 — ${escapeHtml(model.sampleNotice)}</p>` : ''}
-    <h3 class="rp-h-sm">분석 관측소·기간·사례</h3>
+    <h3 class="rp-h-sm">학생 정보와 관측소·기간</h3>
     <table class="data-table compact rp-info"><tbody>${model.caseInfo.map(([k, v]) => `<tr><th scope="row">${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`).join('')}</tbody></table>
-    ${model.sections.map((sec) => `
-      <section class="rp-section">
+    ${model.parts.map((sec) => `
+      <section class="rp-section" data-part="${escapeHtml(sec.key)}">
         <h3 class="rp-h">${escapeHtml(sec.title)}</h3>
-        <p class="muted small">탐구 목표: ${escapeHtml(sec.goal)}</p>
+        ${sec.sub ? `<p class="muted small">${escapeHtml(sec.sub)}</p>` : ''}
         ${sec.blocks.map((q) => questionHtml(cd, q)).join('')}
-        ${sec.unlinked.length ? `<h4 class="rp-h-sm">문항에 연결하지 않은 근거</h4>${sec.unlinked.map((ev) => figureHtml(cd, ev)).join('')}` : ''}
-        ${!sec.blocks.some((b) => b.figures.length) && !sec.unlinked.length ? '<p class="rp-empty">(첨부한 근거 없음)</p>' : ''}
+        ${sec.table ? `<p class="rp-label">${escapeHtml(sec.table.title)}</p><table class="data-table compact"><thead><tr>${sec.table.head.map((x) => `<th>${escapeHtml(x)}</th>`).join('')}</tr></thead><tbody>${sec.table.rows.map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>` : ''}
+        ${sec.unlinked?.length ? `<h4 class="rp-h-sm">문항에 연결하지 않은 근거</h4>${sec.unlinked.map((ev) => figureHtml(cd, ev)).join('')}` : ''}
+        ${sec.noEvidence ? '<p class="rp-empty">(첨부한 근거 없음)</p>' : ''}
       </section>`).join('')}
-    <section class="rp-section">
+    <section class="rp-section" data-part="conclusion">
       <h3 class="rp-h">${escapeHtml(model.conclusion.title)}</h3>
       ${model.conclusion.blocks.map((q) => questionHtml(cd, q, '결론')).join('')}
     </section>
-    <section class="rp-section rp-sources">
-      <h3 class="rp-h">자료 출처와 관측 간격</h3>
+    <section class="rp-section rp-sources" data-part="sources">
+      <h3 class="rp-h">자료 출처와 분석의 한계</h3>
       ${model.isSample ? '<p class="rp-unavail">이 보고서의 자료는 기능 확인용 예시 데이터입니다. 실제 관측값이 아닙니다.</p>' : ''}
-      ${model.sources.map((s) => `<p class="rp-src"><b>${escapeHtml(s.role)}</b></p><ul>${s.lines.map((l) => `<li>${escapeHtml(l)}</li>`).join('')}</ul>`).join('')}
-      <p class="rp-src"><b>자료 처리 기준</b></p><ul>${model.processing.map((l) => `<li>${escapeHtml(l)}</li>`).join('')}</ul>
+      ${model.sources.map((x) => `<p class="rp-src"><b>${escapeHtml(x.role)}</b></p><ul>${x.lines.map((l) => `<li>${escapeHtml(l)}</li>`).join('')}</ul>`).join('')}
+      <p class="rp-src"><b>자료 처리 기준과 분석의 한계</b></p><ul>${model.processing.map((l) => `<li>${escapeHtml(l)}</li>`).join('')}</ul>
     </section>
     <p class="rp-note muted small">미리보기는 내용 확인용입니다. 실제 PDF는 A4 쪽 단위로 나뉘고 쪽 번호가 붙습니다.</p>`;
 }
