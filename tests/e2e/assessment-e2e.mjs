@@ -96,8 +96,8 @@ try {
   await page.fill('input[name=name]', '김학생');
   await page.click('.student-form button[type=submit]');
   await page.waitForSelector('#inq1-main svg');
-  await page.evaluate(() => window.__tideApp.navigate('inq3'));
-  await page.waitForSelector('#ans-q8');
+  await page.evaluate(() => window.__tideApp.navigate('inq4'));
+  await page.waitForSelector('#ans-q9');
 
   // 짧은 포커스 상실(2초 미만) → 기록 안 함
   await page.evaluate(() => window.dispatchEvent(new Event('blur')));
@@ -110,7 +110,7 @@ try {
   });
 
   // 자동 저장 연결: 입력 직후(지연 저장 전) 전체화면 해제 → 답안이 바로 저장되어야 함
-  await page.fill('#ans-q8', '전체화면 해제 직전에 입력한 답안');
+  await page.fill('#ans-q9', '전체화면 해제 직전에 입력한 답안');
   await page.evaluate(() => document.exitFullscreen());
   await page.waitForSelector('.asmt-paused');
   await check('전체화면 해제 → 즉시 중지, 지정 문구 표시, 기록 저장', async () => {
@@ -124,7 +124,7 @@ try {
   });
   await check('중지 직후 입력 중이던 답안이 자동 저장 경로로 저장됨', async () => {
     const w = await page.evaluate(() => JSON.parse(localStorage.getItem('tideLab.v1.work')));
-    assert.equal(w.answers.q8, '전체화면 해제 직전에 입력한 답안');
+    assert.equal(w.answers.q9, '전체화면 해제 직전에 입력한 답안');
   });
   await page.screenshot({ path: join(OUT, 'asmt-paused.png') });
   await check('중지 중 콘텐츠 가림·마우스·키보드 입력 차단', async () => {
@@ -132,9 +132,9 @@ try {
     const top = await page.evaluate(() => { const el = document.elementFromPoint(640, 430); return el.closest('.asmt-overlay') ? 'overlay' : el.tagName; });
     assert.equal(top, 'overlay');
     // 키 입력 시도
-    await page.evaluate(() => document.getElementById('ans-q8').focus());
+    await page.evaluate(() => document.getElementById('ans-q9').focus());
     await page.keyboard.type('XYZ');
-    assert.equal(await page.inputValue('#ans-q8'), '전체화면 해제 직전에 입력한 답안');
+    assert.equal(await page.inputValue('#ans-q9'), '전체화면 해제 직전에 입력한 답안');
     const bg = await page.evaluate(() => getComputedStyle(document.querySelector('.asmt-overlay')).backgroundColor);
     assert.match(bg, /rgb\(\d+, \d+, \d+\)$/, '불투명 배경');
   });
@@ -231,7 +231,7 @@ try {
   await page.waitForTimeout(300);
   await check('새로고침 후 복귀 → 기존 답안 유지·평가 재개', async () => {
     assert.equal(await phase(page), 'running');
-    assert.equal(await page.inputValue('#ans-q8'), '전체화면 해제 직전에 입력한 답안');
+    assert.equal(await page.inputValue('#ans-q9'), '전체화면 해제 직전에 입력한 답안');
   });
 
   // 재접속(비정상 종료: pagehide 없음) — 탭 강제 종료 후 새 탭으로 접속

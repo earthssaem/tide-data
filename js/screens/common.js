@@ -7,7 +7,7 @@ export const localTz = () => ({ offsetMinutes: -new Date().getTimezoneOffset(), 
 
 export function inquiryHeader(def, extra = null) {
   return h('header', { class: 'inq-head' },
-    h('h1', {}, def.no <= 4 ? `탐구 ${def.no}. ${def.title}` : def.title),
+    h('h1', {}, def.step !== 'conclusion' ? `탐구 ${def.no}. ${def.title}` : def.title),
     h('p', { class: 'inq-goal' }, h('b', {}, '탐구 목표 '), def.goal),
     def.intro ? h('p', { class: 'inq-intro' }, def.intro) : null,
     extra);

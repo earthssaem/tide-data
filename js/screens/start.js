@@ -19,8 +19,7 @@ const filled = (s) => {
   if (a.q4.spring || a.q4.neap) n++;
   if (a.q5.some(Boolean)) n++;
   if (Object.keys(a.q6).length) n++;
-  if (a.q7.t0 != null || a.q7.text) n++;
-  for (const k of ['q8', 'q9', 'q10', 'q11', 'q12']) if (String(a[k] || '').trim()) n++;
+  for (const k of ['q9', 'q10', 'q11', 'q12']) if (String(a[k] || '').trim()) n++;
   return n;
 };
 
@@ -136,8 +135,7 @@ export function render(app, container) {
   const steps = [
     [`탐구 1. ${INQUIRIES[0].title}`, '부산의 예측 조위에서 하루와 한 달 동안 반복되는 규칙을 찾습니다.'],
     [`탐구 2. ${INQUIRIES[1].title}`, '인천·부산·묵호의 예측 조위를 비교합니다.'],
-    [`탐구 3. ${INQUIRIES[2].title}`, '부산의 예측 조위와 실제 관측 조위를 비교합니다.'],
-    [`탐구 4. ${INQUIRIES[3].title}`, '서로 다른 두 기간의 관측 조위를 비교하고, 추가 자료로 원인을 확인합니다.'],
+    [`탐구 3. ${INQUIRIES[2].title}`, '부산의 서로 다른 두 기간의 관측 조위를 비교하고, 추가 자료로 원인을 확인합니다.'],
     ['종합·PDF', '해수면 높이에 영향을 주는 요인을 정리하고 PDF 보고서를 내려받아 선생님이 안내한 곳에 제출합니다.'],
   ];
   flow.innerHTML = `<h2 id="flow-h">탐구 순서</h2><ol class="flow">${steps.map(([a, b]) => `<li><b>${escapeHtml(a)}</b><span>${escapeHtml(b)}</span></li>`).join('')}</ol>`;

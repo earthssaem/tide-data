@@ -1,6 +1,7 @@
-// 탐구 문항 정의 (수행평가: 탐구 1~4 + 종합, 문항 ①~⑫)
+// 탐구 문항 정의 (수행평가: 탐구 1~3 + 종합, 문항 ①~⑩)
+// 문항 id(q1~q6, q9~q12)는 저장 형식과 맞추려고 그대로 두고, 화면 번호(no)만 ①~⑩으로 매긴다(이전 탐구 3의 q7·q8은 삭제).
 // - 문항 번호는 교사 채점표와 맞추기 위해 고정한다(교사가 끈 문항은 건너뛴다).
-// - 탐구 1~4의 제목·안내·범례에는 원인(기상·태풍)이나 분석 정답을 미리 쓰지 않는다.
+// - 탐구 1~3의 제목·안내·범례에는 원인(기상·태풍)이나 분석 정답을 미리 쓰지 않는다.
 //   만조·간조·대조·소조·조석 형태라는 낱말은 학생이 답해야 할 '개념'으로만 쓰고, 앱이 어느 지점이 그것인지 표시하지 않는다.
 // lockAfter: 해당 자료를 공개하면 답을 고정한다('moon' 달의 위상, 'weather' 추가 자료).
 // afterReveal: 해당 자료를 공개한 뒤에만 작성한다.
@@ -9,7 +10,7 @@ export const PREDICTED_TEXT = '해당 지역의 조석 특성과 달·태양의 
 export const OBSERVED_TEXT = '조위관측소에서 실제로 잰 해수면 높이입니다(1시간 간격).';
 export const DATUM_CAUTION = '관측소마다 높이의 기준(0 cm)이 달라, 조위 숫자로 어느 지역 해수면이 더 높은지 비교할 수 없습니다. 오르내리는 폭과 반복 모양을 비교하세요.';
 export const TIDE_TYPES = ['반일주조', '혼합조', '일주조', '판단 어려움'];
-export const CIRCLED = ['', '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩', '⑪', '⑫'];
+export const CIRCLED = ['', '①', '②', '③', '④', '⑤', '⑥', '⑦', '⑧', '⑨', '⑩'];
 
 export const INQUIRIES = [
   {
@@ -38,36 +39,25 @@ export const INQUIRIES = [
   },
   {
     no: 3,
-    step: 'inq3',
-    title: '예측과 실제',
-    goal: '부산의 예측 조위와 관측 조위의 변동 폭을 비교한다.',
-    intro: '같은 달 부산의 예측 조위(위)와 관측 조위(아래)입니다. 두 그래프의 세로 눈금 간격은 같고, 높이의 기준(0 cm)은 확인되지 않아 각자 가운데에 맞췄습니다. 높이 자체가 아니라 오르내리는 폭을 비교하세요.',
-    questions: [
-      { id: 'q7', no: 7, kind: 'interval', text: '예측과 실제의 변동 폭이 다르게 나타나는 구간을 그래프에서 끌어서 고르고, 어떻게 다른지 한 문장으로 쓰세요.', tip: '그래프 위에서 누른 채 옆으로 끌면 구간이 골라집니다. 고른 구간의 변동 폭이 표에 계산됩니다.' },
-      { id: 'q8', no: 8, kind: 'text', text: '예측과 실제가 다르게 나타난 이유를 추측해 한 문장으로 쓰세요.' },
-    ],
-  },
-  {
-    no: 4,
-    step: 'inq4',
+    step: 'inq4', // 내부 이름은 그대로(저장된 진행 단계와 호환), 화면에는 탐구 3
     title: '특이한 변화',
     goal: '서로 다른 두 기간의 부산 관측 조위를 비교하고, 차이의 원인을 자료로 확인한다.',
     intro: '부산의 관측 조위를 두 기간으로 나누어 보여 줍니다. 두 그래프의 세로 눈금 간격은 같습니다. 그래프를 비교해 차이를 쓰고 원인을 추측한 뒤 [추가 자료 확인]을 누르세요.',
     questions: [
-      { id: 'q9', no: 9, kind: 'text', text: '두 기간의 그래프는 어떻게 다른가요? 한 문장으로 쓰세요.', lockAfter: 'weather' },
-      { id: 'q10', no: 10, kind: 'text', text: '그 차이가 생긴 원인을 추측해 한 문장으로 쓰세요.', lockAfter: 'weather' },
-      { id: 'q11', no: 11, kind: 'text', text: '기상·태풍 자료에서 근거를 하나 이상 들어 원인을 설명하세요.', hint: '1~2문장', afterReveal: 'weather', compareWith: 'q10' },
+      { id: 'q9', no: 7, kind: 'text', text: '두 기간의 그래프는 어떻게 다른가요? 한 문장으로 쓰세요.', lockAfter: 'weather' },
+      { id: 'q10', no: 8, kind: 'text', text: '그 차이가 생긴 원인을 추측해 한 문장으로 쓰세요.', lockAfter: 'weather' },
+      { id: 'q11', no: 9, kind: 'text', text: '기상·태풍 자료에서 근거를 하나 이상 들어 원인을 설명하세요.', hint: '1~2문장', afterReveal: 'weather', compareWith: 'q10' },
     ],
   },
 ];
 
 export const CONCLUSION = {
-  no: 5,
+  no: 4,
   step: 'conclusion',
   title: '종합',
-  goal: '탐구 1~4를 바탕으로 해수면 높이에 영향을 주는 요인을 정리한다.',
+  goal: '탐구 1~3을 바탕으로 해수면 높이에 영향을 주는 요인을 정리한다.',
   questions: [
-    { id: 'q12', no: 12, kind: 'text', text: '해수면 높이에 영향을 주는 요인을 정리하세요.', hint: '1~2문장' },
+    { id: 'q12', no: 10, kind: 'text', text: '해수면 높이에 영향을 주는 요인을 정리하세요.', hint: '1~2문장' },
   ],
 };
 
@@ -80,8 +70,7 @@ export const STEPS = [
   { id: 'start', label: '시작', short: '시작' },
   { id: 'inq1', label: '탐구 1 조석의 규칙', short: '탐구 1' },
   { id: 'inq2', label: '탐구 2 지역별 차이', short: '탐구 2' },
-  { id: 'inq3', label: '탐구 3 예측과 실제', short: '탐구 3' },
-  { id: 'inq4', label: '탐구 4 특이한 변화', short: '탐구 4' },
+  { id: 'inq4', label: '탐구 3 특이한 변화', short: '탐구 3' },
   { id: 'conclusion', label: '종합', short: '종합' },
   { id: 'report', label: '보고서 확인·PDF', short: '보고서' },
 ];

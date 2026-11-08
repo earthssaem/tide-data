@@ -81,7 +81,7 @@ export function parseSetup(obj, fallback = null) {
 
 /**
  * 평가 자료에 설정 적용: 각 탐구의 시각 범위(ms)를 계산한다. 잘못된 값은 사례 기본값으로 둔다.
- * @returns ad + { setup, win: {month, inq1, count, inq2, inq3, a, b} }
+ * @returns ad + { setup, win: {month, inq1, count, inq2, a, b} }
  */
 export function applySetup(ad, cfg) {
   const tz = ad.tz;
@@ -99,7 +99,7 @@ export function applySetup(ad, cfg) {
   return {
     ...ad,
     setup: st,
-    win: { month, inq1, count: [c0, c0 + DAY], inq2: pr(st.inq2, d.inq2), inq3: month, a: pr(st.inq4.a, d.inq4.a), b: pr(st.inq4.b, d.inq4.b) },
+    win: { month, inq1, count: [c0, c0 + DAY], inq2: pr(st.inq2, d.inq2), a: pr(st.inq4.a, d.inq4.a), b: pr(st.inq4.b, d.inq4.b) },
   };
 }
 
@@ -128,8 +128,7 @@ export function validateSetup(ad0, cfg) {
   if (!ad.months.includes(st.month)) add('error', '분석 연월', `${st.month || '(없음)'}은 자료가 있는 달이 아닙니다. 고를 수 있는 달: ${ad.months.join(', ')}`);
   else {
     const c = coverage(rep, 'predicted', W.month[0], W.month[1]);
-    const o = coverage(rep, 'observed', W.month[0], W.month[1]);
-    add(c.missing || o.missing ? 'warn' : 'ok', '분석 연월', `${st.month} 부산 예측 ${c.have}/${c.expected}, 관측 ${o.have}/${o.expected}${c.missing || o.missing ? ' — 결측은 그래프에서 끊어 표시하고 채우지 않습니다.' : ' (결측 없음)'}`);
+    add(c.missing ? 'warn' : 'ok', '분석 연월', `${st.month} 부산 예측 ${c.have}/${c.expected}${c.missing ? ' — 결측은 그래프에서 끊어 표시하고 채우지 않습니다.' : ' (결측 없음)'}`);
   }
   const [a1, b1] = raw(st.inq1);
   if (!Number.isFinite(a1) || !Number.isFinite(b1) || b1 <= a1) add('error', '탐구 1 구간', '탐구 1의 관찰 구간(3일) 시각 형식이 올바르지 않습니다(예: 2026-09-10 00:00).');
@@ -156,7 +155,7 @@ export function validateSetup(ad0, cfg) {
     else add('ok', '탐구 2 기간', `${fmtRange(a2, b2, tz)} · 인천·부산·묵호 예측 조위 결측 없음`);
   }
   const inData = (cd, a) => cd?.observed?.points.length && a >= cd.observed.points[0].t && a <= cd.observed.points.at(-1).t;
-  for (const [k, label] of [['a', '탐구 4 기간 A'], ['b', '탐구 4 기간 B']]) {
+  for (const [k, label] of [['a', '탐구 3 기간 A'], ['b', '탐구 3 기간 B']]) {
     const [a, b] = raw(st.inq4[k]);
     const cd = inData(ad.past, a) ? ad.past : rep;
     if (!Number.isFinite(a) || !Number.isFinite(b) || b <= a) { add('error', label, `${label}의 시각 형식이 올바르지 않습니다.`); continue; }
@@ -167,11 +166,11 @@ export function validateSetup(ad0, cfg) {
     add(o.missing || p.missing || w.missing ? 'warn' : 'ok', label, `${fmtRange(a, b, tz)} · 관측 조위 ${o.have}/${o.expected}, 해면기압 ${p.have}/${p.expected}, 풍속 ${w.have}/${w.expected}`);
   }
   const la = raw(st.inq4.a), lb = raw(st.inq4.b);
-  if (Number.isFinite(la[0]) && Number.isFinite(lb[0]) && Math.abs((la[1] - la[0]) - (lb[1] - lb[0])) > HOUR) add('warn', '탐구 4 기간', '기간 A와 B의 길이가 다릅니다. 같은 길이로 맞추면 비교하기 쉽습니다.');
-  if (!ad.timeBasis?.confirmed) add('warn', '시간대', '자료의 시간대가 확인되지 않아 탐구 4의 시각 연결(조위·기압·바람·태풍 시각 함께 보기)을 켜지 않습니다.');
-  else add('ok', '시간대', `모든 자료 KST 확인(${ad.timeBasis.checkedAt?.slice(0, 10) || ''}) — 탐구 4 시각 연결 사용`);
+  if (Number.isFinite(la[0]) && Number.isFinite(lb[0]) && Math.abs((la[1] - la[0]) - (lb[1] - lb[0])) > HOUR) add('warn', '탐구 3 기간', '기간 A와 B의 길이가 다릅니다. 같은 길이로 맞추면 비교하기 쉽습니다.');
+  if (!ad.timeBasis?.confirmed) add('warn', '시간대', '자료의 시간대가 확인되지 않아 탐구 3의 시각 연결(조위·기압·바람·태풍 시각 함께 보기)을 켜지 않습니다.');
+  else add('ok', '시간대', `모든 자료 KST 확인(${ad.timeBasis.checkedAt?.slice(0, 10) || ''}) — 탐구 3 시각 연결 사용`);
   const off = ALL_QUESTIONS.filter((q) => st.questions[q.id] === false);
-  add('info', '문항', off.length ? `끈 문항: ${off.map((q) => CIRCLED[q.no]).join(' ')}` : '모든 문항(①~⑫)을 씁니다.');
+  add('info', '문항', off.length ? `끈 문항: ${off.map((q) => CIRCLED[q.no]).join(' ')}` : '모든 문항(①~⑩)을 씁니다.');
   if (!st.reviewed) add('info', '검토', '교사 검토 필요 — 임시 후보 설정입니다. 그래프를 확인한 뒤 [검토 완료]를 표시하세요.');
   return out;
 }

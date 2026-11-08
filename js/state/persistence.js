@@ -35,7 +35,7 @@ export function emptyAnswers() {
     q4: { spring: null, neap: null, reason: '' },
     q5: ['', '', ''],
     q6: {},
-    q7: { t0: null, t1: null, text: '' },
+    q7: { t0: null, t1: null, text: '' }, // 삭제된 탐구(예측과 실제)의 답 — 이미 쓴 내용은 지우지 않고 보관만
     q8: '', q9: '', q10: '', q11: '', q12: '',
   };
 }
@@ -252,7 +252,7 @@ export function sanitizeState(obj) {
   const st = isObj(obj.student) ? obj.student : {};
   s.student = { grade: str(st.grade, 10), klass: str(st.klass, 10), number: str(st.number, 10), name: str(st.name, 40) };
   s.started = !!obj.started;
-  s.step = STEP_IDS.includes(obj.step) ? obj.step : 'start';
+  s.step = obj.step === 'inq3' ? 'inq4' : STEP_IDS.includes(obj.step) ? obj.step : 'start'; // 삭제된 탐구 3(예측과 실제) → 다음 탐구
   s.answers = sanitizeAnswers(obj.answers);
   const rv = isObj(obj.reveals) ? obj.reveals : {};
   s.reveals = { moon: sanitizeReveal(rv.moon, 'moon'), weather: sanitizeReveal(rv.weather, 'weather') };

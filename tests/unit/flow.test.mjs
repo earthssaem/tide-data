@@ -96,6 +96,7 @@ test('저장 형식 3: 이전 형식 거부, 답 정리, 백업 왕복', async (
   assert.deepEqual(clean.answers.q5, ['DT_0001', '', '']);
   assert.equal(clean.answers.q6.DT_0006.type, '');
   assert.equal(clean.answers.q7.t0, null, '끝이 시작보다 앞서면 버림');
+  assert.equal(sanitizeState({ ...JSON.parse(JSON.stringify(st)), step: 'inq3' }).step, 'inq4', '삭제한 탐구 단계 → 다음 탐구');
   const r = parseBackup(makeBackupText(clean), { knownCaseIds: ['khoa-assess-2025-26'], currentCaseId: 'khoa-assess-2025-26', currentDataVersion: 'v' });
   assert.equal(r.ok, true);
   assert.equal(r.state.answers.q6.DT_0005.reason, '높이가 다름');
@@ -136,10 +137,12 @@ test('보고서: 공개 전에는 기상·태풍·위상·⑪ 내용 없음, 공
 });
 
 test('끈 문항은 보고서에서 빠지고 번호는 유지', async () => {
-  const ad = applySetup(await load('khoa-assess-2025-26'), { ...deployed(), questions: { q2: false, q8: false } });
+  const ad = applySetup(await load('khoa-assess-2025-26'), { ...deployed(), questions: { q2: false, q10: false } });
   const m = buildReport(ad, emptyState(ad.id, ad.dataVersion));
   const ids = m.sections.flatMap((s) => s.items.filter((x) => x.id && x.type !== 'figure').map((x) => x.id));
-  assert.ok(!ids.includes('q2') && !ids.includes('q8'));
+  assert.ok(!ids.includes('q2') && !ids.includes('q10'));
+  assert.ok(!ids.includes('q7') && !ids.includes('q8'), '삭제한 탐구 문항 없음');
+  assert.ok(m.sections.every((x) => x.key !== 'inq3'));
   assert.ok(m.sections[0].items.some((x) => x.label === '문항 ③'));
 });
 
@@ -173,7 +176,8 @@ test('예시·검증 사례: 예시 표시, 없는 자료는 미제공(만들지
   const gap = m.st.SAMPLE_S.observed.points.filter((p) => p.t >= Date.parse('2099-09-13T15:00:00Z') && p.t < Date.parse('2099-09-13T21:00:00Z'));
   assert.equal(gap.length, 6);
   assert.ok(gap.every((p) => p.v === null), '결측 시각은 0이 아니라 null');
-  assert.equal(INQUIRIES.length, 4);
+  assert.equal(INQUIRIES.length, 3);
+  assert.deepEqual(ALL_QUESTIONS.map((q) => q.no), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 });
 
 test('10분 간격 예측(부산 2026-09): 정시 값은 1시간 예측과 같고 탐구 1에 쓰임', async () => {

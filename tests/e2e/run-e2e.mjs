@@ -104,7 +104,8 @@ try {
     assert.match(await page.textContent('.start-hero'), /조석 데이터 탐구실/);
     const flow = await page.textContent('.flow');
     assert.ok(!flow.includes('관측소 선택'));
-    assert.match(flow, /탐구 4\. 특이한 변화/);
+    assert.match(flow, /탐구 3\. 특이한 변화/);
+    assert.ok(!flow.includes('예측과 실제'), '삭제한 탐구 없음');
   });
   await check('학생용: 주소창 ?case=로 가상 데이터를 고를 수 없음(실제 자료만)', async () => {
     assert.equal(await page.evaluate(() => window.__tideApp.ad.id), 'khoa-assess-2025-26');
@@ -207,32 +208,13 @@ try {
   await page.check('#q6-DT_0001-0'); await page.fill('#q6-DT_0001-reason', '하루에 두 번 비슷한 높이');
   await page.check('#q6-DT_0006-3'); await page.fill('#q6-DT_0006-reason', '변화가 작아 판단이 어려움');
 
-  // ───── 4. 탐구 3 ─────
-  await go(page, 'inq3');
-  await check('탐구 3: 예측·관측 따로(겹치지 않음), 원인 정보 없음', async () => {
-    await noSpoiler(page, '탐구 3');
-    assert.ok(await page.$('#inq3-predicted svg') && await page.$('#inq3-observed svg'));
-    assert.ok(!(await visibleText(page)).includes('잔차'));
-  });
-  await page.focus('#inq3-observed');
-  for (let i = 0; i < 97; i++) await page.keyboard.press('ArrowRight'); // 09-05 00:00
-  for (let i = 0; i < 48; i++) await page.keyboard.press('Shift+ArrowRight'); // ~ 09-07 00:00
-  await page.waitForSelector('#q7-table');
-  await check('탐구 3 ⑦: 고른 구간의 변동 폭 = 원자료(최고 − 최저)', async () => {
-    const st = await stateOf(page);
-    assert.equal(st.answers.q7.t0, T('2026-09-05 00:00'));
-    assert.equal(st.answers.q7.t1, T('2026-09-07 00:00'));
-    const rng = (m) => { const v = [...m].filter(([k]) => k >= '2026-09-05 00:00' && k <= '2026-09-07 00:00').map(([, x]) => x).filter((x) => x != null); return Math.max(...v) - Math.min(...v); };
-    assert.match(await page.textContent('#q7-pred-range'), new RegExp(fmtV(rng(pred5))));
-    assert.match(await page.textContent('#q7-obs-range'), new RegExp(fmtV(rng(obs5))));
-  });
-  await page.fill('#ans-q7', '관측 조위의 변동 폭이 예측보다 작았다(−14 cm 차이).');
-  await page.fill('#ans-q8', '예측에 들어 있지 않은 다른 영향이 있었기 때문이다.');
-
-  // ───── 5. 탐구 4 ─────
+  // ───── 4. 탐구 3(특이한 변화) ─────
   await go(page, 'inq4');
-  await check('탐구 4: 공개 전 실제 날짜만, 기상·태풍·안정 문구·⑪ 내용 없음', async () => {
-    await noSpoiler(page, '탐구 4');
+  await check('탐구 3: 공개 전 실제 날짜만, 기상·태풍·안정 문구·⑨ 내용 없음, 탐구 3 제목', async () => {
+    await noSpoiler(page, '탐구 3');
+    assert.match(await page.textContent('.inq-head h1'), /^탐구 3\. 특이한 변화/);
+    assert.ok(await page.$('#q-q9 .q-no'));
+    assert.match(await page.textContent('#q-q9 .q-no'), /⑦/);
     const t = await visibleText(page);
     assert.match(t, /기간 A: 2022년 9월 4일 ~ 9월 8일/);
     assert.match(t, /기간 B: 2022년 9월 25일 ~ 9월 29일/);
@@ -242,30 +224,30 @@ try {
   await page.fill('#ans-q9', '기간 A에는 하루 동안 한 번 크게 솟은 부분이 있다.');
   await page.click('#btn-reveal-weather'); await okDialog(page);
   await page.waitForSelector('dialog[open]', { state: 'detached' }).catch(() => {});
-  await check('탐구 4: 빈 답으로 진행 시 안내(앱이 채우지 않음)', async () => assert.equal((await stateOf(page)).reveals.weather.answers.q10, ''));
+  await check('탐구 3: 빈 답으로 진행 시 안내(앱이 채우지 않음)', async () => assert.equal((await stateOf(page)).reveals.weather.answers.q10, ''));
   await page.waitForSelector('#inq4-block-a');
-  await check('탐구 4: 추가 자료 — 두 기간 해면기압·풍속·풍향(같은 시간 축)과 태풍 경로', async () => {
-    for (const k of ['a', 'b']) for (const w of ['tide', 'pressureSea', 'windSpeed', 'windDir']) assert.ok(await page.$(`#inq4-${w}-${k} svg`), `${w}-${k}`);
+  await check('탐구 3: 추가 자료 — 두 기간 해면기압·풍속(같은 시간 축)과 태풍 경로', async () => {
+    for (const k of ['a', 'b']) for (const w of ['tide', 'pressureSea', 'windSpeed']) assert.ok(await page.$(`#inq4-${w}-${k} svg`), `${w}-${k}`);
+    assert.equal(await page.$('#inq4-windDir-a'), null, '풍향은 보여 주지 않음(자료 줄임)');
     assert.ok(await page.$('#inq4-typhoon .track-map svg'));
     assert.match(await page.textContent('#inq4-block-b h2'), /확인한 기압·바람이 상대적으로 안정적인 기간/);
-    assert.match(await page.textContent('#inq4-typhoon'), /태풍 중심기압은 태풍 한가운데의 기압/);
+    assert.match(await page.textContent('#ty-caution'), /중심기압\)과는 다릅니다/);
     assert.match(await page.textContent('#ty-closest'), /2022-09-06 06:00 · 약 19 km/);
     assert.match(await page.textContent('#ty-recent'), /탈라스\(TALAS\), 약 803 km/);
-    assert.match(await page.textContent('#ty-a'), /힌남노\(HINNAMNOR\), 약 19 km/);
     assert.equal(await page.$eval('#ans-q9', (e) => e.readOnly), true);
   });
   await page.focus('#inq4-pressureSea-a');
   for (let i = 0; i < 54; i++) await page.keyboard.press('ArrowRight'); // 2022-09-06 05:00
   await page.keyboard.press('Enter');
   await page.waitForTimeout(200);
-  await check('탐구 4: 고른 시각의 조위·해면기압·풍속 = 원자료(시각 연결)', async () => {
+  await check('탐구 3: 고른 시각의 조위·해면기압·풍속 = 원자료(시각 연결)', async () => {
     const tx = await page.textContent('#inq4-values-a');
     assert.match(tx, /2022-09-06 05:00/);
     assert.ok(tx.includes(`${fmtV(obs22.get('2022-09-06 05:00'))} cm`));
     assert.ok(tx.includes(`${Number(wx22.get('2022-09-06 05:00').pressure_sea_hpa).toFixed(1)} hPa`));
     assert.ok(tx.includes(`${Number(wx22.get('2022-09-06 05:00').wind_ms).toFixed(1)} m/s`));
   });
-  await check('탐구 4 ⑪: ⑩의 추측(공개 전 답)을 옆에 표시', async () => assert.match(await page.textContent('#q11-prev'), /작성하지 않음/));
+  await check('탐구 3 ⑨: ⑧의 추측(공개 전 답)을 옆에 표시', async () => assert.match(await page.textContent('#q11-prev'), /작성하지 않음/));
   await page.fill('#ans-q11', '2022년 9월 6일 새벽 부산 해면기압이 크게 낮아졌고, 태풍 중심이 부산 가까이 지났다.');
 
   // ───── 6. 종합 ─────
@@ -303,7 +285,7 @@ try {
   await page.waitForSelector('#btn-pdf');
   await check('보고서 미리보기: 탐구 1~4·종합 순서, 고른 지점이 그래프에 포함', async () => {
     const parts = await page.$$eval('.rp-section', (x) => x.map((s) => s.dataset.part));
-    assert.deepEqual(parts, ['inq1', 'inq2', 'inq3', 'inq4', 'conclusion', 'sources']);
+    assert.deepEqual(parts, ['inq1', 'inq2', 'inq4', 'conclusion', 'sources']);
     assert.match(await page.textContent('#rp-f1'), /만조\(내가 고름\)/);
     assert.match(await page.textContent('#rp-f2'), /대조\(내가 고름\)/);
     assert.equal(await page.$$eval('#rp-q4 .rp-orbit svg', (x) => x.length), 2);
@@ -326,14 +308,14 @@ try {
     assert.ok(new RegExp(`\\b${pages}\\s*/\\s*${pages}\\b`).test(txt));
   });
   await check('PDF 구성 순서', async () => {
-    const order = ['학생 정보와 자료', '탐구 1. 조석의 규칙', '탐구 2. 지역별 차이', '탐구 3. 예측과 실제', '탐구 4. 특이한 변화', '종합', '자료 출처와 분석의 한계'];
+    const order = ['학생 정보와 자료', '탐구 1. 조석의 규칙', '탐구 2. 지역별 차이', '탐구 3. 특이한 변화', '종합', '자료 출처와 분석의 한계'];
     let pos = -1;
     for (const o of order) { const i = norm(body).indexOf(norm(o), pos + 1); assert.ok(i > pos, o); pos = i; }
   });
   await check('PDF: 학생이 쓴 답·고른 값이 화면과 같게 반영(줄바꿈·긴 답변·음수)', async () => {
     const st = await stateOf(page);
-    for (const k of ['q7', 'q8', 'q9', 'q12']) {
-      const v = k === 'q7' ? st.answers.q7.text : st.answers[k];
+    for (const k of ['q9', 'q12']) {
+      const v = st.answers[k];
       assert.ok(norm(body).includes(norm(v)), k);
     }
     assert.ok(norm(body).includes(norm(st.answers.q11.slice(0, 12))) && norm(body).includes(norm(st.answers.q11.slice(-8))), 'q11(나란히)');
@@ -347,15 +329,16 @@ try {
     assert.ok(body.includes('묵호: 판단 어려움 — 변화가 작아 판단이 어려움'));
     assert.ok(txt.includes('마지막줄확인용문장'));
     const i = txt.indexOf('첫째 줄'); const j = txt.indexOf('둘째 줄'); assert.ok(i >= 0 && j > i && txt.slice(i, j).includes('\n'));
-    assert.ok(/-14 cm|−14 cm/.test(txt));
+    assert.ok(!txt.includes('예측과 실제'), '삭제한 탐구는 보고서에 없음');
   });
-  await check('PDF: 그래프 공유·선택 표시·공개 전후 구분·⑩⑪ 나란히', async () => {
+  await check('PDF: 그래프 공유·선택 표시·공개 전후 구분·⑧⑨ 나란히', async () => {
     assert.match(body, /그림 1\. 부산 예측 조위 3일.*①에서 고른 지점, ②의 24시간/);
     assert.ok(txt.includes('만조(내가 고름)') && txt.includes('소조(내가 고름)'));
     assert.match(txt, /\[달의 위상 확인\] 전에 작성한 답/);
     assert.match(txt, /확인한 달의 위상/);
-    assert.match(txt, /⑩ 추가 자료 확인 전의 추측/);
-    assert.match(txt, /⑪ 기상·태풍 자료를 근거로 한 설명/);
+    assert.match(txt, /⑧ 추가 자료 확인 전의 추측/);
+    assert.match(txt, /⑨ 기상·태풍 자료를 근거로 한 설명/);
+    assert.match(txt, /문항 ⑩/);
     assert.match(txt, /확인한 기압·바람이 상대적으로 안정적인 기간/);
     assert.ok(txt.includes('태풍 경로와 관측소 위치'));
     assert.ok(txt.includes('(작성하지 않음)'));
@@ -428,9 +411,15 @@ try {
     assert.deepEqual(c.inq4.b, { start: '2026-08-01 00:00', end: '2026-08-06 00:00' });
     assert.match(await tp.textContent('#t-valid'), /기간 B.*2026-08-01 00:00/);
   });
-  await tp.uncheck('#t-q-q8'); await tp.waitForTimeout(200);
+  await tp.uncheck('#t-q-q10'); await tp.waitForTimeout(200);
   await tp.fill('#t-memo', '교사메모비밀문장'); await tp.waitForTimeout(200);
-  await check('교사용: 끈 문항 검증 표시', async () => assert.match(await tp.textContent('#t-valid'), /끈 문항: ⑧/));
+  await check('교사용: 끈 문항 검증 표시, 문항 목록 ①~⑩(삭제한 탐구 없음)', async () => {
+    assert.match(await tp.textContent('#t-valid'), /끈 문항: ⑧/);
+    assert.equal(await tp.$$eval('.t-questions input[type=checkbox]', (x) => x.length), 10);
+    assert.equal(await tp.$('#t-q-q7'), null);
+    assert.ok(!(await tp.textContent('#t-editor')).includes('예측과 실제'));
+    assert.match(await tp.textContent('#t-editor'), /탐구 3 — 비교 기간/);
+  });
   await tp.click('#t-export');
   await tp.waitForSelector('dialog[open]');
   const [dep] = await Promise.all([tp.waitForEvent('download'), tp.click('dialog[open] button[value=student]')]);
@@ -442,7 +431,7 @@ try {
     const d = readFileSync(depPath, 'utf8'); const t2 = readFileSync(tchPath, 'utf8');
     assert.equal(dep.suggestedFilename(), 'assessment.json');
     assert.ok(!d.includes('교사메모비밀문장')); assert.ok(t2.includes('교사메모비밀문장'));
-    const j = JSON.parse(d); assert.equal(j.version, 2); assert.equal(j.month, '2026-08'); assert.equal(j.questions.q8, false);
+    const j = JSON.parse(d); assert.equal(j.version, 2); assert.equal(j.month, '2026-08'); assert.equal(j.questions.q10, false);
   });
 
   // ───── 미리보기: 교사 설정 적용, 학생 답과 분리 ─────
@@ -459,12 +448,12 @@ try {
   await check('미리보기: 교사 설정(분석 연월·24시간·끈 문항) 적용, 메모 없음', async () => {
     assert.match(await pv.textContent('#context-bar'), /2026-08/);
     assert.match(await pv.textContent('#q-q2'), /2026-08-11 03:00 ~ 08-12 03:00/);
-    await go(pv, 'inq3');
-    assert.equal(await pv.$('#q-q8'), null);
-    assert.ok(await pv.$('#q-q7'));
+    await go(pv, 'inq4');
+    assert.equal(await pv.$('#q-q10'), null);
+    assert.ok(await pv.$('#q-q9'));
     assert.ok(!(await visibleText(pv)).includes('교사메모비밀문장'));
   });
-  await pv.fill('#ans-q7', '미리보기 답');
+  await pv.fill('#ans-q9', '미리보기 답');
   await pv.waitForTimeout(900);
   await check('미리보기 작성 내용은 학생 답과 분리 저장', async () => {
     assert.equal(await pv.evaluate(() => localStorage.getItem('tideLab.v1.work')), studentKeyBefore);
@@ -493,6 +482,16 @@ try {
     await sp.waitForSelector('.student-form');
     assert.match(await sp.textContent('#sample-banner'), /기능 확인용 예시 데이터/);
     await sp.close();
+  });
+  await tp.reload(); await tp.waitForSelector('#t-editor');
+  await check('교사용: 저장된 설정이 배포 설정과 다르면 차이 표시, [배포 설정 값으로 맞추기](메모 유지)', async () => {
+    const tx = await tp.textContent('#t-diff');
+    assert.match(tx, /분석 연월\s*2026-08\s*2026-09/);
+    assert.match(tx, /끈 문항\s*⑧\s*없음/);
+    await tp.click('#t-diff-apply'); await tp.waitForTimeout(800);
+    const c = await tp.evaluate(() => window.__tideApp.teacher.cfg);
+    assert.equal(c.month, '2026-09'); assert.equal(c.questions.q10, undefined); assert.equal(c.memo, '교사메모비밀문장');
+    assert.equal(await tp.$('#t-diff'), null);
   });
   await check('교사용 메모는 로그인으로 보호된 서버 저장소에만(이 브라우저 사본에는 없음)', async () => {
     assert.match(upstash.data.get('tidelab:teacher:setup')?.v || '', /교사메모비밀문장/);

@@ -1,5 +1,6 @@
 // 교사용 평가 설정 화면 (?mode=teacher)
-// - 문항 켜기·끄기, 기본 분석 연월, 탐구 1 구간(3일 + 문항 ②의 24시간), 탐구 2 지역 비교 기간, 탐구 4 비교 기간(A·B), 교사용 메모
+// - 문항 켜기·끄기, 기본 분석 연월, 탐구 1 구간(3일 + 문항 ②의 24시간), 탐구 2 지역 비교 기간, 탐구 3 비교 기간(A·B), 교사용 메모
+// - 저장된 교사 설정이 학생용 배포 설정과 다르면 다른 항목을 보여 주고 [배포 설정 값으로 맞추기]를 제공
 // - 교사 로그인(서버에서 비밀번호·세션 확인)을 통과해야 화면이 열린다. 교사용 메모가 든 설정은 서버 저장소가 있으면
 //   로그인으로 보호된 API(/api/teacher/setup)에 저장하고, 없으면 이 브라우저에만 저장한다. 학생에게는 적용되지 않는다.
 // - 학생에게 적용: [설정 저장·내보내기] → '학생용 배포 파일'(assessment.json, 메모 제외)을 받아 data/assessment.json을 바꾼다.
@@ -10,7 +11,7 @@ import {
   SETUP_FORMAT, SETUP_VERSION, parseSetup, defaultSetup, applySetup, validateSetup, studentDeployment, teacherExport,
   loadTeacherSetup, saveTeacherSetup, clearTeacherSetup, loadDeployedSetup, fmtLocal, parseLocal, monthRange,
 } from '../setup/setup.js';
-import { INQUIRIES, CONCLUSION, CIRCLED } from '../content/questions.js';
+import { INQUIRIES, CONCLUSION, CIRCLED, ALL_QUESTIONS } from '../content/questions.js';
 import { inq1MainSpec, inq1MonthSpec, inq1Series, inq2Specs, inq4TideSpecs, periodTyphoonText } from '../chart/assess.js';
 import { layoutChart } from '../chart/layout.js';
 import { layoutToSVG, screenMeasure } from '../chart/svg.js';
@@ -80,6 +81,7 @@ async function start(app, message = '') {
   const left = (currentSession()?.expiresAt || 0) - Date.now();
   if (left > 0) app.teacherExpiry = setTimeout(async () => { const c = await checkSession(); if (!c.authenticated) start(app, '로그인 시간이 끝났습니다. 다시 로그인하세요.'); }, Math.min(left + 1000, 2 ** 31 - 1));
   app.teacherRestart = (msg) => start(app, msg);
+  app.teacherRender = () => render(app, T);
 }
 
 async function loadCaseFor(T, caseId) {
@@ -169,7 +171,39 @@ function render(app, T) {
     sampleCases.length ? h('p', { class: 'small' }, '기능 시험(가상 데이터, 학생에게 제공하지 않음): ', ...sampleCases.map((c, i) => [i ? ' · ' : '', h('a', { href: `?mode=preview&case=${encodeURIComponent(c.id)}`, target: '_blank', rel: 'noopener' }, c.label || c.id)])) : null,
   ].filter(Boolean));
   screen.append(bar);
+  const diff = deployDiff(T);
+  if (diff) screen.append(diff);
   screen.append(editor(app, T));
+}
+
+/** 저장된 교사 설정과 학생용 배포 설정의 차이(메모·검토 표시 제외) */
+function deployDiff(T) {
+  const d = T.deployed;
+  if (!d || d.caseId !== T.ad.id || /배포 설정/.test(T.source)) return null;
+  const tz = T.ad.tz;
+  const c = T.cfg;
+  const rng = (r) => { const a = parseLocal(r?.start, tz), b = parseLocal(r?.end, tz); return Number.isFinite(a) && Number.isFinite(b) ? fmtRange(a, b, tz, { withTz: false }) : '—'; };
+  const rows = [];
+  if (c.month !== d.month) rows.push(['분석 연월', c.month, d.month]);
+  if (c.inq1.start !== d.inq1.start || c.inq1.end !== d.inq1.end) rows.push(['탐구 1 구간', rng(c.inq1), rng(d.inq1)]);
+  if (c.inq1.countStart !== d.inq1.countStart) rows.push(['문항 ② 24시간 시작', c.inq1.countStart, d.inq1.countStart]);
+  if (c.inq2.start !== d.inq2.start || c.inq2.end !== d.inq2.end) rows.push(['탐구 2 기간', rng(c.inq2), rng(d.inq2)]);
+  for (const k of ['a', 'b']) if (c.inq4[k].start !== d.inq4[k].start || c.inq4[k].end !== d.inq4[k].end) rows.push([`탐구 3 기간 ${k.toUpperCase()}`, rng(c.inq4[k]), rng(d.inq4[k])]);
+  const offC = ALL_QUESTIONS.filter((q) => c.questions[q.id] === false).map((q) => CIRCLED[q.no]).join(' ') || '없음';
+  const offD = ALL_QUESTIONS.filter((q) => d.questions[q.id] === false).map((q) => CIRCLED[q.no]).join(' ') || '없음';
+  if (offC !== offD) rows.push(['끈 문항', offC, offD]);
+  if (!rows.length) return null;
+  const box = h('section', { class: 'card notice notice-warn t-diff', id: 't-diff' });
+  const tbl = h('table', { class: 'data-table compact' }, h('thead', {}, h('tr', {}, h('th', {}, '항목'), h('th', {}, '저장된 교사 설정(미리보기에 적용 중)'), h('th', {}, '학생용 배포 설정'))),
+    h('tbody', {}, ...rows.map(([a, b, c2]) => h('tr', {}, h('th', {}, a), h('td', {}, b), h('td', {}, c2)))));
+  box.append(h('h2', { class: 'h-sm' }, '저장된 교사 설정이 학생용 배포 설정과 다릅니다'),
+    h('p', { class: 'small' }, '앱이 바뀌면서 배포 기본값이 달라졌거나, 교사 화면에서 바꾼 항목입니다. 학생 화면에는 배포 설정이 적용되고, 미리보기에는 저장된 교사 설정이 적용됩니다.'),
+    tbl,
+    h('button', { type: 'button', class: 'btn btn-secondary btn-sm', id: 't-diff-apply', onclick: () => {
+      for (const k of ['month', 'questions', 'inq1', 'inq2', 'inq4']) T.cfg[k] = JSON.parse(JSON.stringify(d[k]));
+      persist(T); toast('배포 설정 값으로 맞췄습니다(메모는 그대로).'); window.__tideApp?.teacherRender?.();
+    } }, '배포 설정 값으로 맞추기(메모는 유지)'));
+  return box;
 }
 
 function chartBox(id, height, build, title) {
@@ -204,7 +238,7 @@ function editor(app, T) {
   const dayOptions = (t0, t1, lastStartOffset = 0) => { const out = []; for (let t = t0; t + lastStartOffset * DAY < t1 + 1; t += DAY) out.push([ymd(t, tz), fmtDateTime(t, tz).slice(0, 10)]); return out; };
 
   // 분석 연월
-  const fs1 = h('fieldset', { class: 't-fieldset' }, h('legend', {}, '기본 분석 연월 (탐구 1 한 달 그래프 · 탐구 3)'));
+  const fs1 = h('fieldset', { class: 't-fieldset' }, h('legend', {}, '기본 분석 연월 (탐구 1의 3일·한 달 그래프)'));
   fs1.append(h('div', { class: 't-row' }, sel('t-month', '분석 연월', ad.months.map((m) => [m, m]), cfg.month, (v) => {
     cfg.month = v;
     const [m0] = monthRange(v, tz);
@@ -247,8 +281,8 @@ function editor(app, T) {
   fs3.append(chartBox('t-inq2-chart', 150, (ctx) => inq2Specs(ctx, A, 'same'), '탐구 2 미리보기'));
   card.append(fs3);
 
-  // 탐구 4
-  const fs4 = h('fieldset', { class: 't-fieldset' }, h('legend', {}, '탐구 4 — 비교 기간(부산 관측 조위)'));
+  // 탐구 3(특이한 변화)
+  const fs4 = h('fieldset', { class: 't-fieldset' }, h('legend', {}, '탐구 3 — 비교 기간(부산 관측 조위)'));
   const opts4 = [...(ad.past ? dayOptions(ad.past.observed.points[0].t, ad.past.observed.points.at(-1).t - DAY) : []), ...dayOptions(ad.st[ad.rep].observed.points[0].t, ad.st[ad.rep].observed.points.at(-1).t - DAY)];
   for (const [k, label] of [['a', '기간 A'], ['b', '기간 B']]) {
     const s0 = cfg.inq4[k].start.slice(0, 10);
@@ -259,14 +293,15 @@ function editor(app, T) {
       h('span', { class: 'muted small' }, ` ${fmtRange(A.win[k][0], A.win[k][1], tz)} · ${periodTyphoonText(A, k)}`)));
   }
   fs4.append(h('p', { class: 'muted small' }, `학생에게는 [추가 자료 확인] 전까지 날짜와 관측 조위만 보이고, 확인 뒤 기간 B 제목에 ‘확인한 기압·바람이 상대적으로 안정적인 기간’이 붙습니다. 기간 B는 기압·바람이 안정적인 기간으로 고르세요(시작일은 부산 2022년 9월 또는 2025-10~2026-09).`));
-  fs4.append(chartBox('t-inq4-chart', 190, (ctx) => inq4TideSpecs(ctx, A, { revealed: false }), '탐구 4 미리보기'));
+  fs4.append(chartBox('t-inq4-chart', 190, (ctx) => inq4TideSpecs(ctx, A, { revealed: false }), '탐구 3 미리보기'));
   card.append(fs4);
+  if (cfg.questions.q7 !== undefined || cfg.questions.q8 !== undefined) { delete cfg.questions.q7; delete cfg.questions.q8; }
   if (!d0 || !d1) card.append(h('p', { class: 'notice notice-warn' }, '예측 조위 자료가 없습니다.'));
 
   // 문항
   const qBox = h('fieldset', { class: 't-fieldset t-questions' }, h('legend', {}, '사용할 문항'));
   for (const def of [...INQUIRIES, CONCLUSION]) {
-    const grp = h('div', { class: 't-qgroup' }, h('p', { class: 't-qtitle' }, def.no <= 4 ? `탐구 ${def.no}. ${def.title}` : def.title));
+    const grp = h('div', { class: 't-qgroup' }, h('p', { class: 't-qtitle' }, def.step !== 'conclusion' ? `탐구 ${def.no}. ${def.title}` : def.title));
     for (const q of def.questions) {
       const cb = h('input', { type: 'checkbox', id: `t-q-${q.id}` });
       cb.checked = cfg.questions[q.id] !== false;

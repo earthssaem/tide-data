@@ -9,7 +9,7 @@ import { fmtRange, fmtDateTime, fmtDateKo, DAY, HOUR } from '../util/time.js';
 import { fmtNum } from '../util/format.js';
 import { layoutChart } from '../chart/layout.js';
 import {
-  inq1MainSpec, inq1MonthSpec, inq2Specs, stationsMapLayout, inq3Specs, inq3DailySpec, inq4TideSpecs, weatherSpec,
+  inq1MainSpec, inq1MonthSpec, inq2Specs, stationsMapLayout, inq4TideSpecs, weatherSpec,
   typhoonMapLayout, closestTyphoonPoint, extremaIn, periodTitle, periodCd, PERIOD_NAMES, periodTyphoonText,
 } from '../chart/assess.js';
 
@@ -93,8 +93,8 @@ export function buildReport(ad, state) {
   };
   const [Q1, Q2, Q3, Q4] = INQUIRIES[0].questions;
   const [Q5, Q6] = INQUIRIES[1].questions;
-  const [Q7, Q8] = INQUIRIES[2].questions;
-  const [Q9, Q10, Q11] = INQUIRIES[3].questions;
+  const D4 = INQUIRIES.find((d) => d.step === 'inq4');
+  const [Q9, Q10, Q11] = D4.questions;
   const view = (s) => ({ ...s.answers, q3: answerOf(s, Q3) || s.answers.q3 });
 
   // ── 탐구 1 ──
@@ -136,42 +136,27 @@ export function buildReport(ad, state) {
     if (on(Q6)) s2.items.push(qa(Q6, 'inq2'));
   }
 
-  // ── 탐구 3 ──
-  const s3 = { key: 'inq3', title: `탐구 3. ${INQUIRIES[2].title}`, sub: `부산 ${ad.setup.month} · 예측 조위: ${PREDICTED_TEXT} 관측 조위: ${OBSERVED_TEXT} 높이의 기준이 확인되지 않아 변동 폭만 비교함`, items: [] };
-  if (on(Q7) || on(Q8)) {
-    s3.items.push(fig('f4', `그림 4. 부산 예측 조위와 관측 조위(세로 눈금 간격 같음)${state.answers.q7?.t0 != null ? ' — ⑦에서 고른 구간' : ''}`, [
-      { height: 180, spec: (ctx) => inq3Specs(ctx, ad, state.answers)[0] },
-      { height: 195, spec: (ctx) => inq3Specs(ctx, ad, state.answers)[1] },
-      { height: 185, spec: (ctx) => inq3DailySpec(ctx, ad, state.answers) },
-    ]));
-    if (on(Q7)) s3.items.push(qa(Q7, 'inq3'));
-    if (on(Q8)) s3.items.push(qa(Q8, 'inq3'));
-  }
-
-  // ── 탐구 4 ──
-  const s4 = { key: 'inq4', title: `탐구 4. ${INQUIRIES[3].title}`, sub: '부산 관측 조위 — 두 기간 비교(세로 눈금 간격 같음)', items: [] };
+  // ── 탐구 3(특이한 변화) ──
+  const s4 = { key: 'inq4', title: `탐구 ${D4.no}. ${D4.title}`, sub: '부산 관측 조위 — 두 기간 비교(세로 눈금 간격 같음)', items: [] };
   s4.items.push(fig('f5', `그림 5. 부산 관측 조위 — ${periodTitle(ad, 'a', !!rv.weather)} / ${periodTitle(ad, 'b', !!rv.weather)}`, [0, 1].map((i) => ({ height: 185, spec: (ctx) => inq4TideSpecs(ctx, ad, { revealed: !!rv.weather })[i] }))));
   if (on(Q9)) s4.items.push(qa(Q9, 'inq4'));
   if (on(Q10)) s4.items.push(qa(Q10, 'inq4'));
   if (rv.weather) {
     s4.items.push({ type: 'note', text: `[추가 자료 확인] ${fmtDateTime(rv.weather.at, localTz())} — 아래는 그 뒤에 본 자료와 답입니다.` });
     for (const k of ['a', 'b']) {
-      s4.items.push(fig(`f6${k}`, `그림 6${k === 'a' ? '가' : '나'}. ${periodTitle(ad, k, true)} — ${periodCd(ad, k).weather?.station?.name || '기상 관측 지점'} 해면기압·풍속·풍향(조위 그래프와 같은 시간 축)`, [
+      s4.items.push(fig(`f6${k}`, `그림 6${k === 'a' ? '가' : '나'}. ${periodTitle(ad, k, true)} — ${periodCd(ad, k).weather?.station?.name || '기상 관측 지점'} 해면기압·풍속(조위 그래프와 같은 시간 축)`, [
         { height: 140, spec: (ctx) => weatherSpec(ctx, ad, k, 'pressureSea', { title: false }) },
         { height: 125, spec: (ctx) => weatherSpec(ctx, ad, k, 'windSpeed', { title: false }) },
-        { height: 125, spec: (ctx) => weatherSpec(ctx, ad, k, 'windDir', { title: false }) },
       ]));
     }
     if (ad.past?.typhoon) {
       const c = closestTyphoonPoint(ad);
       s4.items.push(fig('f7', `그림 7. ${ad.past.typhoon.meta?.title || ad.past.typhoon.name} — 기상청 실황 분석 위치(${PERIOD_NAMES.a})${c && ad.timeBasis?.confirmed ? ` · 부산 최근접 분석 위치 ${fmtDateTime(c.t, tz)}, 약 ${Math.round(c.km)} km` : ''}`, [{ map: (w, measure, fs) => typhoonMapLayout(ad, { width: w, measure, fontSize: fs }), maxWidth: 360 }]));
     }
-    s4.items.push({ type: 'note', text: `${PERIOD_NAMES.a} 태풍: ${periodTyphoonText(ad, 'a')}` });
     s4.items.push({ type: 'note', text: `${PERIOD_NAMES.b} 태풍: ${periodTyphoonText(ad, 'b')}` });
-    s4.items.push({ type: 'note', text: '태풍 중심기압은 부산에서 잰 기압이 아니며, 시각이 가깝다는 것만으로 원인을 확정할 수 없습니다.' });
     if (on(Q11)) {
       const q = qa(Q11, 'inq4');
-      s4.items.push({ ...q, type: 'side', leftTitle: `${CIRCLED[10]} 추가 자료 확인 전의 추측`, left: (answerOf(state, Q10) || '').trim(), rightTitle: `${CIRCLED[11]} 기상·태풍 자료를 근거로 한 설명`, right: q.lines.join('\n') });
+      s4.items.push({ ...q, type: 'side', leftTitle: `${CIRCLED[Q10.no]} 추가 자료 확인 전의 추측`, left: (answerOf(state, Q10) || '').trim(), rightTitle: `${CIRCLED[Q11.no]} 기상·태풍 자료를 근거로 한 설명`, right: q.lines.join('\n') });
     }
   } else {
     s4.items.push({ type: 'note', text: '[추가 자료 확인]을 하지 않아 추가 자료와 문항 ⑪은 보고서에 없습니다.' });
@@ -182,7 +167,7 @@ export function buildReport(ad, state) {
   // ── 종합 ──
   const s5 = { key: 'conclusion', title: CONCLUSION.title, sub: CONCLUSION.goal, items: CONCLUSION.questions.filter(on).map((q) => qa(q, 'conclusion')) };
 
-  const sections = [s1, s2, s3, s4, s5].filter((s) => s.items.length);
+  const sections = [s1, s2, s4, s5].filter((s) => s.items.length);
   return {
     appName: '조석 데이터 탐구실',
     title: '조석 데이터 탐구 보고서',
@@ -210,8 +195,7 @@ export function infoRows(ad, state) {
     ['관측소', ad.stationList.map((s) => `${s.name}(${s.id}, ${s.sea})`).join(', ') + ' · 대표 관측소 부산'],
     ['탐구 1 (부산 예측)', `3일 ${fmtRange(W.inq1[0], W.inq1[1], tz)} · 한 달 ${ad.setup.month}`],
     ['탐구 2 (세 지역 예측)', fmtRange(W.inq2[0], W.inq2[1], tz)],
-    ['탐구 3 (부산 예측·관측)', ad.setup.month],
-    ['탐구 4 (부산 관측)', `${PERIOD_NAMES.a} ${fmtRange(W.a[0], W.a[1], tz)} / ${PERIOD_NAMES.b} ${fmtRange(W.b[0], W.b[1], tz)}`],
+    ['탐구 3 (부산 관측)', `${PERIOD_NAMES.a} ${fmtRange(W.a[0], W.a[1], tz)} / ${PERIOD_NAMES.b} ${fmtRange(W.b[0], W.b[1], tz)}`],
     ['시간대', `${tz.name || tz.label}${ad.timeBasis?.confirmed ? ' — 공식 자료와 대조해 확인' : ' — 확인되지 않음'}`],
     ['달의 위상 확인', rv.moon ? fmtDateTime(rv.moon.at, localTz()) : '하지 않음'],
     ['추가 자료 확인', rv.weather ? fmtDateTime(rv.weather.at, localTz()) : '하지 않음'],
@@ -232,7 +216,7 @@ export function sourceRows(ad, state) {
     { role: '관측 조위(부산)', lines: dsLines(rep.observed, ['1시간 간격, 단위 cm. 높이 기준면은 자료 문서에 없음(미확인)']) },
   ];
   if (rv.weather) {
-    out.push({ role: '기상(부산 ASOS)', lines: dsLines(rep.weather, [`관측 지점: ${rep.weather?.station?.name || '—'}${rep.weather?.station?.note ? ` (${rep.weather.station.note})` : ''}`, '해면기압·풍속·풍향(바람이 불어오는 방향), 1시간 간격']) });
+    out.push({ role: '기상(부산 ASOS)', lines: dsLines(rep.weather, [`관측 지점: ${rep.weather?.station?.name || '—'}${rep.weather?.station?.note ? ` (${rep.weather.station.note})` : ''}`, '해면기압·풍속, 1시간 간격']) });
     if (ad.past?.typhoon) out.push({ role: '태풍 정보', lines: dsLines(ad.past.typhoon, [ad.past.typhoon.trackKind && `경로 종류: ${ad.past.typhoon.trackKind}`, ad.past.typhoon.note].filter(Boolean)) });
   }
   if (rv.moon && ad.moon) out.push({ role: '달의 위상', lines: [ad.moon.meta.provider && `제공: ${ad.moon.meta.provider}`, ad.moon.meta.identifier && `식별자: ${ad.moon.meta.identifier}`].filter(Boolean) });

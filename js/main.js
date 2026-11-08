@@ -22,12 +22,11 @@ import { answerLines } from './report/model.js';
 import * as StartScreen from './screens/start.js';
 import * as Inq1Screen from './screens/inquiry1.js';
 import * as Inq2Screen from './screens/inquiry2.js';
-import * as Inq3Screen from './screens/inquiry3.js';
 import * as Inq4Screen from './screens/inquiry4.js';
 import * as ConclusionScreen from './screens/conclusion.js';
 import * as ReportScreen from './screens/report.js';
 
-const SCREENS = { start: StartScreen, inq1: Inq1Screen, inq2: Inq2Screen, inq3: Inq3Screen, inq4: Inq4Screen, conclusion: ConclusionScreen, report: ReportScreen };
+const SCREENS = { start: StartScreen, inq1: Inq1Screen, inq2: Inq2Screen, inq4: Inq4Screen, conclusion: ConclusionScreen, report: ReportScreen };
 
 const app = {
   mode: 'student',
@@ -117,7 +116,7 @@ async function boot() {
     app.store = new Store(state);
     if (saved.state && saved.state.caseId === caseId) app.store.setStatus({ kind: 'saved', time: saved.state.updatedAt, message: '저장됨' });
     setupShell();
-    const hashStep = location.hash.replace(/^#\/?/, '');
+    const hashStep = location.hash.replace(/^#\/?/, '') === 'inq3' ? 'inq4' : location.hash.replace(/^#\/?/, '');
     const step = state.started ? (SCREENS[hashStep] ? hashStep : state.step) : 'start';
     navigate(step, { replace: true });
     if (saved.migrated) toast('이전 버전 앱의 작성 내용을 찾아 원본을 따로 보관했습니다. 시작 화면의 안내를 확인하세요.', 'warn');

@@ -132,8 +132,9 @@ export function inq1MainSpec(ctx, ad, ans, { cursor = null, title = true } = {})
     cd, kind: 'predicted', view: ad.win.inq1, series: inq1Series(ad),
     title: title ? `부산 예측 조위 — 3일` : null,
     marks: q1Marks(ad, ans.q1),
-    bands: [{ t0: c0, t1: c1, fill: COLORS.band, opacity: 0.18, stroke: '#b98900', strokeWidth: 1 }],
-    legendExtra: [{ kind: 'bar', label: `문항 ② 24시간 (${fmtRange(c0, c1, cd.tz, { withTz: false })})`, color: '#f6dc8a' }],
+    // 문항 ②를 끈 경우 24시간 띠를 그리지 않는다
+    bands: ad.setup?.questions?.q2 === false ? [] : [{ t0: c0, t1: c1, fill: COLORS.band, opacity: 0.18, stroke: '#b98900', strokeWidth: 1 }],
+    legendExtra: ad.setup?.questions?.q2 === false ? [] : [{ kind: 'bar', label: `문항 ② 24시간 (${fmtRange(c0, c1, cd.tz, { withTz: false })})`, color: '#f6dc8a' }],
     cursor,
   });
 }
@@ -231,46 +232,7 @@ export function stationsMapLayout({ stations, width, measure, fontSize = 11, tit
   return { items, width, height: oy + mapH + small + 8 };
 }
 
-// ───────────── 탐구 3 ─────────────
-export function inq3Specs(ctx, ad, ans, { cursor = null, drag = null } = {}) {
-  const cd = ad.st[ad.rep];
-  const view = ad.win.inq3;
-  const sel = drag || (ans.q7?.t0 != null ? [ans.q7.t0, ans.q7.t1] : null);
-  const bands = sel ? [{ t0: sel[0], t1: sel[1], fill: COLORS.sel, opacity: 0.22, stroke: '#1d2733', strokeWidth: 1.2, dash: [4, 3] }] : [];
-  const doms = yDomains([{ series: cd.predicted, t0: view[0], t1: view[1] }, { series: cd.observed, t0: view[0], t1: view[1] }], 'same');
-  const step = sharedTickStep(doms, (ctx.height || 230) - 90);
-  const legendSel = sel ? [{ kind: 'barHollow', label: '내가 고른 구간', color: '#1d2733' }] : [];
-  return [
-    tideSpec({ ...ctx, hideXTitle: true }, { cd, kind: 'predicted', view, yDomain: doms[0], title: '부산 예측 조위', subtitle: `${fmtRange(view[0], view[1], cd.tz)} · 세로 눈금 간격은 아래 관측 조위와 같음${sampleTag(cd)}`, bands, cursor, legendExtra: legendSel, dotMinSpacing: 7, tickStep: step }),
-    tideSpec(ctx, { cd, kind: 'observed', view, yDomain: doms[1], title: '부산 관측 조위', subtitle: `높이의 기준(0 cm)이 확인되지 않아 예측과 높이를 겹쳐 그리지 않음${sampleTag(cd)}`, bands, cursor, noLegend: false, dotMinSpacing: 7, tickStep: step }),
-  ];
-}
-
-/** 일별 변동 폭: 예측(왼쪽 반)과 관측(오른쪽 반)을 나란히 */
-export function inq3DailySpec(ctx, ad, ans) {
-  const cd = ad.st[ad.rep];
-  const month = ad.win.inq3;
-  const P = monthDays(cd, month, 'predicted'), O = monthDays(cd, month, 'observed');
-  const sel = ans.q7?.t0 != null ? [ans.q7.t0, ans.q7.t1] : null;
-  const bars = [];
-  P.forEach((d, i) => {
-    const o = O[i];
-    const mid = d.start + DAY / 2;
-    bars.push({ t0: d.start, t1: mid, v: d.complete ? d.range : null, hollow: !d.complete && d.range != null, color: COLORS.barPred });
-    bars.push({ t0: mid, t1: d.end, v: o?.complete ? o.range : null, hollow: o && !o.complete && o.range != null, color: COLORS.barObs });
-  });
-  return {
-    ...baseSpec(ctx, cd, month),
-    header: { title: '부산 일별 변동 폭 — 예측과 관측', subtitle: `하루 동안 최고값 − 최저값 · ${fmtRange(month[0], month[1], cd.tz)}${sampleTag(cd)}` },
-    legend: [{ kind: 'bar', label: '예측 조위', color: COLORS.barPred }, { kind: 'bar', label: '관측 조위', color: COLORS.barObs }, ...(sel ? [{ kind: 'barHollow', label: '내가 고른 구간', color: '#1d2733' }] : [])],
-    y: { label: '변동 폭 (cm)', includeZero: true, floorZero: true },
-    x: { ...baseSpec(ctx, cd, month).x, minTickSpacing: 30, centerDayLabels: true, label: `날짜 (${cd.tz.label})` },
-    series: [{ kind: 'bars', bars, color: COLORS.bar }],
-    bands: sel ? [{ t0: sel[0], t1: sel[1], fill: COLORS.sel, opacity: 0.12, stroke: '#1d2733', strokeWidth: 1.2, dash: [4, 3] }] : [],
-  };
-}
-
-// ───────────── 탐구 4 ─────────────
+// ───────────── 탐구 3(특이한 변화, 내부 이름 inq4) ─────────────
 export const PERIOD_NAMES = { a: '기간 A', b: '기간 B' };
 export function periodTitle(ad, k, revealed) {
   const [t0, t1] = ad.win[k];
@@ -306,14 +268,14 @@ export function periodTyphoonText(ad, k) {
   return b ? `이 기간(앞뒤 하루 포함) 부산에서 가장 가까웠던 태풍 중심: ${b.name.replace(/^\d{4}년 /, '')}, 약 ${Math.round(b.km)} km (기상청 태풍경로)` : '이 기간(앞뒤 하루 포함)에 기록된 태풍이 없습니다(기상청 태풍경로).';
 }
 
-export function inq4TideSpecs(ctx, ad, { revealed = false, cursor = {} } = {}) {
+export function inq4TideSpecs(ctx, ad, { revealed = false, cursor = {}, compact = false } = {}) {
   const ks = ['a', 'b'];
   const doms = yDomains(ks.map((k) => ({ series: periodCd(ad, k).observed, t0: ad.win[k][0], t1: ad.win[k][1] })), 'same');
   const step = sharedTickStep(doms, (ctx.height || 230) - 90);
   return ks.map((k, i) => tideSpec(ctx, {
     cd: periodCd(ad, k), kind: 'observed', view: ad.win[k], yDomain: doms[i], tickStep: step,
-    title: `부산 관측 조위 — ${periodTitle(ad, k, revealed)}`,
-    subtitle: `세로 눈금 간격은 두 기간이 같음(각자 가운데)${sampleTag(periodCd(ad, k))}`,
+    title: compact ? '관측 조위' : `부산 관측 조위 — ${periodTitle(ad, k, revealed)}`,
+    subtitle: compact ? `${sampleTag(periodCd(ad, k)).replace(/^ · /, '')}` : `세로 눈금 간격은 두 기간이 같음(각자 가운데)${sampleTag(periodCd(ad, k))}`,
     color: k === 'a' ? COLORS.past : COLORS.recent, cursor: cursor[k] ?? null, dotMinSpacing: 7,
   }));
 }
@@ -338,14 +300,14 @@ export function weatherDomain(ad, kind) {
   return [kind === 'windSpeed' ? 0 : lo - pad, hi + pad];
 }
 
-export function weatherSpec(ctx, ad, k, kind, { cursor = null, yDomain = null, title = true } = {}) {
+export function weatherSpec(ctx, ad, k, kind, { cursor = null, yDomain = null, title = true, compact = false } = {}) {
   const cd = periodCd(ad, k);
   const view = ad.win[k];
   const K = WEATHER[kind];
   const w = cd.weather;
   const spec = {
     ...baseSpec(ctx, cd, view),
-    header: title ? { title: `${K.label} — ${w?.station?.name || '기상 관측 지점'} · ${PERIOD_NAMES[k]}`, subtitle: kind === 'pressureSea' ? '해면기압: 관측소 기압을 해수면 높이로 환산한 값(태풍 중심기압과 다름)' : kind === 'windDir' ? '바람이 불어오는 방향' : '1시간 평균 풍속' } : null,
+    header: compact ? { title: `${K.label} (${K.unit})`, subtitle: '' } : title ? { title: `${K.label} — ${w?.station?.name || '기상 관측 지점'} · ${PERIOD_NAMES[k]}`, subtitle: kind === 'pressureSea' ? '해면기압: 관측소 기압을 해수면 높이로 환산한 값(태풍 중심기압과 다름)' : kind === 'windDir' ? '바람이 불어오는 방향' : '1시간 평균 풍속' } : null,
     y: { label: K.axis, domain: yDomain || weatherDomain(ad, kind) },
     cursor: cursor != null ? { t: cursor } : null,
     series: [], legend: [],
