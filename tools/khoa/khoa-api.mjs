@@ -37,6 +37,20 @@ export const DATASETS = {
     valueFields: { pred_cm: 'tdlvHgt' },
     unitStated: 'cm',
   },
+  // 같은 조석예보(시계열) API의 10분 간격(min=10). 만조·간조가 정시 사이에 있어 탐구 1에서 사용
+  forecast10: {
+    key: 'forecast10',
+    title: '해양수산부 국립해양조사원_조석예보(시계열) 10분 간격',
+    datasetId: '15156022',
+    pageUrl: 'https://www.data.go.kr/data/15156022/openapi.do',
+    kind: 'predicted',
+    description: '조석 예보지점의 시계열 조석 예측(10분 간격, min=10)',
+    endpoint: 'https://apis.data.go.kr/1192136/tideFcstTime/GetTideFcstTimeApiService',
+    extraParams: { min: '10' },
+    timeField: 'predcDt',
+    valueFields: { pred_cm: 'tdlvHgt' },
+    unitStated: 'cm',
+  },
   realtime: {
     key: 'realtime',
     title: '해양수산부 국립해양조사원_조위관측소 실측·예측 조위 조회',
