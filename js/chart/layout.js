@@ -34,10 +34,17 @@ function niceStep(range, target) {
 
 export function yTicksFor(domain, plotH, minSpacing = 34) {
   const [a, b] = domain;
-  const step = niceStep(b - a, Math.max(2, Math.floor(plotH / minSpacing)));
-  const out = [];
-  const start = Math.ceil(a / step - 1e-9) * step;
-  for (let v = start; v <= b + 1e-9; v += step) out.push(Math.round(v / step) * step);
+  const make = (target) => {
+    const step = niceStep(b - a, target);
+    const ticks = [];
+    const start = Math.ceil(a / step - 1e-9) * step;
+    for (let v = start; v <= b + 1e-9; v += step) ticks.push(Math.round(v / step) * step);
+    return { step, ticks };
+  };
+  // 눈금이 하나만 남으면(작은 그림·축 범위가 눈금 간격과 어긋날 때) 간격을 줄여 최소 2개를 보인다
+  let target = Math.max(2, Math.floor(plotH / minSpacing));
+  let { step, ticks: out } = make(target);
+  for (let i = 0; i < 4 && out.length < 2; i++) ({ step, ticks: out } = make(target += 2));
   const digits = step < 1 ? Math.min(3, Math.ceil(-Math.log10(step))) : 0;
   return out.map((v) => ({ v, label: fmtNum(v, digits) }));
 }
