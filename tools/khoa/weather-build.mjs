@@ -7,6 +7,7 @@
 import { readFileSync, writeFileSync, existsSync, copyFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { DATASETS, parseResponse } from './khoa-api.mjs';
+import { readRawPage } from '../lib/rawpack.mjs';
 
 const stationFor = (o, ds) => (ds.stationOption ? o[ds.stationOption] : o.station);
 
@@ -20,7 +21,7 @@ export function loadRaw(o, manifest, dsKey, dates) {
     days[date] = r ? r.status : 'not-collected';
     if (!r || r.status !== 'ok') continue;
     for (const f of r.files || []) {
-      const page = JSON.parse(readFileSync(join(o.raw, f), 'utf8'));
+      const page = readRawPage(o.raw, f);
       const p = parseResponse(page.rawText);
       if (p.ok) for (const it of p.items) items.push({ date, it });
     }

@@ -14,6 +14,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DATASETS, parseResponse, dateRange } from './khoa-api.mjs';
+import { readRawPage } from '../lib/rawpack.mjs';
 import { moonPhasesBetween } from '../lib/moon.mjs';
 import { buildWeather, buildTyphoon, pressureMinCheck, writeWeather } from './weather-build.mjs';
 
@@ -62,7 +63,7 @@ export function loadDataset(o, manifest, dsKey, dates) {
     days[date] = st ? st.status : 'not-collected';
     if (!st || st.status !== 'ok') continue;
     for (const f of st.files || []) {
-      const page = JSON.parse(readFileSync(join(o.raw, f), 'utf8'));
+      const page = readRawPage(o.raw, f);
       const r = parseResponse(page.rawText);
       if (!r.ok) continue;
       for (const it of r.items) rows.push({ date, page: f, item: it });
