@@ -177,3 +177,15 @@ test('검증용 사례: 기준면 불일치 → 잔차 없음, 기상·달 자�
   assert.equal(fmtDateTime(first.t, cd.tz), '2099-09-18 00:00');
   assert.ok(Number.isInteger(Math.round(first.v)));
 });
+
+test('잔차: 기준면 미확인(datumConfirmed:false)이면 계산하지 않음', () => {
+  const a = { stationId: 'S', datum: 'UNCONFIRMED', datumLabel: '미확인', datumConfirmed: false, unit: 'cm', points: [{ t: 0, v: 100 }] };
+  const b = { ...a, points: [{ t: 0, v: 90 }] };
+  const r = computeResidual(a, b);
+  assert.equal(r.ok, false);
+  assert.equal(r.points.length, 0);
+  assert.match(r.problems[0], /기준면이 확인되지/);
+  // 기준면 정보가 아예 없는 자료도 미확인으로 처리
+  const s = normalizeTideSeries('time,v\n2099-09-08 00:00,1\n', tideSpec({ datum: undefined, quality: null }));
+  assert.equal(s.datumConfirmed, false);
+});

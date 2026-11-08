@@ -45,6 +45,8 @@ tests/                     단위 검증, 전체 흐름 검증
 
 ## 실제 자료로 바꾸기
 
+> 국립해양조사원 자료(부산 2022년 9월 등)는 `tools/khoa/`의 자동 수집 도구로 받아 사례 파일까지 만들 수 있습니다. 인증키 신청, 설정, 실행 방법은 [tools/khoa/README.md](tools/khoa/README.md)에 있습니다.
+
 관측소 이름, 기간, 태풍 이름은 화면 코드에 직접 쓰지 않고 **사례 설정(`case.json`)** 에서만 관리합니다.
 
 1. `data/cases/` 아래에 새 폴더를 만듭니다. 예: `data/cases/busan-2022/`
@@ -65,7 +67,7 @@ tests/                     단위 검증, 전체 흐름 검증
 | `description` | 제공 기관, 자료명, 기간, 관측 간격, 기준면, 식별자(보고서의 자료 출처에 표시) |
 | `datasets.observed.time.offset` | **원자료** 시각의 시간대. UTC 자료면 `"+00:00"` |
 | `datasets.*.unit` | 원자료 단위 `cm`/`m`/`mm`. 앱이 cm로 명시적으로 변환하고 변환 내역을 보고서에 적음 |
-| `datasets.*.stationId`, `datum` | 관측·예측 자료가 같은 관측소·같은 기준면인지 확인하는 값. 다르면 잔차를 계산하지 않음 |
+| `datasets.*.stationId`, `datum`, `datumConfirmed` | 관측·예측 자료가 같은 관측소·같은 기준면인지 확인하는 값. 다르거나 기준면이 미확인(`datumConfirmed: false`)이면 잔차를 계산하지 않음 |
 | `datasets.observed.quality` | 품질 코드 → 정상/의심/오류/결측. 오류·결측은 빈 값으로 처리(0으로 바꾸지 않음) |
 | `missingValues`, `valueRange` | 결측 표시 문자열, 허용 범위(벗어나면 오류값으로 결측 처리) |
 | `datasets.<이름>.provided: false` | 자료가 없을 때. 해당 그래프·문항에 “자료 미제공”이 표시되고 값을 만들지 않음 |

@@ -12,7 +12,9 @@ export function checkComparable(obs, pred) {
   if (obs.stationId !== pred.stationId) {
     problems.push(`관측소가 다릅니다 (관측: ${obs.stationId}, 예측: ${pred.stationId}).`);
   }
-  if (obs.datum !== pred.datum) {
+  if (obs.datumConfirmed === false || pred.datumConfirmed === false) {
+    problems.push('높이 기준면이 확인되지 않아 관측값과 예측값이 같은 기준면인지 알 수 없습니다. 기준면을 공식 자료로 확인하기 전에는 잔차를 계산하지 않습니다.');
+  } else if (obs.datum !== pred.datum) {
     problems.push(`높이 기준면이 다릅니다 (관측: ${obs.datumLabel}, 예측: ${pred.datumLabel}). 기준면을 맞추는 변환을 전처리에서 먼저 수행해야 합니다.`);
   }
   if (obs.unit !== pred.unit) {

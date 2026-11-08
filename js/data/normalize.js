@@ -108,6 +108,8 @@ export function normalizeTideSeries(csvText, spec) {
     stationId: spec.stationId,
     datum: spec.datum,
     datumLabel: spec.datumLabel || spec.datum,
+    // 기준면을 문서로 확인하지 못한 자료는 false — 잔차 계산을 막는다
+    datumConfirmed: spec.datumConfirmed !== false && !!spec.datum,
     unit: 'cm',
     sourceUnit: unit,
     conversions,
