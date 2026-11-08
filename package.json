@@ -21,7 +21,9 @@
     "stations:plan": "node tools/khoa/stations.mjs plan",
     "multi:collect": "node tools/khoa/collect.mjs --plan data/stations/plan.json --datasets hourly,forecast,airpress,wind,asos",
     "multi:test-day": "node tools/khoa/collect.mjs --plan data/stations/plan.json --datasets hourly,forecast,airpress,wind,asos --test-day 2022-09-01",
-    "multi:build": "node tools/khoa/build-multi.mjs --case-id khoa-multi-2022-09"
+    "multi:build": "node tools/khoa/build-multi.mjs --case-id khoa-multi-2022-09",
+    "assess:build": "node tools/khoa/build-assess.mjs",
+    "time:check": "node tools/khoa/check-time-basis.mjs"
   },
   "license": "UNLICENSED"
 }

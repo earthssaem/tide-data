@@ -83,9 +83,13 @@ test('KHOA 기상 자료 없음 → ASOS 대체, 기압 종류 분리, QC 결측
   assert.equal(q.weather.completeness.windSpeed.valid, 48 - 2, '행 없음 1 + 결측 플래그 1');
   assert.equal(q.weather.completeness.pressureStation.valid, 47);
 
-  // 앱 로더: 플래그 값은 null, 기압 종류 분리
-  const { buildCaseData } = await import(join(ROOT, 'js/data/loader.js'));
-  const cd = await buildCaseData(cj, async (fn) => readFileSync(join(dir, fn), 'utf8'));
+  // 앱 전처리(normalize): 플래그 값은 null, 기압 종류 분리
+  const { normalizeWeather, normalizeTyphoonTrack } = await import(join(ROOT, 'js/data/normalize.js'));
+  const cd = {
+    weather: normalizeWeather(readFileSync(join(dir, cj.datasets.weather.file), 'utf8'), cj.datasets.weather),
+    typhoon: normalizeTyphoonTrack(readFileSync(join(dir, cj.datasets.typhoon.track.file), 'utf8'), cj.datasets.typhoon.track),
+    keyTimes: cj.inquiry3.keyTimes,
+  };
   const at = (t) => cd.weather.points.find((p) => p.t === Date.parse(t));
   assert.equal(at('2022-09-04T18:00:00Z').pressureSea, null, '09-05 03:00 KST 오류 플래그 → 결측');
   assert.equal(at('2022-09-04T18:00:00Z').pressureStation, 999.4, '현지기압은 그대로');

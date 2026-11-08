@@ -212,7 +212,7 @@ function renderContextBar() {
   if (app.currentStep === 'start' || !s.started) { bar.hidden = true; return; }
   bar.hidden = false;
   const st = s.student;
-  bar.innerHTML = `<span><b>대표 관측소</b> 부산 <span class="muted">(${escapeHtml(app.ad.rep)})</span></span>
+  bar.innerHTML = `<span><b>대표 관측소</b> ${escapeHtml(app.ad.stationList.find((s) => s.id === app.ad.rep)?.name || "")} <span class="muted">(${escapeHtml(app.ad.rep)})</span></span>
     <span><b>분석 연월</b> ${escapeHtml(app.ad.setup.month)}</span>
     <span class="ctx-student"><b>작성자</b> ${escapeHtml(`${st.grade}학년 ${st.klass}반 ${st.number}번 ${st.name}`)}</span>`;
 }

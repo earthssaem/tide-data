@@ -1,128 +1,530 @@
 {
-  "formatVersion": 1,
-  "id": "sample-2099",
-  "dataVersion": "sample-2099-v1",
-  "isSample": true,
-  "sampleNotice": "실제 관측값이 아닙니다. 가상의 관측소·가상의 태풍으로 만든 값입니다.",
-  "title": "예시 사례: 예시 관측소 A · 가상 태풍 A",
-  "timezone": { "label": "KST", "name": "한국 표준시(UTC+9)", "offsetMinutes": 540 },
-  "station": {
-    "id": "EX-A",
-    "name": "예시 관측소 A",
-    "lat": 34.80,
-    "lon": 127.90,
-    "note": "가상 관측소(가상 좌표)"
-  },
-  "description": {
-    "provider": "개발용 예시 자료 생성기 (tools/make-sample-data.mjs)",
-    "title": "조석 데이터 탐구실 기능 확인용 예시 자료",
-    "period": "2099-08-29 ~ 2099-10-03 (가상)",
-    "interval": "1시간",
-    "datumLabel": "예시 기준면 (가상)",
-    "identifier": "sample-2099-v1"
-  },
-  "datasets": {
+ "formatVersion": 3,
+ "kind": "tide-assessment",
+ "id": "sample-2099",
+ "dataVersion": "sample-2099-1",
+ "isSample": true,
+ "sampleNotice": "실제 관측값이 아닌 가상 자료입니다(교사용 기능 시험 전용).",
+ "title": "예시 사례 (기능 확인용 예시 데이터)",
+ "timezone": {
+  "label": "KST",
+  "name": "한국 표준시(UTC+9)",
+  "offsetMinutes": 540
+ },
+ "timeBasis": {
+  "confirmed": true,
+  "tide": true,
+  "weather": true,
+  "typhoon": true,
+  "note": "예시 데이터(가상)",
+  "evidence": ""
+ },
+ "representative": "SAMPLE_S",
+ "period": {
+  "start": "2098-10-01",
+  "end": "2099-09-30"
+ },
+ "months": [
+  "2098-10",
+  "2098-11",
+  "2098-12",
+  "2099-01",
+  "2099-02",
+  "2099-03",
+  "2099-04",
+  "2099-05",
+  "2099-06",
+  "2099-07",
+  "2099-08",
+  "2099-09"
+ ],
+ "stations": [
+  {
+   "id": "SAMPLE_W",
+   "name": "인천(가상)",
+   "nameEn": "Incheon (sample)",
+   "sea": "서해",
+   "lat": 37.2,
+   "lon": 126.4,
+   "note": "가상 관측소",
+   "datasets": {
     "observed": {
-      "file": "observed.csv",
-      "adapter": "csv-tide",
-      "kind": "observed",
-      "label": "관측 조위",
-      "stationId": "EX-A",
-      "datum": "EX-DATUM",
-      "datumLabel": "예시 기준면",
-      "unit": "cm",
-      "intervalMinutes": 60,
-      "time": { "column": "time", "offset": "+09:00" },
-      "value": { "column": "tide_cm" },
-      "quality": {
-        "column": "qc",
-        "ok": ["1"], "suspect": ["2"], "bad": ["3"], "missing": ["9"],
-        "labels": { "1": "정상", "2": "의심", "3": "오류", "9": "결측" }
-      },
-      "missingValues": ["", "-", "-999"],
-      "valueRange": [-300, 1200],
-      "meta": {
-        "provider": "예시 자료 생성기",
-        "title": "관측 조위(예시)",
-        "identifier": "EX-A-OBS-sample-v1"
-      }
+     "file": "stations/SAMPLE_W/observed.csv",
+     "adapter": "csv-tide",
+     "kind": "observed",
+     "label": "관측 조위",
+     "stationId": "SAMPLE_W",
+     "datum": "UNCONFIRMED",
+     "datumLabel": "가상(예시)",
+     "datumConfirmed": false,
+     "unit": "cm",
+     "intervalMinutes": 60,
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "value": {
+      "column": "tide_cm"
+     },
+     "quality": {
+      "column": "qc",
+      "ok": [
+       "1"
+      ],
+      "bad": [
+       "3"
+      ],
+      "missing": [
+       "9"
+      ]
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "예시 데이터 생성기(가상)",
+      "title": "기능 확인용 예시 데이터",
+      "identifier": "sample-SAMPLE_W"
+     }
     },
     "predicted": {
-      "file": "predicted.csv",
-      "adapter": "csv-tide",
-      "kind": "predicted",
-      "label": "천문조 예측 조위",
-      "stationId": "EX-A",
-      "datum": "EX-DATUM",
-      "datumLabel": "예시 기준면",
-      "unit": "m",
-      "intervalMinutes": 60,
-      "time": { "column": "time", "offset": "+09:00" },
-      "value": { "column": "pred_m" },
-      "missingValues": ["", "-"],
-      "meta": {
-        "provider": "예시 자료 생성기",
-        "title": "천문조 예측 조위(예시, 원자료 단위 m)",
-        "identifier": "EX-A-PRED-sample-v1"
-      }
+     "file": "stations/SAMPLE_W/predicted.csv",
+     "adapter": "csv-tide",
+     "kind": "predicted",
+     "label": "예측 조위",
+     "stationId": "SAMPLE_W",
+     "datum": "UNCONFIRMED",
+     "datumLabel": "가상(예시)",
+     "datumConfirmed": false,
+     "unit": "cm",
+     "intervalMinutes": 60,
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "value": {
+      "column": "pred_cm"
+     },
+     "quality": {
+      "column": "qc",
+      "ok": [
+       "1"
+      ],
+      "bad": [
+       "3"
+      ],
+      "missing": [
+       "9"
+      ]
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "예시 데이터 생성기(가상)",
+      "title": "기능 확인용 예시 데이터",
+      "identifier": "sample-SAMPLE_W"
+     }
     },
     "weather": {
-      "file": "weather.csv",
-      "adapter": "csv-weather",
-      "intervalMinutes": 60,
-      "station": { "id": "EX-W", "name": "예시 기상관측소 B", "lat": 34.95, "lon": 128.03, "note": "가상 관측지점(가상 좌표)" },
-      "time": { "column": "time", "offset": "+09:00" },
-      "fields": {
-        "pressure": { "column": "pressure_hpa", "unit": "hPa", "range": [850, 1100] },
-        "windSpeed": { "column": "wind_ms", "unit": "m/s", "range": [0, 90] },
-        "windDir": { "column": "wind_dir_deg", "unit": "deg", "range": [0, 360] }
-      },
-      "missingValues": ["", "-"],
-      "meta": {
-        "provider": "예시 자료 생성기",
-        "title": "기상 관측(예시): 해면기압, 풍속, 풍향",
-        "identifier": "EX-W-WX-sample-v1"
-      }
-    },
-    "moonPhases": {
-      "file": "moon.csv",
-      "adapter": "csv-moon",
-      "time": { "column": "time", "offset": "+09:00" },
-      "phaseColumn": "phase",
-      "lunarColumn": "lunar",
-      "meta": {
-        "provider": "Meeus(Astronomical Algorithms) 계산식으로 계산한 2099년 값",
-        "title": "달의 위상 시각(예시 사례용)",
-        "identifier": "moon-2099-calc-v1"
-      }
-    },
-    "typhoon": {
-      "name": "가상 태풍 A",
-      "year": 2099,
-      "note": "기능 확인을 위한 가상의 태풍입니다. 실제 태풍이 아닙니다.",
-      "track": {
-        "file": "typhoon_track.csv",
-        "time": { "column": "time", "offset": "+09:00" },
-        "latColumn": "lat",
-        "lonColumn": "lon",
-        "pressureColumn": "pressure_hpa",
-        "windColumn": "max_wind_ms"
-      },
-      "meta": {
-        "provider": "예시 자료 생성기",
-        "title": "태풍 경로(예시)",
-        "identifier": "TY-A-sample-v1"
-      }
+     "provided": false
     }
+   },
+   "timeShiftFlags": []
   },
-  "inquiry1": { "start": "2099-09-15 00:00", "end": "2099-09-18 00:00" },
-  "inquiry2": { "start": "2099-09-01 00:00", "end": "2099-10-01 00:00" },
-  "inquiry3": {
-    "start": "2099-09-18 00:00",
-    "end": "2099-09-23 00:00",
-    "keyTimes": [
-      { "time": "2099-09-19 12:00", "label": "영향 시작(교사 설정)" },
-      { "time": "2099-09-20 12:00", "label": "최근접(교사 설정)" }
-    ]
+  {
+   "id": "SAMPLE_S",
+   "name": "부산(가상)",
+   "nameEn": "Busan (sample)",
+   "sea": "남해",
+   "lat": 34.9,
+   "lon": 128.6,
+   "note": "가상 관측소",
+   "datasets": {
+    "observed": {
+     "file": "stations/SAMPLE_S/observed.csv",
+     "adapter": "csv-tide",
+     "kind": "observed",
+     "label": "관측 조위",
+     "stationId": "SAMPLE_S",
+     "datum": "UNCONFIRMED",
+     "datumLabel": "가상(예시)",
+     "datumConfirmed": false,
+     "unit": "cm",
+     "intervalMinutes": 60,
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "value": {
+      "column": "tide_cm"
+     },
+     "quality": {
+      "column": "qc",
+      "ok": [
+       "1"
+      ],
+      "bad": [
+       "3"
+      ],
+      "missing": [
+       "9"
+      ]
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "예시 데이터 생성기(가상)",
+      "title": "기능 확인용 예시 데이터",
+      "identifier": "sample-SAMPLE_S"
+     }
+    },
+    "predicted": {
+     "file": "stations/SAMPLE_S/predicted.csv",
+     "adapter": "csv-tide",
+     "kind": "predicted",
+     "label": "예측 조위",
+     "stationId": "SAMPLE_S",
+     "datum": "UNCONFIRMED",
+     "datumLabel": "가상(예시)",
+     "datumConfirmed": false,
+     "unit": "cm",
+     "intervalMinutes": 60,
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "value": {
+      "column": "pred_cm"
+     },
+     "quality": {
+      "column": "qc",
+      "ok": [
+       "1"
+      ],
+      "bad": [
+       "3"
+      ],
+      "missing": [
+       "9"
+      ]
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "예시 데이터 생성기(가상)",
+      "title": "기능 확인용 예시 데이터",
+      "identifier": "sample-SAMPLE_S"
+     }
+    },
+    "weather": {
+     "file": "stations/SAMPLE_S/weather.csv",
+     "adapter": "csv-weather",
+     "intervalMinutes": 60,
+     "station": {
+      "id": "SAMPLE-WX",
+      "name": "가상 기상관측소",
+      "lat": 34.95,
+      "lon": 128.7,
+      "note": "가상"
+     },
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "fields": {
+      "pressureSea": {
+       "column": "pressure_sea_hpa",
+       "unit": "hPa",
+       "label": "해면기압"
+      },
+      "pressureStation": {
+       "column": "pressure_station_hpa",
+       "unit": "hPa",
+       "label": "현지기압"
+      },
+      "windSpeed": {
+       "column": "wind_ms",
+       "unit": "m/s",
+       "label": "풍속"
+      },
+      "windDir": {
+       "column": "wind_dir_deg",
+       "unit": "deg",
+       "label": "풍향"
+      }
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "예시 데이터 생성기(가상)",
+      "title": "가상 기상",
+      "identifier": "sample-weather"
+     }
+    }
+   },
+   "timeShiftFlags": []
+  },
+  {
+   "id": "SAMPLE_E",
+   "name": "묵호(가상)",
+   "nameEn": "Mukho (sample)",
+   "sea": "동해",
+   "lat": 37.6,
+   "lon": 129.1,
+   "note": "가상 관측소",
+   "datasets": {
+    "observed": {
+     "file": "stations/SAMPLE_E/observed.csv",
+     "adapter": "csv-tide",
+     "kind": "observed",
+     "label": "관측 조위",
+     "stationId": "SAMPLE_E",
+     "datum": "UNCONFIRMED",
+     "datumLabel": "가상(예시)",
+     "datumConfirmed": false,
+     "unit": "cm",
+     "intervalMinutes": 60,
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "value": {
+      "column": "tide_cm"
+     },
+     "quality": {
+      "column": "qc",
+      "ok": [
+       "1"
+      ],
+      "bad": [
+       "3"
+      ],
+      "missing": [
+       "9"
+      ]
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "예시 데이터 생성기(가상)",
+      "title": "기능 확인용 예시 데이터",
+      "identifier": "sample-SAMPLE_E"
+     }
+    },
+    "predicted": {
+     "file": "stations/SAMPLE_E/predicted.csv",
+     "adapter": "csv-tide",
+     "kind": "predicted",
+     "label": "예측 조위",
+     "stationId": "SAMPLE_E",
+     "datum": "UNCONFIRMED",
+     "datumLabel": "가상(예시)",
+     "datumConfirmed": false,
+     "unit": "cm",
+     "intervalMinutes": 60,
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "value": {
+      "column": "pred_cm"
+     },
+     "quality": {
+      "column": "qc",
+      "ok": [
+       "1"
+      ],
+      "bad": [
+       "3"
+      ],
+      "missing": [
+       "9"
+      ]
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "예시 데이터 생성기(가상)",
+      "title": "기능 확인용 예시 데이터",
+      "identifier": "sample-SAMPLE_E"
+     }
+    },
+    "weather": {
+     "provided": false
+    }
+   },
+   "timeShiftFlags": []
   }
+ ],
+ "past": {
+  "id": "SAMPLE_S-2099-08",
+  "stationId": "SAMPLE_S",
+  "label": "부산(가상) 2099년 8월",
+  "period": {
+   "start": "2099-08-01",
+   "end": "2099-08-31"
+  },
+  "datasets": {
+   "observed": {
+    "file": "past/SAMPLE_S-2099-08/observed.csv",
+    "adapter": "csv-tide",
+    "kind": "observed",
+    "label": "관측 조위",
+    "stationId": "SAMPLE_S",
+    "datum": "UNCONFIRMED",
+    "datumLabel": "가상(예시)",
+    "datumConfirmed": false,
+    "unit": "cm",
+    "intervalMinutes": 60,
+    "time": {
+     "column": "time",
+     "offset": "+09:00"
+    },
+    "value": {
+     "column": "tide_cm"
+    },
+    "quality": {
+     "column": "qc",
+     "ok": [
+      "1"
+     ],
+     "bad": [
+      "3"
+     ],
+     "missing": [
+      "9"
+     ]
+    },
+    "missingValues": [
+     ""
+    ],
+    "meta": {
+     "provider": "예시 데이터 생성기(가상)",
+     "title": "기능 확인용 예시 데이터",
+     "identifier": "sample-SAMPLE_S"
+    }
+   },
+   "weather": {
+    "file": "past/SAMPLE_S-2099-08/weather.csv",
+    "adapter": "csv-weather",
+    "intervalMinutes": 60,
+    "station": {
+     "id": "SAMPLE-WX",
+     "name": "가상 기상관측소",
+     "lat": 34.95,
+     "lon": 128.7,
+     "note": "가상"
+    },
+    "time": {
+     "column": "time",
+     "offset": "+09:00"
+    },
+    "fields": {
+     "pressureSea": {
+      "column": "pressure_sea_hpa",
+      "unit": "hPa",
+      "label": "해면기압"
+     },
+     "pressureStation": {
+      "column": "pressure_station_hpa",
+      "unit": "hPa",
+      "label": "현지기압"
+     },
+     "windSpeed": {
+      "column": "wind_ms",
+      "unit": "m/s",
+      "label": "풍속"
+     },
+     "windDir": {
+      "column": "wind_dir_deg",
+      "unit": "deg",
+      "label": "풍향"
+     }
+    },
+    "missingValues": [
+     ""
+    ],
+    "meta": {
+     "provider": "예시 데이터 생성기(가상)",
+     "title": "가상 기상",
+     "identifier": "sample-weather"
+    }
+   },
+   "typhoon": {
+    "name": "가상 태풍 예시",
+    "year": 2099,
+    "label": "가상 태풍(예시)",
+    "note": "기능 확인용 가상 태풍",
+    "track": {
+     "file": "past/SAMPLE_S-2099-08/typhoon_track.csv",
+     "kind": "가상 경로(예시)",
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "latColumn": "lat",
+     "lonColumn": "lon",
+     "pressureColumn": "pressure_hpa",
+     "windColumn": "max_wind_ms"
+    },
+    "meta": {
+     "provider": "예시 데이터 생성기(가상)",
+     "title": "가상 태풍(예시)",
+     "identifier": "sample-typhoon"
+    }
+   }
+  }
+ },
+ "recentTyphoonCheck": {
+  "text": "예시: 이 기간 가까이 지난 가상 태풍 없음."
+ },
+ "moonPhases": {
+  "file": "moon.csv",
+  "adapter": "csv-moon",
+  "time": {
+   "column": "time",
+   "offset": "+09:00"
+  },
+  "phaseColumn": "phase",
+  "lunarColumn": "lunar",
+  "meta": {
+   "provider": "Meeus 계산식(예시 사례)",
+   "identifier": "moon-calc-meeus"
+  }
+ },
+ "defaults": {
+  "month": "2099-09",
+  "inq1": {
+   "start": "2099-09-10 00:00",
+   "end": "2099-09-13 00:00",
+   "count": {
+    "start": "2099-09-11 02:00",
+    "end": "2099-09-12 02:00"
+   }
+  },
+  "inq2": {
+   "start": "2099-09-10 00:00",
+   "end": "2099-09-13 00:00"
+  },
+  "inq4": {
+   "a": {
+    "start": "2099-08-14 00:00",
+    "end": "2099-08-19 00:00"
+   },
+   "b": {
+    "start": "2099-09-20 00:00",
+    "end": "2099-09-25 00:00"
+   }
+  }
+ },
+ "description": {
+  "provider": "예시 데이터 생성기(가상)",
+  "datumNote": "가상 자료"
+ }
 }

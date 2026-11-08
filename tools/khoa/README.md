@@ -212,3 +212,11 @@ npm run kma:typhoon
 
 - 안내문에 따르면 통계자료는 최종 품질처리 후 익월 15일 이후에 제공됩니다. 또 "조석기준면 결정 전 자료는 참고용"이라는 주의가 있습니다.
 - 내려받은 파일의 형식(열 구성, 머리말에 기준면이 적혀 있는지)은 아직 확인하지 못했습니다. 파일 하나를 주시면 변환기를 그 형식에 맞춰 추가하겠습니다.
+
+## 수행평가 자료(인천·부산·묵호 2025-10~2026-09) — 형식 3 사례
+
+1. 관측소 계획: `data/stations/plan-2025-26.json`(인천 DT_0001·ASOS 112, 부산 DT_0005·ASOS 159, 묵호 DT_0006·ASOS 106 동해).
+2. 수집: 관측소×(조위|기상) 6개 작업을 나눠 `data/raw-work/par/<관측소>-<tide|wx>/`(git 제외)에 받았습니다(5,475건 모두 정상).
+3. 원본 보관: 낱개 응답을 자료·관측소·월별 gzip 묶음으로 `data/raw/khoa-2025-26/packs/`에, 합친 수집 기록을 `manifest.json`에 둡니다(`tools/lib/rawpack.mjs`). 빌드 도구는 낱개 파일이 없으면 묶음에서 같은 경로를 읽습니다. URL의 인증키는 `serviceKey=***`로 가려져 있습니다.
+4. 시간대 확인: `node tools/khoa/check-time-basis.mjs --fetch`(공식 자료를 받아 `time-check/reference/`에 저장, PDF 글자 추출에 `pdftotext` 필요) 또는 인수 없이(저장해 둔 자료로 다시 비교). 결과는 `data/raw/khoa-2025-26/time-check/README.md`·`result.json`. 시각은 고치지 않고 보고만 합니다.
+5. 사례 만들기: `node tools/khoa/build-assess.mjs` → `data/cases/khoa-assess-2025-26/`. 부산 2022년 9월(관측 조위·ASOS)은 기존 원본 `data/raw/khoa/`에서, 태풍 힌남노는 `data/raw/kma/typhoon/2022-11/`(실황 분석 위치, KST)에서 가져옵니다. 탐구 4 기간 B 주변 태풍 확인 자료는 `data/raw/kma/typhoon/2026-09-check/`(거리만 사용).

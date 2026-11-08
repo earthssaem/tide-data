@@ -122,7 +122,7 @@ test('보호된 설정 요청: 로그인·CSRF·출처 확인, 서버 저장소 
     setEnv(baseEnv());
     const ok = await call(login, req({ method: 'POST', body: { password: PW } }));
     const cookie = cookieOf(ok), csrf = ok.body.csrfToken;
-    const body = { format: 'tide-lab-assessment-setup', version: 1, caseId: 'khoa-multi-2022-09', stations: { DT_0005: { enabled: true, memo: '교사만 보는 메모' } } };
+    const body = { format: 'tide-lab-assessment-setup', version: 2, caseId: 'khoa-assess-2025-26', month: '2026-09', memo: '교사만 보는 메모' };
     assert.equal((await call(setup, req({ method: 'PUT', body, cookie, csrf }))).statusCode, 503, '저장소 없음 → 저장 거부');
     setEnv({ ...baseEnv(), UPSTASH_REDIS_REST_URL: up.url, UPSTASH_REDIS_REST_TOKEN: up.token });
     assert.equal((await call(setup, req())).statusCode, 401, '로그인 전 읽기 거부');
@@ -136,7 +136,7 @@ test('보호된 설정 요청: 로그인·CSRF·출처 확인, 서버 저장소 
     assert.equal((await call(setup, req({ method: 'PUT', body, cookie, csrf }))).statusCode, 200);
     const got = await call(setup, req({ cookie }));
     assert.equal(got.statusCode, 200);
-    assert.equal(got.body.setup.stations.DT_0005.memo, '교사만 보는 메모');
+    assert.equal(got.body.setup.memo, '교사만 보는 메모');
     assert.equal(csrfFor(SECRET, verifySession(cookie.split('=')[1], SECRET).sid), csrf);
   } finally { await up.close(); }
 });

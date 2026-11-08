@@ -231,7 +231,9 @@ export function sourceRows(ad, state) {
     if (ad.past?.typhoon) out.push({ role: '태풍 정보', lines: dsLines(ad.past.typhoon, [ad.past.typhoon.trackKind && `경로 종류: ${ad.past.typhoon.trackKind}`, ad.past.typhoon.note].filter(Boolean)) });
   }
   if (rv.moon && ad.moon) out.push({ role: '달의 위상', lines: [ad.moon.meta.provider && `제공: ${ad.moon.meta.provider}`, ad.moon.meta.identifier && `식별자: ${ad.moon.meta.identifier}`].filter(Boolean) });
-  out.push({ role: '시간대 확인', lines: [ad.timeBasis?.note || '', ad.timeBasis?.evidence ? `근거: ${ad.timeBasis.evidence}` : ''].filter(Boolean) });
+  const tb = ad.timeBasis || {};
+  const tbNote = rv.weather ? tb.note : tb.confirmed ? '조위(예측·관측)는 국립해양조사원 조석표(시각 9hE)·바다누리 관측값과 대조해 KST로 확인' : tb.note;
+  out.push({ role: '시간대 확인', lines: [tbNote || '', tb.evidence ? `근거: ${tb.evidence}` : ''].filter(Boolean) });
   return out;
 }
 

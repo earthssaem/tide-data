@@ -1,6 +1,5 @@
 // 교사용 평가 설정 화면 (?mode=teacher)
-// - 관측소별: 평가에 사용 여부, 분석할 연·월, 기본·집중 관찰 구간, 달의 위상·기상·태풍 연결, 사용할 문항, 교사용 메모
-// - 한 달 그래프에서 끌어서 구간을 고른 뒤 [기본 관찰 구간으로 지정]/[집중 관찰 구간으로 지정]
+// - 문항 켜기·끄기, 기본 분석 연월, 탐구 1 구간(3일 + 문항 ②의 24시간), 탐구 2 지역 비교 기간, 탐구 4 비교 기간(A·B), 교사용 메모
 // - 교사 로그인(서버에서 비밀번호·세션 확인)을 통과해야 화면이 열린다. 교사용 메모가 든 설정은 서버 저장소가 있으면
 //   로그인으로 보호된 API(/api/teacher/setup)에 저장하고, 없으면 이 브라우저에만 저장한다. 학생에게는 적용되지 않는다.
 // - 학생에게 적용: [설정 저장·내보내기] → '학생용 배포 파일'(assessment.json, 메모 제외)을 받아 data/assessment.json을 바꾼다.
@@ -8,16 +7,16 @@
 
 import { loadRegistry, loadCase } from '../data/loader.js';
 import {
-  SETUP_FORMAT, SETUP_VERSION, parseSetup, caseEntries, defaultStationSetup, sanitizeStationSetup, applySetup, availableMonths,
-  validateStationSetup, studentDeployment, teacherExport, loadTeacherSetup, saveTeacherSetup, clearTeacherSetup, loadDeployedSetup, fmtLocal, parseLocal,
+  SETUP_FORMAT, SETUP_VERSION, parseSetup, defaultSetup, applySetup, validateSetup, studentDeployment, teacherExport,
+  loadTeacherSetup, saveTeacherSetup, clearTeacherSetup, loadDeployedSetup, fmtLocal, parseLocal, monthRange,
 } from '../setup/setup.js';
-import { INQUIRIES, activeQuestions } from '../content/questions.js';
-import { inq2MonthSpec, COLORS } from '../chart/specs.js';
+import { INQUIRIES, CONCLUSION, CIRCLED } from '../content/questions.js';
+import { inq1MainSpec, inq1DailySpec, inq2Specs, inq4TideSpecs } from '../chart/assess.js';
 import { layoutChart } from '../chart/layout.js';
 import { layoutToSVG, screenMeasure } from '../chart/svg.js';
 import { $, h, confirmDialog, alertDialog, choiceDialog, downloadBlob, pickFile, toast } from '../util/dom.js';
 import { escapeHtml } from '../util/format.js';
-import { fmtRange, fmtDateTime, HOUR } from '../util/time.js';
+import { fmtRange, fmtDateTime, HOUR, DAY } from '../util/time.js';
 import { checkSession, renderLogin, teacherFetch, logout, expiryText, currentSession } from '../teacher-auth.js';
 
 const LEVEL = { error: ['오류', 'badge-err'], warn: ['주의', 'badge-warn'], info: ['안내', 'badge-info'], ok: ['확인', 'badge-ok'] };
@@ -70,9 +69,9 @@ async function start(app, message = '') {
     if (!r.ok) storage = 'local';
   }
   const local = loadTeacherSetup();
-  const cfg = serverCfg || local || (deployed ? JSON.parse(JSON.stringify(deployed)) : { format: SETUP_FORMAT, version: SETUP_VERSION, caseId: registry.defaultCase, title: '', reviewNote: '', stations: {} });
+  const cfg = serverCfg || local || (deployed ? JSON.parse(JSON.stringify(deployed)) : { format: SETUP_FORMAT, version: SETUP_VERSION, caseId: registry.defaultCase });
   const source = serverCfg ? '서버에 저장한 교사 설정(로그인으로 보호)' : local ? '이 브라우저에 저장한 교사 설정' : deployed ? '학생용 배포 설정(data/assessment.json)' : '새 설정';
-  const T = { registry, deployed, cfg, source, storage, raw: null, entries: [], selected: null, sel: null, savedAt: serverCfg || local ? Date.now() : null, saveTimer: null };
+  const T = { registry, deployed, cfg, source, storage, ad: null, savedAt: serverCfg || local ? Date.now() : null, saveTimer: null };
   app.teacher = T; // 검증용
   await loadCaseFor(T, cfg.caseId);
   render(app, T);
@@ -84,16 +83,10 @@ async function start(app, message = '') {
 }
 
 async function loadCaseFor(T, caseId) {
-  const entry = T.registry.cases.find((c) => c.id === caseId) || T.registry.cases.find((c) => !c.sample);
-  T.cfg.caseId = entry.id;
-  T.raw = await loadCase(entry);
-  T.entries = caseEntries(T.raw);
-  // 모든 관측소 설정을 채워 둔다(파일에 없는 관측소는 사례 파일의 기간을 임시 후보로, 평가에는 쓰지 않음)
-  const st = {};
-  for (const e of T.entries) st[e.id] = sanitizeStationSetup(T.cfg.stations?.[e.id], defaultStationSetup(e.cd, { enabled: false }));
-  T.cfg.stations = st;
-  T.selected = T.entries.find((e) => st[e.id].enabled)?.id || T.entries[0].id;
-  T.sel = null;
+  const entry = T.registry.cases.find((c) => c.id === caseId && !c.sample) || T.registry.cases.find((c) => !c.sample);
+  T.ad = await loadCase(entry);
+  const fb = defaultSetup(T.ad);
+  T.cfg = T.cfg && T.cfg.caseId === entry.id ? parseSetup({ ...fb, ...T.cfg, format: SETUP_FORMAT, version: SETUP_VERSION }, fb) : fb;
 }
 
 function persist(T) {
@@ -101,9 +94,7 @@ function persist(T) {
   const stamp = () => fmtDateTime(Date.now(), { offsetMinutes: -new Date().getTimezoneOffset() });
   if (T.storage === 'server') {
     // 이 브라우저에는 메모를 뺀 사본만(공용 컴퓨터에 메모가 남지 않게), 서버에는 전체를 로그인·CSRF 확인 후 저장
-    const copy = JSON.parse(JSON.stringify(T.cfg));
-    for (const st of Object.values(copy.stations || {})) st.memo = '';
-    saveTeacherSetup(copy);
+    saveTeacherSetup({ ...T.cfg, memo: '' });
     if (el) el.textContent = '서버에 저장하는 중…';
     clearTimeout(T.saveTimer);
     T.saveTimer = setTimeout(async () => {
@@ -129,22 +120,24 @@ async function doLogout(app, T) {
   await start(app, '로그아웃했습니다.');
 }
 
+const ymd = (t, tz) => fmtLocal(t, tz).slice(0, 10);
+const addDaysStr = (d, n) => new Date(Date.parse(`${d}T00:00:00Z`) + n * DAY).toISOString().slice(0, 10);
+const daysBetween = (a, b) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / DAY);
+
 function render(app, T) {
   const screen = $('#screen');
   screen.className = 'screen screen-teacher';
   screen.innerHTML = '';
   const realCases = T.registry.cases.filter((c) => !c.sample);
   const sampleCases = T.registry.cases.filter((c) => c.sample);
-
   screen.append(h('div', { class: 'inq-head' },
     h('h1', {}, '교사용 평가 설정'),
-    h('p', { class: 'inq-intro' }, '관측소별로 평가에 사용할지, 분석할 달과 관찰 구간, 연결할 자료, 사용할 문항을 정합니다. 확보한 실제 자료의 범위 안에서만 고를 수 있고, 없는 자료는 만들지 않습니다.')));
-
+    h('p', { class: 'inq-intro' }, '문항 사용 여부, 분석할 달, 탐구별 구간·기간을 정합니다. 확보한 실제 자료의 범위 안에서만 고를 수 있고, 없는 자료는 만들지 않습니다. 대조·소조·조석 형태의 정답을 학생에게 지정하는 기능은 없습니다.')));
   const steps = h('section', { class: 'card t-howto', id: 't-howto' });
   steps.innerHTML = `<h2>설정 저장과 학생 적용은 다릅니다</h2>
     <ol>
-      <li><b>${T.storage === 'server' ? '서버에 저장(교사 로그인으로 보호)' : '이 브라우저에 저장'}</b> — ${T.storage === 'server' ? '아래에서 바꾼 내용은 로그인한 교사만 읽고 쓸 수 있는 서버 저장소에 자동 저장됩니다(이 브라우저에는 메모를 뺀 사본).' : '서버 저장소가 설정되지 않아, 아래에서 바꾼 내용은 이 컴퓨터의 이 브라우저에만 자동 저장됩니다.'} [학생용 미리보기]에만 적용되고, 학생 화면은 바뀌지 않습니다.</li>
-      <li><b>학생에게 적용(배포)</b> — [설정 저장·내보내기]에서 <b>학생용 배포 파일</b>(<code>assessment.json</code>, 교사용 메모 제외)을 받아 저장소의 <code>data/assessment.json</code>을 바꾸고 배포(main 반영)합니다. 학생 화면을 새로 고치면 적용됩니다.</li>
+      <li><b>${T.storage === 'server' ? '서버에 저장(교사 로그인으로 보호)' : '이 브라우저에 저장'}</b> — 아래에서 바꾼 내용은 자동 저장되며 [학생용 미리보기]에만 적용됩니다. 학생 화면은 바뀌지 않습니다.</li>
+      <li><b>학생에게 적용(배포)</b> — [설정 저장·내보내기]에서 <b>학생용 배포 파일</b>(<code>assessment.json</code>, 교사용 메모 제외)을 받아 저장소의 <code>data/assessment.json</code>을 바꾸고 배포(main 반영)합니다.</li>
       <li><b>보관·다른 컴퓨터</b> — <b>교사 보관용 파일</b>(메모 포함)을 받아 두고, 다른 컴퓨터에서 [설정 파일 불러오기]로 이어서 고칠 수 있습니다.</li>
     </ol>`;
   screen.append(steps);
@@ -152,206 +145,156 @@ function render(app, T) {
   const bar = h('div', { class: 'card t-bar' });
   const caseSel = h('select', { id: 't-case', 'aria-label': '평가 사례' });
   caseSel.innerHTML = realCases.map((c) => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.label || c.id)}</option>`).join('');
-  caseSel.value = T.cfg.caseId;
+  caseSel.value = T.ad.id;
   caseSel.addEventListener('change', async () => {
-    if (!(await confirmDialog({ title: '평가 사례 바꾸기', body: '평가 사례를 바꾸면 관측소 설정이 새 사례의 기본값으로 바뀝니다. 지금 설정을 보관하려면 먼저 교사 보관용 파일을 내보내세요.', okLabel: '사례 바꾸기' }))) { caseSel.value = T.cfg.caseId; return; }
-    T.cfg = { format: SETUP_FORMAT, version: SETUP_VERSION, caseId: caseSel.value, title: '', reviewNote: '', stations: {} };
+    if (!(await confirmDialog({ title: '평가 사례 바꾸기', body: '평가 사례를 바꾸면 설정이 새 사례의 기본값으로 바뀝니다. 지금 설정을 보관하려면 먼저 교사 보관용 파일을 내보내세요.', okLabel: '사례 바꾸기' }))) { caseSel.value = T.ad.id; return; }
+    T.cfg = null;
     await loadCaseFor(T, caseSel.value);
     persist(T);
     render(app, T);
   });
-  const previewA = h('a', { class: 'btn btn-primary', id: 't-preview', href: '?mode=preview', target: '_blank', rel: 'noopener', onclick: () => persist(T) }, '학생용 미리보기');
   bar.append(...[
     h('div', { class: 't-bar-row t-auth-row' },
       h('span', { class: 'badge badge-ok', id: 't-auth' }, `교사 로그인됨 · ${expiryText(currentSession()?.expiresAt)}`),
       h('button', { type: 'button', class: 'btn btn-ghost btn-sm', id: 't-logout', onclick: () => doLogout(app, T) }, '로그아웃')),
-    h('div', { class: 't-bar-row' }, h('label', { for: 't-case' }, h('b', {}, '평가 사례 ')), caseSel,
-      h('span', { class: 'muted small' }, `설정 출처: ${T.source}`)),
+    h('div', { class: 't-bar-row' }, h('label', { for: 't-case' }, h('b', {}, '평가 사례 ')), caseSel, h('span', { class: 'muted small' }, `설정 출처: ${T.source}`)),
     h('div', { class: 't-bar-row' },
-      previewA,
+      h('a', { class: 'btn btn-primary', id: 't-preview', href: '?mode=preview', target: '_blank', rel: 'noopener', onclick: () => persist(T) }, '학생용 미리보기'),
       h('button', { type: 'button', class: 'btn btn-secondary', id: 't-export', onclick: () => exportDialog(T) }, '설정 저장·내보내기'),
       h('button', { type: 'button', class: 'btn btn-secondary', id: 't-import', onclick: () => importSetup(app, T) }, '설정 파일 불러오기'),
       h('button', { type: 'button', class: 'btn btn-ghost', id: 't-revert', onclick: () => revert(app, T) }, '학생용 배포 설정으로 되돌리기')),
-    h('p', { class: 'muted small', id: 't-saved' }, T.savedAt ? '이 브라우저에 저장된 교사 설정을 불러왔습니다(학생에게는 적용되지 않음).' : '아직 이 브라우저에 저장한 교사 설정이 없습니다. 바꾸는 즉시 자동 저장됩니다.'),
+    h('p', { class: 'muted small', id: 't-saved' }, T.savedAt ? '저장된 교사 설정을 불러왔습니다(학생에게는 적용되지 않음).' : '아직 저장한 교사 설정이 없습니다. 바꾸는 즉시 자동 저장됩니다.'),
     T.deployed?.reviewNote ? h('p', { class: 'notice notice-accent small' }, `배포 설정 메모: ${T.deployed.reviewNote}`) : null,
     app.deployError ? h('p', { class: 'notice notice-warn small' }, app.deployError) : null,
     sampleCases.length ? h('p', { class: 'small' }, '기능 시험(가상 데이터, 학생에게 제공하지 않음): ', ...sampleCases.map((c, i) => [i ? ' · ' : '', h('a', { href: `?mode=preview&case=${encodeURIComponent(c.id)}`, target: '_blank', rel: 'noopener' }, c.label || c.id)])) : null,
   ].filter(Boolean));
   screen.append(bar);
+  screen.append(editor(app, T));
+}
 
-  const lay = h('div', { class: 't-layout' });
-  const listCard = h('section', { class: 'card t-list', 'aria-labelledby': 't-list-h' });
-  listCard.append(h('h2', { id: 't-list-h' }, `관측소 (${T.entries.length}곳)`), h('p', { class: 'muted small' }, '교사용 화면에서는 확보한 모든 관측소를 검토할 수 있습니다. 학생 목록에는 ‘사용’을 켠 관측소만 나타납니다.'));
-  const tbl = h('table', { class: 'data-table compact', id: 't-stations' });
-  tbl.innerHTML = '<thead><tr><th scope="col">사용</th><th scope="col">관측소</th><th scope="col">해역</th><th scope="col">분석 월</th><th scope="col">상태</th></tr></thead>';
-  const tb = h('tbody');
-  for (const e of T.entries) {
-    const st = T.cfg.stations[e.id];
-    const v = validateStationSetup(e.cd, st);
-    const nErr = v.filter((x) => x.level === 'error').length, nWarn = v.filter((x) => x.level === 'warn').length;
-    const tr = h('tr', { class: e.id === T.selected ? 'focus' : '', 'data-id': e.id });
-    const cb = h('input', { type: 'checkbox', 'aria-label': `${e.name} 평가에 사용`, class: 't-enable' });
-    cb.checked = st.enabled;
-    cb.addEventListener('change', () => { st.enabled = cb.checked; persist(T); render(app, T); });
-    const td0 = h('td'); td0.append(cb);
-    const nameBtn = h('button', { type: 'button', class: 'link-btn', onclick: () => { T.selected = e.id; T.sel = null; render(app, T); } }, `${e.name} `, h('span', { class: 'muted small' }, e.id));
-    const td1 = h('td'); td1.append(nameBtn);
-    tr.append(td0, td1, h('td', {}, e.sea || '—'), h('td', {}, st.month),
-      h('td', {}, !st.reviewed ? h('span', { class: 'badge badge-warn' }, '교사 검토 필요') : h('span', { class: 'badge badge-ok' }, '검토 완료'),
-        nErr ? h('span', { class: 'badge badge-err' }, `오류 ${nErr}`) : null, nWarn ? h('span', { class: 'badge badge-info' }, `주의 ${nWarn}`) : null));
-    tb.append(tr);
-  }
-  tbl.append(tb);
-  listCard.append(h('div', { class: 'table-host' }, tbl));
-  lay.append(listCard, editor(app, T));
-  screen.append(lay);
+function chartBox(id, height, build, title) {
+  const host = h('div', { class: 't-chart', id });
+  requestAnimationFrame(() => {
+    const width = Math.max(300, Math.min(880, host.clientWidth || 760));
+    const specs = [].concat(build({ width, height, measure: screenMeasure, fontSize: 12 }));
+    host.innerHTML = specs.map((sp) => layoutToSVG(layoutChart(sp), { title })).join('');
+  });
+  return host;
 }
 
 function editor(app, T) {
-  const e = T.entries.find((x) => x.id === T.selected);
-  const raw = e.cd;
-  const st = T.cfg.stations[e.id];
-  const tz = raw.tz;
-  const card = h('section', { class: 'card t-editor', id: 't-editor', 'aria-labelledby': 't-ed-h' });
-  card.append(h('h2', { id: 't-ed-h' }, `${e.name} (${e.id}${e.sea ? ` · ${e.sea}` : ''}) 설정`));
-  const change = (fn, { rerender = true } = {}) => { fn(); persist(T); if (rerender) render(app, T); };
+  const ad = T.ad;
+  const tz = ad.tz;
+  const cfg = T.cfg;
+  const A = applySetup(ad, cfg);
+  const change = (fn) => { fn(); persist(T); render(app, T); };
+  const card = h('section', { class: 'card t-editor', id: 't-editor' });
+  const rv = h('input', { type: 'checkbox', id: 't-ed-reviewed' }); rv.checked = !!cfg.reviewed;
+  rv.addEventListener('change', () => change(() => { cfg.reviewed = rv.checked; }));
+  card.append(h('div', { class: 't-row' }, h('label', { class: 'wx-check', for: 't-ed-reviewed' }, rv, ' 검토 완료(그래프·결측을 확인함)'),
+    !cfg.reviewed ? h('span', { class: 'badge badge-warn', id: 't-review-badge' }, '교사 검토 필요 — 임시 후보 설정') : null));
 
-  const flags = h('div', { class: 't-row' });
-  const en = h('input', { type: 'checkbox', id: 't-ed-enabled' }); en.checked = st.enabled;
-  en.addEventListener('change', () => change(() => { st.enabled = en.checked; }));
-  const rv = h('input', { type: 'checkbox', id: 't-ed-reviewed' }); rv.checked = st.reviewed;
-  rv.addEventListener('change', () => change(() => { st.reviewed = rv.checked; }));
-  flags.append(...[h('label', { class: 'wx-check', for: 't-ed-enabled' }, en, ' 평가에 사용(학생 목록에 표시)'),
-    h('label', { class: 'wx-check', for: 't-ed-reviewed' }, rv, ' 검토 완료(그래프·결측을 확인함)'),
-    !st.reviewed ? h('span', { class: 'badge badge-warn', id: 't-review-badge' }, '교사 검토 필요 — 임시 후보 설정') : null].filter(Boolean));
-  card.append(flags);
-
-  // 분석할 연·월
-  const months = availableMonths(raw);
-  const mSel = h('select', { id: 't-month', 'aria-label': '분석할 연·월' });
-  mSel.innerHTML = (months.some((m) => m.key === st.month) ? '' : `<option value="${escapeHtml(st.month)}">${escapeHtml(st.month)} (자료 없음)</option>`) + months.map((m) => `<option value="${m.key}">${m.key} (관측 ${m.valid}/${m.expected})</option>`).join('');
-  mSel.value = st.month;
-  mSel.addEventListener('change', () => change(() => { st.month = mSel.value; }));
-  card.append(h('div', { class: 't-row' }, h('label', { for: 't-month' }, h('b', {}, '분석할 연·월 ')), mSel,
-    h('span', { class: 'muted small' }, '확보한 관측 자료가 있는 달만 고를 수 있습니다. 다른 연도·기간은 같은 구조의 사례 자료를 수집해 추가하면 여기에 나타납니다.')));
-
-  // 한 달 그래프(끌어서 구간 고르기)
-  const cdM = applySetup(raw, st);
-  const [m0, m1] = cdM.ranges.inq2;
-  const chartCard = h('div', { class: 't-chart' });
-  const host = h('div', { class: 't-brush', id: 't-brush', role: 'application', 'aria-label': '한 달 관측 조위. 끌어서 구간을 고릅니다. 키보드로는 아래 시각 입력란을 쓰세요.' });
-  const selText = h('p', { class: 'small', id: 't-sel' });
-  chartCard.append(h('p', { class: 'small muted' }, '그래프를 끌어서 구간을 고른 뒤 아래 버튼을 누르세요(1시간 단위로 맞춥니다). 점선은 달의 위상 시각(교사용 참고 — 학생에게는 탐구 2에서 공개 전까지 숨김)입니다.'), host, selText);
-  const btnRow = h('div', { class: 't-row' },
-    h('button', { type: 'button', class: 'btn btn-primary btn-sm', id: 't-set-basic', onclick: () => setRange('basic') }, '기본 관찰 구간으로 지정'),
-    h('button', { type: 'button', class: 'btn btn-accent btn-sm', id: 't-set-focus', onclick: () => setRange('focus') }, '집중 관찰 구간으로 지정'));
-  chartCard.append(btnRow);
-  card.append(chartCard);
-
-  let layout = null;
-  const draw = () => {
-    const width = Math.max(320, Math.min(900, host.clientWidth || 760));
-    const spec = inq2MonthSpec({ cd: { ...cdM, moon: raw.moon }, width, height: 250, measure: screenMeasure, fontSize: 12.5 }, { selectedDays: [], showMoon: !!raw.moon }, null);
-    const band = (r, color, op) => { const a = parseLocal(r?.start, tz), b = parseLocal(r?.end, tz); return Number.isFinite(a) && Number.isFinite(b) ? { t0: a, t1: b, fill: color, opacity: op, stroke: color, strokeWidth: 1.2 } : null; };
-    spec.bands = [band(st.basic, '#1f5fbf', 0.16), band(st.focus, '#d9480f', 0.16), T.sel ? { t0: T.sel[0], t1: T.sel[1], fill: '#5b6675', opacity: 0.22, stroke: '#1d2733', strokeWidth: 1.4, dash: [4, 3] } : null].filter(Boolean);
-    spec.legend = [
-      ...spec.legend.filter((L) => L.kind !== 'barHollow'),
-      { kind: 'bar', label: '기본 관찰 구간', color: '#1f5fbf' },
-      { kind: 'bar', label: '집중 관찰 구간', color: '#d9480f' },
-      ...(T.sel ? [{ kind: 'barHollow', label: '끌어서 고른 구간', color: '#1d2733' }] : []),
-    ];
-    layout = layoutChart(spec);
-    host.innerHTML = layoutToSVG(layout, { title: `${e.name} ${st.month} 한 달 관측 조위` });
-    selText.textContent = T.sel ? `고른 구간: ${fmtRange(T.sel[0], T.sel[1], tz)} (${Math.round((T.sel[1] - T.sel[0]) / HOUR)}시간)` : '아직 고른 구간이 없습니다.';
+  const sel = (id, label, options, value, onChange) => {
+    const s = h('select', { id, 'aria-label': label });
+    s.innerHTML = options.map(([v, t]) => `<option value="${escapeHtml(v)}">${escapeHtml(t)}</option>`).join('');
+    s.value = value;
+    s.addEventListener('change', () => change(() => onChange(s.value)));
+    return s;
   };
-  requestAnimationFrame(draw);
-  const tAt = (ev) => {
-    const r = host.firstElementChild.getBoundingClientRect();
-    const x = (ev.clientX - r.left) * (layout.width / r.width);
-    const t = layout.xToT(Math.min(layout.plot.x + layout.plot.w, Math.max(layout.plot.x, x)));
-    return Math.min(m1, Math.max(m0, Math.round(t / HOUR) * HOUR));
-  };
-  let drag = null;
-  host.addEventListener('pointerdown', (ev) => { if (!layout || ev.button !== 0) return; host.setPointerCapture?.(ev.pointerId); drag = tAt(ev); T.sel = [drag, drag + HOUR]; draw(); });
-  host.addEventListener('pointermove', (ev) => { if (drag == null) return; const t = tAt(ev); T.sel = t >= drag ? [drag, Math.max(drag + HOUR, t)] : [t, drag]; draw(); });
-  const end = () => { drag = null; };
-  host.addEventListener('pointerup', end);
-  host.addEventListener('pointercancel', end);
-  function setRange(kind) {
-    if (!T.sel || T.sel[1] - T.sel[0] < HOUR) { toast('먼저 그래프를 끌어서 구간을 고르세요.'); return; }
-    st[kind] = { start: fmtLocal(T.sel[0], tz), end: fmtLocal(T.sel[1], tz) };
-    T.sel = null;
-    persist(T);
-    toast(`${kind === 'basic' ? '기본' : '집중'} 관찰 구간을 지정했습니다. 검증 결과를 확인하세요.`);
-    render(app, T);
+  const dayOptions = (t0, t1, lastStartOffset = 0) => { const out = []; for (let t = t0; t + lastStartOffset * DAY < t1 + 1; t += DAY) out.push([ymd(t, tz), fmtDateTime(t, tz).slice(0, 10)]); return out; };
+
+  // 분석 연월
+  const fs1 = h('fieldset', { class: 't-fieldset' }, h('legend', {}, '기본 분석 연월 (탐구 1 한 달 그래프 · 탐구 3)'));
+  fs1.append(h('div', { class: 't-row' }, sel('t-month', '분석 연월', ad.months.map((m) => [m, m]), cfg.month, (v) => {
+    cfg.month = v;
+    const [m0] = monthRange(v, tz);
+    const s0 = ymd(m0 + 9 * DAY, tz);
+    cfg.inq1 = { start: `${s0} 00:00`, end: `${addDaysStr(s0, 3)} 00:00`, countStart: `${addDaysStr(s0, 1)} 00:00` };
+    cfg.inq2 = { start: `${s0} 00:00`, end: `${addDaysStr(s0, 3)} 00:00` };
+    toast('분석 연월을 바꾸어 탐구 1·2 구간을 그달 10일부터 3일로 다시 정했습니다. 그래프를 보고 조정하세요.');
+  }), h('span', { class: 'muted small' }, '그달의 부산 예측 조위 일별 변동 폭입니다. 점선은 달의 위상(교사용 참고 — 학생에게는 [달의 위상 확인] 전까지 숨김).')));
+  fs1.append(chartBox('t-month-chart', 220, (ctx) => inq1DailySpec(ctx, A, { q3: {} }, { showMoon: true, title: false }), '한 달 일별 변동 폭'));
+  card.append(fs1);
+
+  // 탐구 1
+  const [mm0, mm1] = monthRange(cfg.month, tz);
+  const i1s = cfg.inq1.start.slice(0, 10);
+  const i1len = Math.max(1, daysBetween(i1s, cfg.inq1.end.slice(0, 10)));
+  const fs2 = h('fieldset', { class: 't-fieldset' }, h('legend', {}, '탐구 1 — 3일 구간과 문항 ②의 24시간'));
+  const countOpts = [];
+  for (let t = A.win.inq1[0]; t + DAY <= A.win.inq1[1]; t += HOUR) countOpts.push([fmtLocal(t, tz), fmtLocal(t, tz)]);
+  fs2.append(h('div', { class: 't-row' },
+    h('b', {}, '시작일 '), sel('t-inq1-start', '탐구 1 시작일', dayOptions(mm0, mm1 - 2 * DAY), i1s, (v) => { cfg.inq1.start = `${v} 00:00`; cfg.inq1.end = `${addDaysStr(v, i1len)} 00:00`; cfg.inq1.countStart = `${addDaysStr(v, 1)} 00:00`; }),
+    h('b', {}, ' 길이 '), sel('t-inq1-len', '탐구 1 길이', [[2, '2일'], [3, '3일'], [4, '4일']].map(([a, b]) => [String(a), b]), String(i1len), (v) => { cfg.inq1.end = `${addDaysStr(i1s, Number(v))} 00:00`; if (parseLocal(cfg.inq1.countStart, tz) + DAY > parseLocal(cfg.inq1.end, tz)) cfg.inq1.countStart = cfg.inq1.start; }),
+    h('b', {}, ' ②의 24시간 시작 '), sel('t-inq1-count', '문항 ② 24시간 시작', countOpts, fmtLocal(A.win.count[0], tz), (v) => { cfg.inq1.countStart = v; })));
+  fs2.append(h('p', { class: 'muted small' }, '24시간의 시작·끝이 만조·간조와 겹치지 않게 고르면 학생이 횟수를 세기 쉽습니다.'));
+  fs2.append(chartBox('t-inq1-chart', 240, (ctx) => inq1MainSpec(ctx, A, { q1: {} }, { title: false }), '탐구 1 미리보기'));
+  card.append(fs2);
+
+  // 탐구 2
+  const d0 = ad.st[ad.rep].predicted.points[0].t, d1 = ad.st[ad.rep].predicted.points.at(-1).t;
+  const i2s = cfg.inq2.start.slice(0, 10);
+  const i2len = Math.max(1, daysBetween(i2s, cfg.inq2.end.slice(0, 10)));
+  const fs3 = h('fieldset', { class: 't-fieldset' }, h('legend', {}, '탐구 2 — 지역 비교 기간(인천·부산·묵호 예측 조위)'));
+  fs3.append(h('div', { class: 't-row' },
+    h('b', {}, '시작일 '), sel('t-inq2-start', '탐구 2 시작일', dayOptions(mm0, mm1 - DAY), i2s, (v) => { cfg.inq2 = { start: `${v} 00:00`, end: `${addDaysStr(v, i2len)} 00:00` }; }),
+    h('b', {}, ' 길이 '), sel('t-inq2-len', '탐구 2 길이', [1, 2, 3, 4, 5, 7].map((n) => [String(n), `${n}일`]), String(i2len), (v) => { cfg.inq2.end = `${addDaysStr(i2s, Number(v))} 00:00`; }),
+    h('button', { type: 'button', class: 'btn btn-ghost btn-xs', id: 't-inq2-same', onclick: () => change(() => { cfg.inq2 = { start: cfg.inq1.start, end: cfg.inq1.end }; }) }, '탐구 1과 같은 기간')));
+  fs3.append(chartBox('t-inq2-chart', 150, (ctx) => inq2Specs(ctx, A, 'same'), '탐구 2 미리보기'));
+  card.append(fs3);
+
+  // 탐구 4
+  const fs4 = h('fieldset', { class: 't-fieldset' }, h('legend', {}, '탐구 4 — 비교 기간(부산 관측 조위)'));
+  for (const [k, label, cd] of [['a', '기간 A', ad.past], ['b', '기간 B', ad.st[ad.rep]]]) {
+    if (!cd) continue;
+    const p0 = cd.observed.points[0].t, p1 = cd.observed.points.at(-1).t;
+    const s0 = cfg.inq4[k].start.slice(0, 10);
+    const len = Math.max(1, daysBetween(s0, cfg.inq4[k].end.slice(0, 10)));
+    fs4.append(h('div', { class: 't-row' }, h('b', {}, `${label} 시작일 `),
+      sel(`t-inq4-${k}-start`, `${label} 시작일`, dayOptions(p0, p1 - DAY), s0, (v) => { cfg.inq4[k] = { start: `${v} 00:00`, end: `${addDaysStr(v, len)} 00:00` }; }),
+      h('b', {}, ' 길이 '), sel(`t-inq4-${k}-len`, `${label} 길이`, [3, 4, 5, 6, 7].map((n) => [String(n), `${n}일`]), String(len), (v) => { cfg.inq4[k].end = `${addDaysStr(s0, Number(v))} 00:00`; }),
+      h('span', { class: 'muted small' }, ` ${fmtRange(A.win[k][0], A.win[k][1], tz)}`)));
   }
+  fs4.append(h('p', { class: 'muted small' }, `학생에게는 [추가 자료 확인] 전까지 날짜와 관측 조위만 보이고, 확인 뒤 기간 B 제목에 ‘확인한 기압·바람이 상대적으로 안정적인 기간’이 붙습니다. ${ad.recentTyphoonCheck?.text || ''}`));
+  fs4.append(chartBox('t-inq4-chart', 190, (ctx) => inq4TideSpecs(ctx, A, { revealed: false }), '탐구 4 미리보기'));
+  card.append(fs4);
+  if (!d0 || !d1) card.append(h('p', { class: 'notice notice-warn' }, '예측 조위 자료가 없습니다.'));
 
-  // 시각 직접 입력(키보드로도 지정)
-  const rangeInputs = (kind, label) => {
-    const a = h('input', { type: 'text', id: `t-${kind}-start`, value: st[kind]?.start || '', 'aria-label': `${label} 시작 (YYYY-MM-DD HH:mm)`, size: 16 });
-    const b = h('input', { type: 'text', id: `t-${kind}-end`, value: st[kind]?.end || '', 'aria-label': `${label} 끝 (YYYY-MM-DD HH:mm)`, size: 16 });
-    const ok = h('button', { type: 'button', class: 'btn btn-ghost btn-xs', id: `t-${kind}-apply`, onclick: () => change(() => { st[kind] = { start: a.value.trim(), end: b.value.trim() }; }) }, '적용');
-    return h('div', { class: 't-row' }, h('b', {}, `${label} `), a, ' ~ ', b, ok, h('span', { class: 'muted small' }, `KST · ${(() => { const x = parseLocal(st[kind]?.start, tz), y = parseLocal(st[kind]?.end, tz); return Number.isFinite(x) && Number.isFinite(y) && y > x ? `${Math.round((y - x) / HOUR)}시간` : '형식 확인'; })()}`));
-  };
-  card.append(rangeInputs('basic', '기본 관찰 구간(탐구 1)'), rangeInputs('focus', '집중 관찰 구간(탐구 3~5)'));
-
-  // 자료 연결
-  const linkBox = h('fieldset', { class: 't-fieldset' }, h('legend', {}, '자료 연결'));
-  const link = (key, label, availableRaw, note) => {
-    const cb = h('input', { type: 'checkbox', id: `t-link-${key}`, disabled: !availableRaw });
-    cb.checked = !!st.links[key] && availableRaw;
-    cb.addEventListener('change', () => change(() => { st.links[key] = cb.checked; }));
-    return h('label', { class: 'wx-check', for: `t-link-${key}` }, cb, ` ${label}`, h('span', { class: 'muted small' }, ` — ${availableRaw ? note : '이 관측소·사례에 자료 없음'}`));
-  };
-  linkBox.append(
-    link('moon', '달의 위상 자료', !!raw.availability.moonPhases, '탐구 2에서 [달의 위상 자료 확인] 후 공개'),
-    link('weather', '기상 자료(기압·바람)', !!raw.availability.weather, `탐구 5에서 공개 · ${raw.weather?.station?.name || ''}${raw.weatherDistanceKm != null && raw.weatherDistanceKm >= 0.1 ? ` (약 ${raw.weatherDistanceKm.toFixed(1)} km)` : ''}`),
-    link('typhoon', '태풍 정보(경로·시각)', !!raw.availability.typhoon, `탐구 5에서 공개${raw.typhoon ? ` · ${raw.typhoon.name}` : ''} · 태풍이 없는 사례는 끄세요`),
-    h('p', { class: 'muted small' }, `예측 조위: ${raw.availability.predicted ? (raw.availability.residual ? '있음(잔차 계산 가능)' : `있음, 잔차 계산 불가 — ${raw.residual?.problems?.[0] || ''}`) : '자료 없음(잔차를 계산하지 않음)'}`));
-  card.append(linkBox);
-
-  // 사용할 문항
+  // 문항
   const qBox = h('fieldset', { class: 't-fieldset t-questions' }, h('legend', {}, '사용할 문항'));
-  for (const def of INQUIRIES) {
-    const grp = h('div', { class: 't-qgroup' }, h('p', { class: 't-qtitle' }, `탐구 ${def.no}. ${def.title}`));
-    const on = new Set(activeQuestions(def, st).map((q) => q.id));
-    def.questions.forEach((q, i) => {
+  for (const def of [...INQUIRIES, CONCLUSION]) {
+    const grp = h('div', { class: 't-qgroup' }, h('p', { class: 't-qtitle' }, def.no <= 4 ? `탐구 ${def.no}. ${def.title}` : def.title));
+    for (const q of def.questions) {
       const cb = h('input', { type: 'checkbox', id: `t-q-${q.id}` });
-      cb.checked = on.has(q.id);
-      cb.addEventListener('change', () => change(() => { st.questions[q.id] = cb.checked; }));
-      grp.append(h('label', { class: 'wx-check t-q', for: `t-q-${q.id}` }, cb, ` ${i + 1}. ${q.text}${q.optional ? ' (선택 문항)' : ''}`));
-    });
+      cb.checked = cfg.questions[q.id] !== false;
+      cb.addEventListener('change', () => change(() => { cfg.questions[q.id] = cb.checked; }));
+      grp.append(h('label', { class: 'wx-check t-q', for: `t-q-${q.id}` }, cb, ` ${CIRCLED[q.no]} ${q.text}`));
+    }
     qBox.append(grp);
   }
-  qBox.append(h('p', { class: 'muted small' }, '대조·소조의 정답 날짜를 학생에게 지정하는 기능은 없습니다. 학생이 자료에서 직접 찾고 근거를 씁니다.'));
+  qBox.append(h('p', { class: 'muted small' }, '끈 문항은 학생 화면과 보고서에서 빠집니다. 문항 번호(①~⑫)는 바뀌지 않습니다.'));
   card.append(qBox);
 
-  // 교사용 메모
-  const memo = h('textarea', { id: 't-memo', rows: 3, placeholder: '예: 9/6 전후 해수면 상승 관찰 기대. 서해 관측소와 비교할지 결정 필요' });
-  memo.value = st.memo || '';
-  memo.addEventListener('input', () => { st.memo = memo.value; persist(T); });
-  card.append(h('label', { for: 't-memo' }, h('b', {}, '교사용 메모')), h('p', { class: 'muted small' }, '학생 화면, 학생 PDF, 학생용 배포 파일에는 들어가지 않습니다(교사 보관용 파일에만 저장).'), memo);
+  const memo = h('textarea', { id: 't-memo', rows: 3, placeholder: '예: 기간 A의 9/6 새벽 급상승을 찾는지 확인. ③에서 9/12 전후를 고르면 인정' });
+  memo.value = cfg.memo || '';
+  memo.addEventListener('input', () => { cfg.memo = memo.value; persist(T); });
+  card.append(h('label', { for: 't-memo' }, h('b', {}, '교사용 메모')), h('p', { class: 'muted small' }, '학생 화면, 학생 PDF, 학생용 배포 파일에는 들어가지 않습니다(교사 보관용 파일·서버 저장소에만 저장).'), memo);
 
-  // 검증
-  const v = validateStationSetup(raw, st);
-  const vBox = h('section', { class: 't-valid', id: 't-valid', 'aria-labelledby': 't-valid-h' });
-  vBox.append(h('h3', { id: 't-valid-h' }, '설정 검증'));
-  vBox.append(h('ul', { class: 't-vlist' }, ...v.map((x) => h('li', { class: `t-v-${x.level}` }, h('span', { class: `badge ${LEVEL[x.level][1]}` }, LEVEL[x.level][0]), ' ', h('b', {}, x.area), ` ${x.text}`))));
+  const v = validateSetup(ad, cfg);
+  const vBox = h('section', { class: 't-valid', id: 't-valid' });
+  vBox.append(h('h3', {}, '설정 검증'), h('ul', { class: 't-vlist' }, ...v.map((x) => h('li', { class: `t-v-${x.level}` }, h('span', { class: `badge ${LEVEL[x.level][1]}` }, LEVEL[x.level][0]), ' ', h('b', {}, x.area), ` ${x.text}`))));
   card.append(vBox);
   return card;
 }
 
 async function exportDialog(T) {
   persist(T);
-  const enabled = Object.entries(T.cfg.stations).filter(([, s]) => s.enabled).map(([id]) => T.entries.find((e) => e.id === id)?.name || id);
-  const notReviewed = Object.entries(T.cfg.stations).filter(([, s]) => s.enabled && !s.reviewed).map(([id]) => T.entries.find((e) => e.id === id)?.name || id);
-  const errors = T.entries.filter((e) => T.cfg.stations[e.id].enabled).flatMap((e) => validateStationSetup(e.cd, T.cfg.stations[e.id]).filter((x) => x.level === 'error').map((x) => `${e.name}: ${x.text}`));
+  const errors = validateSetup(T.ad, T.cfg).filter((x) => x.level === 'error').map((x) => `${x.area}: ${x.text}`);
   const v = await choiceDialog({
     title: '설정 저장·내보내기',
     html: true,
-    body: `<p>✓ 현재 설정은 <b>이 브라우저에 저장</b>되어 있습니다(미리보기에만 적용).</p>
-      <p>평가에 사용: ${escapeHtml(enabled.join(', ') || '없음')}</p>
-      ${notReviewed.length ? `<p class="warn">⚠ 교사 검토 필요(임시 후보): ${escapeHtml(notReviewed.join(', '))}</p>` : ''}
+    body: `<p>✓ 현재 설정은 <b>${T.storage === 'server' ? '서버' : '이 브라우저'}에 저장</b>되어 있습니다(미리보기에만 적용).</p>
+      ${!T.cfg.reviewed ? '<p class="warn">⚠ 교사 검토 필요(임시 후보 설정)</p>' : ''}
       ${errors.length ? `<p class="warn">⚠ 검증 오류: ${escapeHtml(errors.slice(0, 4).join(' / '))}${errors.length > 4 ? ' …' : ''}</p>` : ''}
       <ul><li><b>교사 보관용 파일</b>: 메모까지 모두 들어 있습니다. 다른 컴퓨터에서 이어서 고칠 때 씁니다.</li>
       <li><b>학생용 배포 파일(assessment.json)</b>: 메모를 뺀 설정입니다. 저장소의 <code>data/assessment.json</code>을 이 파일로 바꾸고 배포하면 학생 화면에 적용됩니다.</li></ul>`,

@@ -11,7 +11,6 @@ import { parseDateTime, fmtDateTime, fmtDuration, dayKey, HOUR } from '../../js/
 import { fmtSigned, fmtNum, MINUS, compass16 } from '../../js/util/format.js';
 import { segments, pairDiff, nearestValid, pointAt } from '../../js/analysis/series.js';
 import { dailyRanges } from '../../js/analysis/daily.js';
-import { computeResidual, checkComparable } from '../../js/analysis/residual.js';
 import { loadRegistry, loadCase } from '../../js/data/loader.js';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -113,31 +112,6 @@ test('일별 변동 폭: 날짜 경계(KST), 불완전한 날 표시', () => {
   assert.equal(days[1].missing, 3);
 });
 
-test('잔차: 같은 시각만 비교, 보간하지 않음', () => {
-  const obs = { stationId: 'S', datum: 'D', datumLabel: 'D', unit: 'cm', points: [
-    { t: 0, v: 100 }, { t: HOUR, v: 110 }, { t: 2 * HOUR, v: null }, { t: 3 * HOUR, v: 90 },
-  ] };
-  const pred = { stationId: 'S', datum: 'D', datumLabel: 'D', unit: 'cm', points: [
-    { t: 0, v: 80 }, { t: HOUR + 30 * 60000, v: 100 }, { t: 2 * HOUR, v: 70 }, { t: 3 * HOUR, v: 95 },
-  ] };
-  const r = computeResidual(obs, pred);
-  assert.equal(r.ok, true);
-  assert.deepEqual(r.points.map((p) => p.v), [20, null, null, -5]);
-  assert.equal(r.matched, 2);
-  assert.equal(r.obsOnly, 1);
-  assert.equal(r.predOnly, 1);
-});
-
-test('잔차: 기준면·관측소가 다르면 계산하지 않음', () => {
-  const base = { stationId: 'S', datum: 'D', datumLabel: 'D', unit: 'cm', points: [{ t: 0, v: 1 }] };
-  const r1 = computeResidual(base, { ...base, datum: 'X', datumLabel: 'X' });
-  assert.equal(r1.ok, false);
-  assert.equal(r1.points.length, 0);
-  assert.match(r1.problems[0], /기준면/);
-  assert.equal(checkComparable(base, { ...base, stationId: 'T' }).ok, false);
-  assert.equal(computeResidual(base, null).ok, false);
-});
-
 test('기상 자료: 범위 밖 값 결측, 풍향 16방위', () => {
   const csv = 'time,p,w,d\n2099-09-08 00:00,1005.2,12.5,45\n2099-09-08 01:00,-999,,400\n';
   const w = normalizeWeather(csv, {
@@ -153,39 +127,3 @@ test('기상 자료: 범위 밖 값 결측, 풍향 16방위', () => {
   assert.equal(compass16(359), '북');
 });
 
-test('예시 사례 불러오기: 자료 연결과 예시 표시', async () => {
-  const reg = await loadRegistry(readText);
-  const cd = await loadCase(reg.cases.find((c) => c.id === 'sample-2099'), readText);
-  assert.equal(cd.isSample, true);
-  assert.equal(cd.availability.residual, true);
-  assert.equal(cd.predicted.conversions[0], 'm → cm (×100)');
-  assert.ok(cd.observed.points.some((p) => p.v != null && p.v < 0), '음수 조위 포함');
-  assert.ok(cd.observed.points.some((p) => p.v == null), '결측 포함');
-  assert.ok(cd.weatherDistanceKm > 1, '기상 관측 지점 거리 계산');
-});
-
-test('검증용 사례: 기준면 불일치 → 잔차 없음, 기상·달 자료 미제공', async () => {
-  const reg = await loadRegistry(readText);
-  const cd = await loadCase(reg.cases.find((c) => c.id === 'test-minimal'), readText);
-  assert.equal(cd.availability.predicted, true);
-  assert.equal(cd.availability.residual, false);
-  assert.equal(cd.residual.points.length, 0);
-  assert.equal(cd.availability.weather, false);
-  assert.equal(cd.availability.moonPhases, false);
-  // UTC·m 원자료가 KST·cm로 변환되었는지
-  const first = cd.observed.points[0];
-  assert.equal(fmtDateTime(first.t, cd.tz), '2099-09-18 00:00');
-  assert.ok(Number.isInteger(Math.round(first.v)));
-});
-
-test('잔차: 기준면 미확인(datumConfirmed:false)이면 계산하지 않음', () => {
-  const a = { stationId: 'S', datum: 'UNCONFIRMED', datumLabel: '미확인', datumConfirmed: false, unit: 'cm', points: [{ t: 0, v: 100 }] };
-  const b = { ...a, points: [{ t: 0, v: 90 }] };
-  const r = computeResidual(a, b);
-  assert.equal(r.ok, false);
-  assert.equal(r.points.length, 0);
-  assert.match(r.problems[0], /기준면이 확인되지/);
-  // 기준면 정보가 아예 없는 자료도 미확인으로 처리
-  const s = normalizeTideSeries('time,v\n2099-09-08 00:00,1\n', tideSpec({ datum: undefined, quality: null }));
-  assert.equal(s.datumConfirmed, false);
-});

@@ -110,12 +110,11 @@ test('수집 → 원본 보관 → 사례 파일·품질 보고서', async () =>
   assert.equal(cj.isSample, false);
   assert.equal(cj.datasets.observed.datumConfirmed, false);
   assert.equal(cj.datasets.predicted.datumConfirmed, false);
-  // 앱 로더로 읽었을 때 잔차가 계산되지 않아야 함
-  const { buildCaseData } = await import(join(ROOT, 'js/data/loader.js'));
-  const cd = await buildCaseData(cj, async (f) => readFileSync(join(dir, f), 'utf8'));
-  assert.equal(cd.residual.ok, false);
-  assert.match(cd.residual.problems[0], /기준면이 확인되지/);
-  assert.equal(cd.observed.points.filter((p) => p.v === 0).length, 0);
+  // 앱 전처리로 읽었을 때 빈 값이 0이 되지 않아야 함
+  const { normalizeTideSeries } = await import(join(ROOT, 'js/data/normalize.js'));
+  const obs = normalizeTideSeries(obsCsv, cj.datasets.observed);
+  assert.equal(obs.points.filter((p) => p.v === 0).length, 0);
+  assert.ok(obs.points.some((p) => p.v == null), '결측은 null');
   assert.ok(existsSync(join(cases, 'index.json')));
 });
 
