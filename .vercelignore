@@ -1,0 +1,6 @@
+# Vercel 배포에서 제외(비밀 값·로컬 산출물)
+.env
+.env.*
+.secrets/
+node_modules/
+tests/e2e/out/

@@ -496,3 +496,8 @@ textarea:focus { border-color: var(--teal); }
 .t-row input[type=text] { max-width: 100%; min-width: 0; }
 .t-editor, .t-list { min-width: 0; }
 #t-case { max-width: 100%; min-width: 0; }
+.login-card { max-width: 520px; margin: 2rem auto; }
+#t-login-form { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin: .8rem 0 .3rem; }
+#t-login-form label { flex-basis: 100%; }
+#t-password { flex: 1; min-width: 0; font: inherit; padding: .45rem .6rem; border: 1px solid var(--line); border-radius: 8px; }
+.t-auth-row { justify-content: flex-end; }

@@ -5,3 +5,4 @@ tests/e2e/out/
 .secrets/
 .env
 .env.*
+!.env.example

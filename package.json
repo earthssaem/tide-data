@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node tools/serve.mjs",
+    "teacher:setup": "node tools/teacher-auth-setup.mjs",
     "test": "node --test \"tests/unit/*.test.mjs\" \"tests/khoa/*.test.mjs\"",
     "test:e2e": "node tests/e2e/run-e2e.mjs && node tests/e2e/assessment-e2e.mjs",
     "make-sample": "node tools/make-sample-data.mjs",

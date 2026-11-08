@@ -1,12 +1,15 @@
 // 수행평가 흐름 검증 (Playwright): node tests/e2e/run-e2e.mjs [결과폴더]
 // 학생용(부산 2022-09 실제 자료): 학생 정보 → 관측소 선택 → 탐구 1~5(자료 공개 단계) → 결론 → 새로고침·백업 복원 → PDF
-// 교사용: 관측소별 설정·검증·내보내기 → 미리보기 적용(학생 답안과 분리) · 이전 형식 보존 · 자료 로딩 실패
+// 교사용: 로그인(차단·실패·성공·만료·로그아웃·보호된 요청) → 관측소별 설정·검증·내보내기 → 미리보기 적용(학생 답안과 분리) · 이전 형식 보존 · 자료 로딩 실패
 import { createRequire } from 'node:module';
 import { spawn, execFileSync } from 'node:child_process';
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
+import { randomBytes } from 'node:crypto';
+import { hashPassword, signSession, COOKIE_NAME } from '../../api/_lib/auth.js';
+import { startFakeUpstash } from '../helpers/fake-upstash.mjs';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
@@ -56,7 +59,14 @@ async function noSpoiler(p, where) {
   assert.deepEqual(hit, [], `${where}: ${hit.join(', ')}`);
 }
 
-const server = spawn(process.execPath, [join(ROOT, 'tools/serve.mjs'), String(PORT)], { stdio: 'ignore' });
+// 시험용 교사 비밀번호·비밀키는 실행할 때마다 무작위로 만든다(실제 값 아님). 서버 저장소는 가짜 Upstash.
+const TEACHER_PW = `e2e-${randomBytes(12).toString('base64url')}`;
+const TEACHER_SECRET = randomBytes(48).toString('base64url');
+const upstash = await startFakeUpstash();
+const server = spawn(process.execPath, [join(ROOT, 'tools/serve.mjs'), String(PORT)], {
+  stdio: 'ignore',
+  env: { ...process.env, TEACHER_PASSWORD_HASH: await hashPassword(TEACHER_PW), TEACHER_SESSION_SECRET: TEACHER_SECRET, TEACHER_SESSION_HOURS: '8', UPSTASH_REDIS_REST_URL: upstash.url, UPSTASH_REDIS_REST_TOKEN: upstash.token },
+});
 await new Promise((r) => setTimeout(r, 700));
 const browser = await chromium.launch({ env: { ...process.env, LANG: 'C.UTF-8', LC_ALL: 'C.UTF-8' } });
 const newCtx = async (o) => { const c = await browser.newContext(o); c.setDefaultTimeout(15000); return c; };
@@ -79,6 +89,8 @@ try {
   const ctx = await newCtx({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
   const page = await ctx.newPage();
   watch(page, 'student');
+  const studentApi = [];
+  page.on('request', (r) => { if (new URL(r.url()).pathname.startsWith('/api/') || !r.url().startsWith(BASE)) studentApi.push(`${r.method()} ${r.url()}`); });
 
   // ───── 1. 시작 화면 ─────
   await page.goto(BASE + '?case=sample-2099');
@@ -410,12 +422,52 @@ try {
   });
   execFileSync('pdftoppm', ['-r', '50', '-png', pdfPath, join(OUT, 'pdfpage')]);
 
+  await check('학생 화면은 서버(API)나 외부로 아무것도 보내지 않음(답안은 학생 브라우저에만)', async () => assert.deepEqual(studentApi, []));
+
   // ───── 11. 교사용 설정 ─────
   const studentKeyBefore = await page.evaluate(() => localStorage.getItem('tideLab.v1.work'));
   const tp = await ctx.newPage();
   watch(tp, 'teacher');
+  const apiStatus = (p, path, method = 'GET', body) => p.evaluate(async ([u, m, b]) => (await fetch(u, { method: m, headers: b ? { 'Content-Type': 'application/json' } : {}, body: b ? JSON.stringify(b) : undefined })).status, [path, method, body]);
   await tp.goto(BASE + '?mode=teacher');
+  await tp.waitForSelector('#t-login-form');
+  await check('로그인 전: 교사 설정 화면 차단, 보호된 요청 401', async () => {
+    assert.equal(await tp.$('#t-editor'), null);
+    assert.equal(await apiStatus(tp, '/api/teacher/setup'), 401);
+    assert.equal(await apiStatus(tp, '/api/teacher/setup', 'PUT', { format: 'tide-lab-assessment-setup', version: 1, caseId: 'x', stations: {} }), 401);
+    const pv0 = await ctx.newPage();
+    await pv0.goto(BASE + '?mode=preview'); await passAssessment(pv0);
+    await pv0.waitForSelector('#t-login-form');
+    assert.equal(await pv0.$('.student-form'), null, '미리보기도 로그인 전에는 열리지 않음');
+    await pv0.close();
+  });
+  const loginReqs = [];
+  tp.on('request', (r) => { if (r.url().includes('/api/teacher/login')) loginReqs.push({ url: r.url(), method: r.method(), body: r.postData() || '' }); });
+  await tp.fill('#t-password', 'wrong-password-123');
+  await tp.click('#t-login-btn');
+  await tp.waitForSelector('#t-login-error:not([hidden])');
+  await check('로그인 실패: 안내, 화면 열리지 않음, 쿠키 없음', async () => {
+    assert.match(await tp.textContent('#t-login-error'), /비밀번호가 맞지 않습니다/);
+    assert.equal(await tp.$('#t-editor'), null);
+    assert.equal((await ctx.cookies()).some((c) => c.name === COOKIE_NAME), false);
+  });
+  await tp.fill('#t-password', TEACHER_PW);
+  await tp.click('#t-login-btn');
   await tp.waitForSelector('#t-editor');
+  await check('로그인 성공: 비밀번호는 POST 본문으로만, HttpOnly·Secure·SameSite 세션 쿠키', async () => {
+    assert.ok(loginReqs.length >= 2 && loginReqs.every((r) => r.method === 'POST' && !r.url.includes(TEACHER_PW) && !r.url.includes('password')));
+    assert.ok(loginReqs.at(-1).body.includes(TEACHER_PW));
+    assert.ok(!tp.url().includes(TEACHER_PW));
+    const c = (await ctx.cookies()).find((x) => x.name === COOKIE_NAME);
+    assert.ok(c && c.httpOnly && c.secure && c.sameSite === 'Strict' && c.path === '/');
+    assert.ok(c.expires * 1000 > Date.now() + 7.5 * 3600e3 && c.expires * 1000 < Date.now() + 8.5 * 3600e3, '만료 시간 있음(8시간)');
+    assert.ok(!(await tp.evaluate(() => document.cookie)).includes(COOKIE_NAME), '스크립트로 쿠키를 읽을 수 없음');
+    assert.ok(await tp.isVisible('#t-logout'));
+  });
+  await check('로그인 후에도 CSRF 토큰 없는 설정 변경은 거부(403)', async () => {
+    assert.equal(await apiStatus(tp, '/api/teacher/setup', 'PUT', { format: 'tide-lab-assessment-setup', version: 1, caseId: 'khoa-multi-2022-09', stations: {} }), 403);
+    assert.equal(await apiStatus(tp, '/api/teacher/setup'), 200);
+  });
   await check('교사용: 확보한 모든 관측소(11곳) 검토 가능, 임시 후보에 교사 검토 필요 표시', async () => {
     assert.equal(await tp.$$eval('#t-stations tbody tr', (x) => x.length), 11);
     assert.ok(await tp.isVisible('#t-review-badge'));
@@ -525,6 +577,49 @@ try {
     assert.match(await sp.textContent('#sample-banner'), /기능 확인용 예시 데이터/);
     await sp.close();
   });
+  await check('교사용 메모는 로그인으로 보호된 서버 저장소에만(이 브라우저 사본에는 없음)', async () => {
+    assert.match(upstash.data.get('tidelab:teacher:setup')?.v || '', /교사메모비밀문장/);
+    assert.ok(!(await tp.evaluate(() => localStorage.getItem('tideLabTeacher.v1.setup') || '')).includes('교사메모비밀문장'));
+  });
+  // 세션 만료: 만료된 토큰을 가진 브라우저
+  await check('세션 만료: 만료된 세션으로는 화면·보호된 요청 모두 차단', async () => {
+    const cx = await newCtx({ viewport: { width: 1280, height: 800 } });
+    let token = signSession(TEACHER_SECRET, { now: Date.now() - 9 * 3600e3, ttlMs: 8 * 3600e3 }).token;
+    // 브라우저에 이 세션 쿠키를 직접 넣는다(로그인 응답과 같은 속성)
+    const plant = (v) => cx.addCookies([{ name: COOKIE_NAME, value: v, domain: 'localhost', path: '/', secure: true, httpOnly: true, sameSite: 'Strict' }]);
+    await plant(token);
+    const p = await cx.newPage();
+    await p.goto(BASE + '?mode=teacher');
+    await p.waitForSelector('#t-login-form');
+    assert.equal(await p.$('#t-editor'), null);
+    assert.equal(await apiStatus(p, '/api/teacher/setup'), 401);
+    // 비밀키를 모르는 사람이 만든 토큰도 거부
+    await plant(signSession('not-the-real-secret-not-the-real-secret', { ttlMs: 3600e3 }).token);
+    assert.equal(await apiStatus(p, '/api/teacher/setup'), 401);
+    await plant(signSession(TEACHER_SECRET, { ttlMs: 3600e3 }).token);
+    assert.equal(await apiStatus(p, '/api/teacher/setup'), 200, '(대조) 유효한 세션이면 통과 — 쿠키가 실제로 전송됨');
+    await cx.close();
+  });
+  const oldCookie = (await ctx.cookies()).find((x) => x.name === COOKIE_NAME);
+  await tp.click('#t-logout');
+  await tp.waitForSelector('#t-login-form');
+  await check('로그아웃: 쿠키 삭제, 화면·보호된 요청 차단, 예전 세션 재사용 불가', async () => {
+    assert.equal((await ctx.cookies()).some((c) => c.name === COOKIE_NAME), false);
+    assert.equal(await tp.$('#t-editor'), null);
+    assert.equal(await apiStatus(tp, '/api/teacher/setup'), 401);
+    const cx = await newCtx({ viewport: { width: 1280, height: 800 } });
+    await cx.addCookies([{ name: COOKIE_NAME, value: oldCookie.value, domain: 'localhost', path: '/', secure: true, httpOnly: true, sameSite: 'Strict' }]);
+    const p = await cx.newPage();
+    await p.goto(BASE + 'index.html');
+    assert.equal(await apiStatus(p, '/api/teacher/session'), 401, '서버 저장소의 무효화 목록으로 거부');
+    await cx.addCookies([{ name: COOKIE_NAME, value: signSession(TEACHER_SECRET, { ttlMs: 3600e3 }).token, domain: 'localhost', path: '/', secure: true, httpOnly: true, sameSite: 'Strict' }]);
+    assert.equal(await apiStatus(p, '/api/teacher/session'), 200, '(대조) 새 유효 세션은 통과 — 쿠키가 실제로 전송됨');
+    await cx.close();
+    const pv2 = await ctx.newPage();
+    await pv2.goto(BASE + '?mode=preview'); await passAssessment(pv2);
+    await pv2.waitForSelector('#t-login-form');
+    await pv2.close();
+  });
   await tp.close(); await pv.close();
   await ctx.close();
 
@@ -558,11 +653,32 @@ try {
     assert.equal(await pf.evaluate(() => window.__tideApp.cd), null);
   });
   await ctxF.close();
+  // ───── 15. 서버에 교사 로그인 환경변수가 없으면 교사 화면 접근 거부 ─────
+  const bare = spawn(process.execPath, [join(ROOT, 'tools/serve.mjs'), String(PORT + 1)], { stdio: 'ignore', env: { ...process.env, TEACHER_PASSWORD_HASH: '', TEACHER_SESSION_SECRET: '' } });
+  await new Promise((r) => setTimeout(r, 700));
+  try {
+    const cb = await newCtx({ viewport: { width: 1280, height: 800 } });
+    const pb = await cb.newPage();
+    await pb.goto(`http://localhost:${PORT + 1}/?mode=teacher`);
+    await pb.waitForSelector('#t-login-blocked');
+    await check('환경변수 없음: 교사 화면·미리보기 접근 거부(로그인 창도 열지 않음), 학생 화면은 정상', async () => {
+      assert.equal(await pb.$('#t-login-form'), null);
+      assert.equal(await pb.$('#t-editor'), null);
+      assert.match(await pb.textContent('#t-login-blocked'), /TEACHER_PASSWORD_HASH/);
+      await pb.goto(`http://localhost:${PORT + 1}/?mode=preview`); await passAssessment(pb);
+      await pb.waitForSelector('#fatal');
+      assert.equal(await pb.$('.student-form'), null);
+      await pb.goto(`http://localhost:${PORT + 1}/`); await passAssessment(pb);
+      await pb.waitForSelector('.student-form');
+    });
+    await cb.close();
+  } finally { bare.kill(); }
 } catch (e) {
   results.push(['✗', '실행 중 오류', e.stack]);
 } finally {
   await browser.close();
   server.kill();
+  await upstash.close();
 }
 for (const e of errors) results.push(['✗', '브라우저 오류', e]);
 for (const r of results.filter((x) => x[1] === '실행 중 오류' || x[1] === '브라우저 오류')) console.log(r[0], r[1], r[2] ? `\n    ${r[2]}` : '');

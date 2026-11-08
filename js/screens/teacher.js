@@ -1,7 +1,8 @@
 // 교사용 평가 설정 화면 (?mode=teacher)
 // - 관측소별: 평가에 사용 여부, 분석할 연·월, 기본·집중 관찰 구간, 달의 위상·기상·태풍 연결, 사용할 문항, 교사용 메모
 // - 한 달 그래프에서 끌어서 구간을 고른 뒤 [기본 관찰 구간으로 지정]/[집중 관찰 구간으로 지정]
-// - 변경 내용은 이 브라우저(교사 설정)에만 자동 저장되어 [학생용 미리보기]에 적용된다. 학생에게는 적용되지 않는다.
+// - 교사 로그인(서버에서 비밀번호·세션 확인)을 통과해야 화면이 열린다. 교사용 메모가 든 설정은 서버 저장소가 있으면
+//   로그인으로 보호된 API(/api/teacher/setup)에 저장하고, 없으면 이 브라우저에만 저장한다. 학생에게는 적용되지 않는다.
 // - 학생에게 적용: [설정 저장·내보내기] → '학생용 배포 파일'(assessment.json, 메모 제외)을 받아 data/assessment.json을 바꾼다.
 // - 대조·소조 정답 날짜를 지정하는 기능은 넣지 않는다. 없는 자료는 만들지 않고 검증 결과로 알린다.
 
@@ -17,6 +18,7 @@ import { layoutToSVG, screenMeasure } from '../chart/svg.js';
 import { $, h, confirmDialog, alertDialog, choiceDialog, downloadBlob, pickFile, toast } from '../util/dom.js';
 import { escapeHtml } from '../util/format.js';
 import { fmtRange, fmtDateTime, HOUR } from '../util/time.js';
+import { checkSession, renderLogin, teacherFetch, logout, expiryText, currentSession } from '../teacher-auth.js';
 
 const LEVEL = { error: ['오류', 'badge-err'], warn: ['주의', 'badge-warn'], info: ['안내', 'badge-info'], ok: ['확인', 'badge-ok'] };
 
@@ -34,17 +36,51 @@ export async function boot(app) {
   $('#brand-home').querySelector('.brand-name').textContent = '조석 데이터 탐구실 · 교사용 평가 설정';
   $('#brand-home').addEventListener('click', () => { location.href = '?mode=teacher'; });
   document.title = '교사용 평가 설정 — 조석 데이터 탐구실';
+  await start(app);
+}
 
+/** 로그인 확인 → 설정 화면. 로그인하지 않았으면 설정 화면을 만들지 않는다 */
+async function start(app, message = '') {
+  const screen = $('#screen');
+  screen.className = 'screen screen-teacher';
+  const s = await checkSession();
+  if (!s.authenticated) {
+    if (s.code === 'not_configured' || s.code === 'unavailable' || s.code === 'https_required' || s.code === 'store_error') {
+      screen.innerHTML = '';
+      screen.append(h('section', { class: 'card login-card', id: 't-login-blocked' },
+        h('h1', {}, '교사용 화면을 열 수 없습니다'),
+        h('p', { class: 'notice notice-warn' }, s.error || '교사 로그인을 확인하지 못했습니다.'),
+        h('p', { class: 'small' }, '서버에 교사 로그인 환경변수(TEACHER_PASSWORD_HASH, TEACHER_SESSION_SECRET)가 있어야 합니다. 설정 방법은 README의 ‘교사 로그인’을 보세요. 학생 화면은 그대로 쓸 수 있습니다.'),
+        h('p', { class: 'small' }, h('a', { href: './' }, '← 학생 화면으로'))));
+      return;
+    }
+    renderLogin(screen, { message, onSuccess: () => start(app) });
+    return;
+  }
   const registry = await loadRegistry();
   let deployed = null;
   try { deployed = await loadDeployedSetup(readText); } catch (e) { deployed = null; app.deployError = e.message; }
+  // 교사 설정: 서버 저장소(로그인으로 보호) → 이 브라우저 → 학생용 배포 설정 순서
+  let storage = s.storage === 'server' ? 'server' : 'local';
+  let serverCfg = null;
+  if (storage === 'server') {
+    const r = await teacherFetch('/api/teacher/setup', { onExpired: () => start(app, '로그인 시간이 끝났습니다. 다시 로그인하세요.') });
+    if (r.status === 401) return;
+    if (r.ok && r.setup) { try { serverCfg = parseSetup(r.setup); } catch { serverCfg = null; } }
+    if (!r.ok) storage = 'local';
+  }
   const local = loadTeacherSetup();
-  let cfg = local || (deployed ? JSON.parse(JSON.stringify(deployed)) : { format: SETUP_FORMAT, version: SETUP_VERSION, caseId: registry.defaultCase, title: '', reviewNote: '', stations: {} });
-  let source = local ? '이 브라우저에 저장한 교사 설정' : deployed ? '학생용 배포 설정(data/assessment.json)' : '새 설정';
-  const T = { registry, deployed, cfg, source, raw: null, entries: [], selected: null, sel: null, savedAt: local ? Date.now() : null };
+  const cfg = serverCfg || local || (deployed ? JSON.parse(JSON.stringify(deployed)) : { format: SETUP_FORMAT, version: SETUP_VERSION, caseId: registry.defaultCase, title: '', reviewNote: '', stations: {} });
+  const source = serverCfg ? '서버에 저장한 교사 설정(로그인으로 보호)' : local ? '이 브라우저에 저장한 교사 설정' : deployed ? '학생용 배포 설정(data/assessment.json)' : '새 설정';
+  const T = { registry, deployed, cfg, source, storage, raw: null, entries: [], selected: null, sel: null, savedAt: serverCfg || local ? Date.now() : null, saveTimer: null };
   app.teacher = T; // 검증용
   await loadCaseFor(T, cfg.caseId);
   render(app, T);
+  // 세션이 끝나면 로그인 화면으로
+  clearTimeout(app.teacherExpiry);
+  const left = (currentSession()?.expiresAt || 0) - Date.now();
+  if (left > 0) app.teacherExpiry = setTimeout(async () => { const c = await checkSession(); if (!c.authenticated) start(app, '로그인 시간이 끝났습니다. 다시 로그인하세요.'); }, Math.min(left + 1000, 2 ** 31 - 1));
+  app.teacherRestart = (msg) => start(app, msg);
 }
 
 async function loadCaseFor(T, caseId) {
@@ -61,10 +97,36 @@ async function loadCaseFor(T, caseId) {
 }
 
 function persist(T) {
+  const el = document.getElementById('t-saved');
+  const stamp = () => fmtDateTime(Date.now(), { offsetMinutes: -new Date().getTimezoneOffset() });
+  if (T.storage === 'server') {
+    // 이 브라우저에는 메모를 뺀 사본만(공용 컴퓨터에 메모가 남지 않게), 서버에는 전체를 로그인·CSRF 확인 후 저장
+    const copy = JSON.parse(JSON.stringify(T.cfg));
+    for (const st of Object.values(copy.stations || {})) st.memo = '';
+    saveTeacherSetup(copy);
+    if (el) el.textContent = '서버에 저장하는 중…';
+    clearTimeout(T.saveTimer);
+    T.saveTimer = setTimeout(async () => {
+      const r = await teacherFetch('/api/teacher/setup', { method: 'PUT', body: { ...T.cfg, format: SETUP_FORMAT, version: SETUP_VERSION } });
+      const e2 = document.getElementById('t-saved');
+      if (r.ok) { T.savedAt = Date.now(); T.source = '서버에 저장한 교사 설정(로그인으로 보호)'; if (e2) e2.textContent = `서버에 저장됨 ${stamp()} (학생에게는 아직 적용되지 않음)`; return; }
+      if (r.status === 401) { toast('로그인 시간이 끝나 서버에 저장하지 못했습니다. 다시 로그인하면 이어서 저장합니다.', 'warn'); window.__tideApp?.teacherRestart?.('로그인 시간이 끝났습니다. 다시 로그인하세요(바꾼 내용은 이 브라우저에 남아 있습니다).'); return; }
+      if (e2) e2.textContent = `서버에 저장하지 못했습니다: ${r.error || r.status}`;
+    }, 500);
+    return;
+  }
   const r = saveTeacherSetup(T.cfg);
   if (r.ok) { T.savedAt = r.time; T.source = '이 브라우저에 저장한 교사 설정'; }
-  const el = document.getElementById('t-saved');
-  if (el) el.textContent = r.ok ? `이 브라우저에 자동 저장됨 ${fmtDateTime(r.time, { offsetMinutes: -new Date().getTimezoneOffset() })} (학생에게는 아직 적용되지 않음)` : `저장 실패: ${r.error}`;
+  if (el) el.textContent = r.ok ? `이 브라우저에 자동 저장됨 ${stamp()} (서버 저장소 없음 · 학생에게는 아직 적용되지 않음)` : `저장 실패: ${r.error}`;
+}
+
+async function doLogout(app, T) {
+  clearTimeout(T.saveTimer);
+  await logout();
+  // 서버에 보관 중이면 이 브라우저의 사본을 지운다(서버 저장소가 없으면 설정을 잃지 않게 남겨 둠)
+  if (T.storage === 'server') clearTeacherSetup();
+  clearTimeout(app.teacherExpiry);
+  await start(app, '로그아웃했습니다.');
 }
 
 function render(app, T) {
@@ -81,7 +143,7 @@ function render(app, T) {
   const steps = h('section', { class: 'card t-howto', id: 't-howto' });
   steps.innerHTML = `<h2>설정 저장과 학생 적용은 다릅니다</h2>
     <ol>
-      <li><b>이 브라우저에 저장</b> — 아래에서 바꾼 내용은 이 컴퓨터의 이 브라우저에만 자동 저장됩니다. [학생용 미리보기]에만 적용되고, 학생 화면은 바뀌지 않습니다.</li>
+      <li><b>${T.storage === 'server' ? '서버에 저장(교사 로그인으로 보호)' : '이 브라우저에 저장'}</b> — ${T.storage === 'server' ? '아래에서 바꾼 내용은 로그인한 교사만 읽고 쓸 수 있는 서버 저장소에 자동 저장됩니다(이 브라우저에는 메모를 뺀 사본).' : '서버 저장소가 설정되지 않아, 아래에서 바꾼 내용은 이 컴퓨터의 이 브라우저에만 자동 저장됩니다.'} [학생용 미리보기]에만 적용되고, 학생 화면은 바뀌지 않습니다.</li>
       <li><b>학생에게 적용(배포)</b> — [설정 저장·내보내기]에서 <b>학생용 배포 파일</b>(<code>assessment.json</code>, 교사용 메모 제외)을 받아 저장소의 <code>data/assessment.json</code>을 바꾸고 배포(main 반영)합니다. 학생 화면을 새로 고치면 적용됩니다.</li>
       <li><b>보관·다른 컴퓨터</b> — <b>교사 보관용 파일</b>(메모 포함)을 받아 두고, 다른 컴퓨터에서 [설정 파일 불러오기]로 이어서 고칠 수 있습니다.</li>
     </ol>`;
@@ -100,6 +162,9 @@ function render(app, T) {
   });
   const previewA = h('a', { class: 'btn btn-primary', id: 't-preview', href: '?mode=preview', target: '_blank', rel: 'noopener', onclick: () => persist(T) }, '학생용 미리보기');
   bar.append(...[
+    h('div', { class: 't-bar-row t-auth-row' },
+      h('span', { class: 'badge badge-ok', id: 't-auth' }, `교사 로그인됨 · ${expiryText(currentSession()?.expiresAt)}`),
+      h('button', { type: 'button', class: 'btn btn-ghost btn-sm', id: 't-logout', onclick: () => doLogout(app, T) }, '로그아웃')),
     h('div', { class: 't-bar-row' }, h('label', { for: 't-case' }, h('b', {}, '평가 사례 ')), caseSel,
       h('span', { class: 'muted small' }, `설정 출처: ${T.source}`)),
     h('div', { class: 't-bar-row' },
@@ -323,6 +388,7 @@ async function revert(app, T) {
   T.source = '학생용 배포 설정(data/assessment.json)';
   T.savedAt = null;
   await loadCaseFor(T, T.cfg.caseId);
+  if (T.storage === 'server') persist(T);
   render(app, T);
   toast('학생용 배포 설정으로 되돌렸습니다.');
 }

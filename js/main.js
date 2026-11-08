@@ -11,8 +11,9 @@ import {
 } from './state/persistence.js';
 import { snapshotEvidence } from './state/evidence.js';
 import { STEPS, INQUIRIES, CONCLUSION, REVEALS, activeQuestions } from './content/questions.js';
-import { applyAssessment, enabledStations, loadDeployedSetup, loadTeacherSetup } from './setup/setup.js';
+import { applyAssessment, enabledStations, loadDeployedSetup, loadTeacherSetup, parseSetup } from './setup/setup.js';
 import { loadKoreaMap } from './chart/map.js';
+import { checkSession, renderLogin, teacherFetch } from './teacher-auth.js';
 import { $, h, confirmDialog, alertDialog, downloadBlob, pickFile, toast } from './util/dom.js';
 import { escapeHtml } from './util/format.js';
 import { fmtRange, fmtTime, fmtDateTime } from './util/time.js';
@@ -74,15 +75,34 @@ async function boot() {
     return;
   }
   setStorageMode(app.mode === 'preview' ? 'preview' : 'student');
+  // 교사용 미리보기·기능 시험은 교사 로그인 후에만(서버에서 세션 확인). 학생용 화면은 로그인 없이 그대로.
+  let teacherSession = null;
+  if (app.mode === 'preview') {
+    teacherSession = await checkSession();
+    if (!teacherSession.authenticated) {
+      $('#stepper').hidden = true;
+      $('.top-tools').style.display = 'none';
+      if (['not_configured', 'unavailable', 'https_required', 'store_error'].includes(teacherSession.code)) {
+        showFatal(new Error(`교사용 미리보기를 열 수 없습니다. ${teacherSession.error || ''}`));
+        return;
+      }
+      renderLogin($('#screen'), { title: '교사용 미리보기 로그인', purpose: '교사용 미리보기와 기능 시험', onSuccess: () => location.reload() });
+      return;
+    }
+  }
   try {
     app.registry = await loadRegistry();
     const known = app.registry.cases;
-    // 평가 설정: 학생용은 배포 파일만, 미리보기는 이 브라우저의 교사 설정 우선
+    // 평가 설정: 학생용은 배포 파일만, 미리보기는 서버(로그인으로 보호)·이 브라우저의 교사 설정 우선
     let cfg = null;
     if (app.mode === 'preview') {
-      cfg = loadTeacherSetup();
-      if (cfg) app.setupSource = '이 브라우저에 저장한 교사 설정';
-      else {
+      if (teacherSession?.storage === 'server') {
+        const r = await teacherFetch('/api/teacher/setup');
+        if (r.status === 401) { location.reload(); return; }
+        if (r.ok && r.setup) { try { cfg = parseSetup(r.setup); app.setupSource = '서버에 저장한 교사 설정'; } catch { cfg = null; } }
+      }
+      if (!cfg) { cfg = loadTeacherSetup(); if (cfg) app.setupSource = '이 브라우저에 저장한 교사 설정'; }
+      if (!cfg) {
         try { cfg = await loadDeployedSetup(readText); app.setupSource = '학생용 배포 설정(data/assessment.json)'; } catch { cfg = null; }
       }
     } else {
