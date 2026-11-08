@@ -1,0 +1,28 @@
+{
+ "request": {
+  "dataset": "hourly",
+  "datasetTitle": "해양수산부 국립해양조사원_1시간 조위(조석성과)",
+  "datasetId": "15156017",
+  "endpoint": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService",
+  "url": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService?serviceKey=***&type=json&obsCode=DT_0005&reqDate=20220917&pageNo=1&numOfRows=300",
+  "station": "DT_0005",
+  "reqDate": "20220917",
+  "pageNo": 1,
+  "numOfRows": 300,
+  "attempt": 1,
+  "fetchedAt": "2026-11-08T09:20:40.054Z"
+ },
+ "http": {
+  "status": 200
+ },
+ "result": {
+  "code": "00",
+  "codeName": "NORMAL_SERVICE",
+  "message": "NORMAL_SERVICE",
+  "totalCount": 24,
+  "pageNo": 1,
+  "numOfRows": 300,
+  "itemCount": 24
+ },
+ "rawText": "{\"header\":{\"resultCode\":\"00\",\"resultMsg\":\"NORMAL_SERVICE\"},\"body\":{\"items\":{\"item\":[{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 00:00\",\"tdlvVl\":116.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 01:00\",\"tdlvVl\":110.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 02:00\",\"tdlvVl\":101.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 03:00\",\"tdlvVl\":90.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 04:00\",\"tdlvVl\":79.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 05:00\",\"tdlvVl\":72.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 06:00\",\"tdlvVl\":71.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 07:00\",\"tdlvVl\":77.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 08:00\",\"tdlvVl\":88.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 09:00\",\"tdlvVl\":99.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 10:00\",\"tdlvVl\":110.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 11:00\",\"tdlvVl\":119.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 12:00\",\"tdlvVl\":122.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 13:00\",\"tdlvVl\":120.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 14:00\",\"tdlvVl\":115.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 15:00\",\"tdlvVl\":107.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 16:00\",\"tdlvVl\":96.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 17:00\",\"tdlvVl\":88.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 18:00\",\"tdlvVl\":83.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 19:00\",\"tdlvVl\":83.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 20:00\",\"tdlvVl\":89.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 21:00\",\"tdlvVl\":100.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 22:00\",\"tdlvVl\":108.0},{\"obsvtrNm\":\"부산\",\"lot\":129.03527,\"lat\":35.09638,\"obsrvnDt\":\"2022-09-17 23:00\",\"tdlvVl\":110.0}]},\"pageNo\":1,\"numOfRows\":300,\"totalCount\":24,\"type\":\"json\"}}"
+}

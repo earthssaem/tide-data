@@ -13,6 +13,12 @@
       "path": "test-minimal",
       "label": "검증용 사례 (예측·기상·달의 위상 자료 없음)",
       "enabled": false
+    },
+    {
+      "id": "khoa-dt0005-2022-09",
+      "path": "khoa-dt0005-2022-09",
+      "label": "부산 2022년 09월 · 태풍 힌남노(HINNAMNOR) (국립해양조사원 자료)",
+      "enabled": true
     }
   ]
 }
