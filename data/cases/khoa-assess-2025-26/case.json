@@ -1,0 +1,790 @@
+{
+ "formatVersion": 3,
+ "kind": "tide-assessment",
+ "id": "khoa-assess-2025-26",
+ "dataVersion": "khoa-assess-2025-26-2026-11-08",
+ "isSample": false,
+ "title": "조석 수행평가 · 인천·부산·묵호 2025년 10월~2026년 9월 + 부산 2022년 9월",
+ "timezone": {
+  "label": "KST",
+  "name": "한국 표준시(UTC+9)",
+  "offsetMinutes": 540
+ },
+ "timeBasis": {
+  "confirmed": true,
+  "checkedAt": "2026-11-08T17:03:01.625Z",
+  "evidence": "data/raw/khoa-2025-26/time-check/README.md",
+  "tide": true,
+  "weather": true,
+  "typhoon": true,
+  "note": "조위(예측·관측)는 국립해양조사원 조석표(시각 9hE)·바다누리 관측값과, ASOS는 태양 위치·조위관측소 기압과 대조해 KST로 확인. 태풍 시각은 기상자료개방포털 안내(KST).",
+  "items": [
+   {
+    "item": "인천 예측 조위(tideFcstTime)",
+    "ok": true
+   },
+   {
+    "item": "바다누리 인천 실시간 표시 시각",
+    "ok": true
+   },
+   {
+    "item": "인천 관측 조위(hourlyTide)",
+    "ok": true
+   },
+   {
+    "item": "인천 조위관측소 기압(surveyAirPress)",
+    "ok": true
+   },
+   {
+    "item": "인천 조위관측소 풍속(surveyWind)",
+    "ok": true
+   },
+   {
+    "item": "ASOS 112 인천 일사량(icsr)",
+    "ok": true
+   },
+   {
+    "item": "ASOS 112 인천 현지기압(pa)",
+    "ok": true
+   },
+   {
+    "item": "부산 예측 조위(tideFcstTime)",
+    "ok": true
+   },
+   {
+    "item": "바다누리 부산 실시간 표시 시각",
+    "ok": true
+   },
+   {
+    "item": "부산 관측 조위(hourlyTide)",
+    "ok": true
+   },
+   {
+    "item": "부산 조위관측소 기압(surveyAirPress)",
+    "ok": true
+   },
+   {
+    "item": "부산 조위관측소 풍속(surveyWind)",
+    "ok": true
+   },
+   {
+    "item": "ASOS 159 부산 일사량(icsr)",
+    "ok": true
+   },
+   {
+    "item": "ASOS 159 부산 현지기압(pa)",
+    "ok": true
+   },
+   {
+    "item": "묵호 예측 조위(tideFcstTime)",
+    "ok": true
+   },
+   {
+    "item": "바다누리 묵호 실시간 표시 시각",
+    "ok": true
+   },
+   {
+    "item": "묵호 관측 조위(hourlyTide)",
+    "ok": true
+   },
+   {
+    "item": "묵호 조위관측소 기압(surveyAirPress)",
+    "ok": true
+   },
+   {
+    "item": "묵호 조위관측소 풍속(surveyWind)",
+    "ok": true
+   },
+   {
+    "item": "ASOS 106 동해 일사량(icsr)",
+    "ok": true
+   },
+   {
+    "item": "ASOS 106 동해 현지기압(pa)",
+    "ok": true
+   }
+  ]
+ },
+ "representative": "DT_0005",
+ "period": {
+  "start": "2025-10-01",
+  "end": "2026-09-30"
+ },
+ "months": [
+  "2025-10",
+  "2025-11",
+  "2025-12",
+  "2026-01",
+  "2026-02",
+  "2026-03",
+  "2026-04",
+  "2026-05",
+  "2026-06",
+  "2026-07",
+  "2026-08",
+  "2026-09"
+ ],
+ "stations": [
+  {
+   "id": "DT_0001",
+   "name": "인천",
+   "nameEn": "Incheon",
+   "sea": "서해",
+   "lat": 37.451944,
+   "lon": 126.592222,
+   "note": "서해 대표",
+   "datasets": {
+    "observed": {
+     "file": "stations/DT_0001/observed.csv",
+     "adapter": "csv-tide",
+     "kind": "observed",
+     "label": "관측 조위",
+     "stationId": "DT_0001",
+     "datum": "UNCONFIRMED",
+     "datumLabel": "미확인(문서에 없음)",
+     "datumConfirmed": false,
+     "unit": "cm",
+     "intervalMinutes": 60,
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "value": {
+      "column": "tide_cm"
+     },
+     "quality": {
+      "column": "qc",
+      "ok": [
+       "1"
+      ],
+      "bad": [
+       "3"
+      ],
+      "missing": [
+       "9"
+      ],
+      "labels": {
+       "1": "응답값",
+       "3": "오류·충돌",
+       "9": "값 없음"
+      }
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "국립해양조사원",
+      "title": "해양수산부 국립해양조사원_1시간 조위(조석성과)",
+      "identifier": "data.go.kr 15156017"
+     }
+    },
+    "predicted": {
+     "file": "stations/DT_0001/predicted.csv",
+     "adapter": "csv-tide",
+     "kind": "predicted",
+     "label": "예측 조위",
+     "stationId": "DT_0001",
+     "datum": "UNCONFIRMED",
+     "datumLabel": "조석표 기준면(평균해면 아래 464 cm)",
+     "datumConfirmed": false,
+     "unit": "cm",
+     "intervalMinutes": 60,
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "value": {
+      "column": "pred_cm"
+     },
+     "quality": {
+      "column": "qc",
+      "ok": [
+       "1"
+      ],
+      "bad": [
+       "3"
+      ],
+      "missing": [
+       "9"
+      ],
+      "labels": {
+       "1": "응답값",
+       "3": "오류·충돌",
+       "9": "값 없음"
+      }
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "국립해양조사원",
+      "title": "해양수산부 국립해양조사원_조석예보(시계열)",
+      "identifier": "data.go.kr 15156022"
+     }
+    },
+    "weather": {
+     "provided": false
+    }
+   },
+   "timeShiftFlags": []
+  },
+  {
+   "id": "DT_0005",
+   "name": "부산",
+   "nameEn": "Busan",
+   "sea": "남해",
+   "lat": 35.096389,
+   "lon": 129.035278,
+   "note": "남해 대표(탐구 기준 관측소)",
+   "datasets": {
+    "observed": {
+     "file": "stations/DT_0005/observed.csv",
+     "adapter": "csv-tide",
+     "kind": "observed",
+     "label": "관측 조위",
+     "stationId": "DT_0005",
+     "datum": "UNCONFIRMED",
+     "datumLabel": "미확인(문서에 없음)",
+     "datumConfirmed": false,
+     "unit": "cm",
+     "intervalMinutes": 60,
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "value": {
+      "column": "tide_cm"
+     },
+     "quality": {
+      "column": "qc",
+      "ok": [
+       "1"
+      ],
+      "bad": [
+       "3"
+      ],
+      "missing": [
+       "9"
+      ],
+      "labels": {
+       "1": "응답값",
+       "3": "오류·충돌",
+       "9": "값 없음"
+      }
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "국립해양조사원",
+      "title": "해양수산부 국립해양조사원_1시간 조위(조석성과)",
+      "identifier": "data.go.kr 15156017"
+     }
+    },
+    "predicted": {
+     "file": "stations/DT_0005/predicted.csv",
+     "adapter": "csv-tide",
+     "kind": "predicted",
+     "label": "예측 조위",
+     "stationId": "DT_0005",
+     "datum": "UNCONFIRMED",
+     "datumLabel": "조석표 기준면(평균해면 아래 65 cm)",
+     "datumConfirmed": false,
+     "unit": "cm",
+     "intervalMinutes": 60,
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "value": {
+      "column": "pred_cm"
+     },
+     "quality": {
+      "column": "qc",
+      "ok": [
+       "1"
+      ],
+      "bad": [
+       "3"
+      ],
+      "missing": [
+       "9"
+      ],
+      "labels": {
+       "1": "응답값",
+       "3": "오류·충돌",
+       "9": "값 없음"
+      }
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "국립해양조사원",
+      "title": "해양수산부 국립해양조사원_조석예보(시계열)",
+      "identifier": "data.go.kr 15156022"
+     }
+    },
+    "weather": {
+     "file": "stations/DT_0005/weather.csv",
+     "adapter": "csv-weather",
+     "intervalMinutes": 60,
+     "station": {
+      "id": "ASOS-159",
+      "name": "기상청 부산 ASOS(159)",
+      "lat": 35.1047,
+      "lon": 129.032,
+      "elevation_m": 69.56,
+      "note": "조위관측소에서 1 km · 해발 69.56 m · 부산광역시 중구 대청동1가"
+     },
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "fields": {
+      "pressureSea": {
+       "column": "pressure_sea_hpa",
+       "unit": "hPa",
+       "label": "해면기압",
+       "range": [
+        850,
+        1100
+       ],
+       "qc": {
+        "column": "ps_qc",
+        "bad": [
+         "1"
+        ],
+        "missing": [
+         "9"
+        ]
+       },
+       "note": "기상청 ASOS 해면기압(ps) — 해수면 높이로 환산한 기압"
+      },
+      "pressureStation": {
+       "column": "pressure_station_hpa",
+       "unit": "hPa",
+       "label": "현지기압",
+       "range": [
+        800,
+        1100
+       ],
+       "qc": {
+        "column": "pa_qc",
+        "bad": [
+         "1"
+        ],
+        "missing": [
+         "9"
+        ]
+       },
+       "note": "기상청 ASOS 현지기압(pa) — 관측소 높이(해발 69.56 m)의 기압, 해면기압과 섞지 않음"
+      },
+      "windSpeed": {
+       "column": "wind_ms",
+       "unit": "m/s",
+       "label": "풍속",
+       "range": [
+        0,
+        75
+       ],
+       "qc": {
+        "column": "ws_qc",
+        "bad": [
+         "1"
+        ],
+        "missing": [
+         "9"
+        ]
+       },
+       "note": "기상청 ASOS 풍속(ws, m/s)"
+      },
+      "windDir": {
+       "column": "wind_dir_deg",
+       "unit": "deg",
+       "label": "풍향",
+       "range": [
+        0,
+        360
+       ],
+       "qc": {
+        "column": "wd_qc",
+        "bad": [
+         "1"
+        ],
+        "missing": [
+         "9"
+        ]
+       },
+       "note": "기상청 ASOS 풍향(wd) — 활용가이드 표기 \"16방위\", 불어오는 방향"
+      }
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "기상청",
+      "title": "기상청_지상(종관, ASOS) 시간자료 조회서비스 (data.go.kr 15057210)",
+      "identifier": "data.go.kr 15057210, ASOS 159"
+     }
+    }
+   },
+   "timeShiftFlags": []
+  },
+  {
+   "id": "DT_0006",
+   "name": "묵호",
+   "nameEn": "Mukho",
+   "sea": "동해",
+   "lat": 37.550278,
+   "lon": 129.116389,
+   "note": "동해 대표",
+   "datasets": {
+    "observed": {
+     "file": "stations/DT_0006/observed.csv",
+     "adapter": "csv-tide",
+     "kind": "observed",
+     "label": "관측 조위",
+     "stationId": "DT_0006",
+     "datum": "UNCONFIRMED",
+     "datumLabel": "미확인(문서에 없음)",
+     "datumConfirmed": false,
+     "unit": "cm",
+     "intervalMinutes": 60,
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "value": {
+      "column": "tide_cm"
+     },
+     "quality": {
+      "column": "qc",
+      "ok": [
+       "1"
+      ],
+      "bad": [
+       "3"
+      ],
+      "missing": [
+       "9"
+      ],
+      "labels": {
+       "1": "응답값",
+       "3": "오류·충돌",
+       "9": "값 없음"
+      }
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "국립해양조사원",
+      "title": "해양수산부 국립해양조사원_1시간 조위(조석성과)",
+      "identifier": "data.go.kr 15156017"
+     }
+    },
+    "predicted": {
+     "file": "stations/DT_0006/predicted.csv",
+     "adapter": "csv-tide",
+     "kind": "predicted",
+     "label": "예측 조위",
+     "stationId": "DT_0006",
+     "datum": "UNCONFIRMED",
+     "datumLabel": "조석표 기준면(평균해면 아래 19 cm)",
+     "datumConfirmed": false,
+     "unit": "cm",
+     "intervalMinutes": 60,
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "value": {
+      "column": "pred_cm"
+     },
+     "quality": {
+      "column": "qc",
+      "ok": [
+       "1"
+      ],
+      "bad": [
+       "3"
+      ],
+      "missing": [
+       "9"
+      ],
+      "labels": {
+       "1": "응답값",
+       "3": "오류·충돌",
+       "9": "값 없음"
+      }
+     },
+     "missingValues": [
+      ""
+     ],
+     "meta": {
+      "provider": "국립해양조사원",
+      "title": "해양수산부 국립해양조사원_조석예보(시계열)",
+      "identifier": "data.go.kr 15156022"
+     }
+    },
+    "weather": {
+     "provided": false
+    }
+   },
+   "timeShiftFlags": []
+  }
+ ],
+ "past": {
+  "id": "DT_0005-2022-09",
+  "stationId": "DT_0005",
+  "label": "부산 2022년 9월",
+  "period": {
+   "start": "2022-09-01",
+   "end": "2022-09-30"
+  },
+  "datasets": {
+   "observed": {
+    "file": "past/DT_0005-2022-09/observed.csv",
+    "adapter": "csv-tide",
+    "kind": "observed",
+    "label": "관측 조위",
+    "stationId": "DT_0005",
+    "datum": "UNCONFIRMED",
+    "datumLabel": "미확인(문서에 없음)",
+    "datumConfirmed": false,
+    "unit": "cm",
+    "intervalMinutes": 60,
+    "time": {
+     "column": "time",
+     "offset": "+09:00"
+    },
+    "value": {
+     "column": "tide_cm"
+    },
+    "quality": {
+     "column": "qc",
+     "ok": [
+      "1"
+     ],
+     "bad": [
+      "3"
+     ],
+     "missing": [
+      "9"
+     ],
+     "labels": {
+      "1": "응답값",
+      "3": "오류·충돌",
+      "9": "값 없음"
+     }
+    },
+    "missingValues": [
+     ""
+    ],
+    "meta": {
+     "provider": "국립해양조사원",
+     "title": "해양수산부 국립해양조사원_1시간 조위(조석성과)",
+     "identifier": "data.go.kr 15156017"
+    }
+   },
+   "weather": {
+    "file": "past/DT_0005-2022-09/weather.csv",
+    "adapter": "csv-weather",
+    "intervalMinutes": 60,
+    "station": {
+     "id": "ASOS-159",
+     "name": "기상청 부산 ASOS(159)",
+     "lat": 35.1047,
+     "lon": 129.032,
+     "elevation_m": 69.56,
+     "note": "조위관측소에서 1 km · 해발 69.56 m · 부산광역시 중구 대청동1가"
+    },
+    "time": {
+     "column": "time",
+     "offset": "+09:00"
+    },
+    "fields": {
+     "pressureSea": {
+      "column": "pressure_sea_hpa",
+      "unit": "hPa",
+      "label": "해면기압",
+      "range": [
+       850,
+       1100
+      ],
+      "qc": {
+       "column": "ps_qc",
+       "bad": [
+        "1"
+       ],
+       "missing": [
+        "9"
+       ]
+      },
+      "note": "기상청 ASOS 해면기압(ps) — 해수면 높이로 환산한 기압"
+     },
+     "pressureStation": {
+      "column": "pressure_station_hpa",
+      "unit": "hPa",
+      "label": "현지기압",
+      "range": [
+       800,
+       1100
+      ],
+      "qc": {
+       "column": "pa_qc",
+       "bad": [
+        "1"
+       ],
+       "missing": [
+        "9"
+       ]
+      },
+      "note": "기상청 ASOS 현지기압(pa) — 관측소 높이(해발 69.56 m)의 기압, 해면기압과 섞지 않음"
+     },
+     "windSpeed": {
+      "column": "wind_ms",
+      "unit": "m/s",
+      "label": "풍속",
+      "range": [
+       0,
+       75
+      ],
+      "qc": {
+       "column": "ws_qc",
+       "bad": [
+        "1"
+       ],
+       "missing": [
+        "9"
+       ]
+      },
+      "note": "기상청 ASOS 풍속(ws, m/s)"
+     },
+     "windDir": {
+      "column": "wind_dir_deg",
+      "unit": "deg",
+      "label": "풍향",
+      "range": [
+       0,
+       360
+      ],
+      "qc": {
+       "column": "wd_qc",
+       "bad": [
+        "1"
+       ],
+       "missing": [
+        "9"
+       ]
+      },
+      "note": "기상청 ASOS 풍향(wd) — 활용가이드 표기 \"16방위\", 불어오는 방향"
+     }
+    },
+    "missingValues": [
+     ""
+    ],
+    "meta": {
+     "provider": "기상청",
+     "title": "기상청_지상(종관, ASOS) 시간자료 조회서비스 (data.go.kr 15057210)",
+     "identifier": "data.go.kr 15057210, ASOS 159"
+    }
+   },
+   "typhoon": {
+    "name": "힌남노(HINNAMNOR)",
+    "year": 2022,
+    "label": "2022년 제11호 태풍 힌남노(HINNAMNOR)",
+    "note": "경로는 기상청 태풍정보의 실황 분석 위치(예보 아님). 시각 KST(기상자료개방포털 안내).",
+    "track": {
+     "file": "past/DT_0005-2022-09/typhoon_track.csv",
+     "kind": "실황 분석 위치(기상청 태풍정보)",
+     "time": {
+      "column": "time",
+      "offset": "+09:00"
+     },
+     "latColumn": "lat",
+     "lonColumn": "lon",
+     "pressureColumn": "pressure_hpa",
+     "windColumn": "max_wind_ms",
+     "note": "기상청이 발표 때마다 분석한 태풍 중심 위치(예보시간 0). 예보 경로·베스트트랙 아님"
+    },
+    "meta": {
+     "provider": "기상청 기상자료개방포털(data.kma.go.kr) 태풍정보",
+     "title": "2022년 제11호 태풍 힌남노(HINNAMNOR) 태풍정보(실황 분석)",
+     "identifier": "KMA typhoon 2022-11, 수집 2026-11-08"
+    }
+   }
+  }
+ },
+ "recentTyphoonCheck": {
+  "period": "2026-09-19 ~ 2026-09-23",
+  "text": "기상청 태풍 경로 자료로 확인한 결과, 이 기간 부산에서 약 900 km 안으로 들어온 태풍 중심은 없었습니다(가장 가까운 것: 2026년 제25호 두쥐안, 약 915 km).",
+  "source": "data/raw/kma/typhoon/2026-09-check/meta.json",
+  "typhoons": [
+   {
+    "file": "2026-24.csv",
+    "name": "2026년 제24호 태풍 크로반(KROVANH)",
+    "minDistToBusanKm": 606
+   },
+   {
+    "file": "2026-25.csv",
+    "name": "2026년 제25호 태풍 두쥐안(DUJUAN)",
+    "minDistToBusanKm": 915
+   },
+   {
+    "file": "2026-26.csv",
+    "name": "2026년 제26호 태풍 수리개(SURIGAE)",
+    "minDistToBusanKm": 865
+   }
+  ]
+ },
+ "moonPhases": {
+  "file": "moon.csv",
+  "adapter": "csv-moon",
+  "time": {
+   "column": "time",
+   "offset": "+09:00"
+  },
+  "phaseColumn": "phase",
+  "lunarColumn": "lunar",
+  "meta": {
+   "provider": "Meeus 계산식으로 계산한 값(공식 자료 아님)",
+   "title": "달의 위상 시각(계산값)",
+   "identifier": "moon-calc-meeus"
+  }
+ },
+ "defaults": {
+  "month": "2026-09",
+  "inq1": {
+   "start": "2026-09-10 00:00",
+   "end": "2026-09-13 00:00",
+   "count": {
+    "start": "2026-09-11 00:00",
+    "end": "2026-09-12 00:00"
+   }
+  },
+  "inq2": {
+   "start": "2026-09-10 00:00",
+   "end": "2026-09-13 00:00"
+  },
+  "inq4": {
+   "a": {
+    "start": "2022-09-04 00:00",
+    "end": "2022-09-09 00:00"
+   },
+   "b": {
+    "start": "2026-09-19 00:00",
+    "end": "2026-09-24 00:00"
+   }
+  }
+ },
+ "description": {
+  "provider": "국립해양조사원(KHOA)·기상청(KMA), 공공데이터포털 오픈API 및 기상자료개방포털",
+  "period": "2025-10-01 ~ 2026-09-30 (부산 과거 비교: 2022-09-01 ~ 2022-09-30)",
+  "interval": "1시간",
+  "predictedText": "해당 지역의 조석 특성과 달·태양의 주기적인 영향을 바탕으로 계산한 해수면 높이입니다.",
+  "datumNote": "관측 조위의 높이 기준면은 자료 문서에 없어 확인되지 않았습니다. 관측소마다 기준면이 달라 조위 숫자로 지역끼리 해수면 높낮이를 비교할 수 없습니다.",
+  "identifier": "khoa-assess-2025-26 (변환 2026-11-08)"
+ }
+}

@@ -1,18 +1,19 @@
 // 저장과 복구
-// - 학생 정보·답안·근거는 현재 브라우저의 localStorage에만 저장한다(외부 서버 전송 없음).
+// - 학생 정보·답안은 현재 브라우저의 localStorage에만 저장한다(외부 서버 전송 없음).
 // - 학생용 키는 모두 'tideLab.'으로 시작하며, 삭제할 때도 이 키만 지운다.
 // - 교사용 미리보기·기능 시험의 작성 내용은 'tideLabTeacher.v1.preview'에 따로 저장한다(학생 답안과 분리).
-// - 저장 형식 2(탐구 1~5). 이전 형식(1)의 저장 내용은 지우지 않고 'tideLab.v1.legacy'에 원본 그대로 보관한다.
+// - 저장 형식 3(탐구 1~4 + 종합, 문항 ①~⑫). 이전 형식의 저장 내용은 지우지 않고 원본 그대로 보관한다
+//   (형식 1 → 'tideLab.v1.legacy', 형식 2 → 'tideLab.v2.legacy').
 
-import { ALL_QUESTION_IDS, DRAWING_QUESTION_IDS, STEP_IDS, EVIDENCE_INQUIRIES } from '../content/questions.js';
+import { STEP_IDS } from '../content/questions.js';
 
-export const SCHEMA_VERSION = 2;
-const WEATHER_KEYS = ['pressureSea', 'pressureStation', 'pressure', 'windSpeed', 'windDir'];
+export const SCHEMA_VERSION = 3;
 export const SAVE_FORMAT = 'tide-lab-save';
 export const BACKUP_FORMAT = 'tide-lab-backup';
 export const KEY_PREFIX = 'tideLab.';
 export const STUDENT_WORK_KEY = 'tideLab.v1.work';
 export const LEGACY_KEY = 'tideLab.v1.legacy';
+export const LEGACY_KEYS = { 1: 'tideLab.v1.legacy', 2: 'tideLab.v2.legacy' };
 export const PREVIEW_WORK_KEY = 'tideLabTeacher.v1.preview';
 
 let workKey = STUDENT_WORK_KEY;
@@ -25,19 +26,18 @@ export function setStorageMode(mode) {
 export const isPreviewStorage = () => previewMode;
 export const currentWorkKey = () => workKey;
 
-export function emptyAnalysis() {
+/** 문항별 답(형식이 정해진 답은 객체, 글 답은 문자열) */
+export function emptyAnswers() {
   return {
-    inq1: { view: null, points: [], pair: null, compare: null },
-    inq2: { detailView: null, selectedDays: [], focusDay: null, showMoon: true, contextDays: 2, pair: null, compare: null },
-    inq3: { view: null, points: [], pair: null },
-    inq5: { view: null, marks: [], cursor: null, panels: null },
+    q1: { high: null, low: null, range: '' },
+    q2: { high: '', low: '', period: '' },
+    q3: { spring: null, neap: null },
+    q4: { spring: null, neap: null },
+    q5: ['', '', ''],
+    q6: {},
+    q7: { t0: null, t1: null, text: '' },
+    q8: '', q9: '', q10: '', q11: '', q12: '',
   };
-}
-
-/** 관측소마다 따로 보관하는 작성 내용 */
-export const WORKSPACE_KEYS = ['answers', 'links', 'drawings', 'reveals', 'analysis'];
-export function emptyWorkspace() {
-  return { answers: {}, links: {}, drawings: {}, reveals: { moon: null, weather: null }, analysis: emptyAnalysis() };
 }
 
 export function emptyState(caseId, dataVersion) {
@@ -50,11 +50,10 @@ export function emptyState(caseId, dataVersion) {
     student: { grade: '', klass: '', number: '', name: '' },
     started: false,
     step: 'start',
-    stationId: null, // 학생이 고른 관측소
-    ...emptyWorkspace(),
-    evidences: [], // 모든 관측소의 근거(관측소가 기록됨)
-    evSeq: Object.fromEntries(EVIDENCE_INQUIRIES.map((n) => [n, 0])),
-    byStation: {}, // 지금 고르지 않은 관측소의 작성 내용
+    answers: emptyAnswers(),
+    // 자료 공개: 공개한 순간의 답을 따로 보관(이후 해당 답은 고정)
+    reveals: { moon: null, weather: null },
+    ui: { inq2Scale: 'same' },
     createdAt: now,
     updatedAt: now,
     lastPdfAt: null,
@@ -80,18 +79,25 @@ export function saveLocal(state) {
   }
 }
 
-/** 이전 형식 저장 내용 요약(보관본) */
-export function legacyInfo() {
-  if (previewMode) return null;
+/** 보관된 이전 형식 저장 내용 목록 */
+export function legacyList() {
+  if (previewMode) return [];
   const ls = storage();
-  if (!ls) return null;
-  try {
-    const raw = ls.getItem(LEGACY_KEY);
-    if (!raw) return null;
-    const o = JSON.parse(raw);
-    return { raw, student: o.student || {}, updatedAt: o.updatedAt || null, answers: Object.values(o.answers || {}).filter((x) => typeof x === 'string' && x.trim()).length, evidences: Array.isArray(o.evidences) ? o.evidences.length : 0, caseId: o.caseId || '' };
-  } catch { return null; }
+  if (!ls) return [];
+  const out = [];
+  for (const [ver, key] of Object.entries(LEGACY_KEYS)) {
+    try {
+      const raw = ls.getItem(key);
+      if (!raw) continue;
+      const o = JSON.parse(raw);
+      const answers = o.answers && typeof o.answers === 'object' ? Object.values(o.answers).filter((x) => typeof x === 'string' && x.trim()).length : 0;
+      out.push({ version: Number(ver), key, raw, student: o.student || {}, updatedAt: o.updatedAt || null, answers, evidences: Array.isArray(o.evidences) ? o.evidences.length : 0, caseId: o.caseId || '' });
+    } catch { /* 읽을 수 없는 보관본은 건너뜀(지우지 않음) */ }
+  }
+  return out;
 }
+/** 가장 최근 보관본(이전 이름 호환) */
+export const legacyInfo = () => legacyList().sort((a, b) => b.version - a.version)[0] || null;
 
 export function loadLocal() {
   const ls = storage();
@@ -101,13 +107,15 @@ export function loadLocal() {
   if (!raw) return { state: null };
   let obj;
   try { obj = JSON.parse(raw); } catch (e) { return { state: null, error: `저장된 내용을 읽을 수 없습니다: ${e.message}`, raw }; }
-  // 이전 형식(탐구 1~3): 원본을 따로 보관하고 새 형식으로 시작
-  if (obj && obj.format === SAVE_FORMAT && obj.schemaVersion === 1) {
+  // 이전 형식: 원본을 따로 보관하고 새 형식으로 시작(미리보기 저장 내용은 보관하지 않고 새로 시작)
+  if (obj && obj.format === SAVE_FORMAT && typeof obj.schemaVersion === 'number' && obj.schemaVersion < SCHEMA_VERSION) {
+    if (previewMode) { try { ls.removeItem(workKey); } catch { /* 무시 */ } return { state: null, migrated: false }; }
+    const key = LEGACY_KEYS[obj.schemaVersion] || `tideLab.v${obj.schemaVersion}.legacy`;
     try {
-      if (!ls.getItem(LEGACY_KEY)) ls.setItem(LEGACY_KEY, raw);
-      if (ls.getItem(LEGACY_KEY)) ls.removeItem(workKey);
+      if (!ls.getItem(key)) ls.setItem(key, raw);
+      if (ls.getItem(key)) ls.removeItem(workKey);
     } catch (e) { return { state: null, error: `이전 형식 저장 내용을 보관하지 못했습니다: ${e.message}` }; }
-    return { state: null, migrated: true };
+    return { state: null, migrated: true, migratedFrom: obj.schemaVersion };
   }
   try {
     return { state: sanitizeState(obj) };
@@ -134,61 +142,21 @@ export function clearLocal() {
   }
 }
 
-export function clearLegacy() {
-  try { storage()?.removeItem(LEGACY_KEY); return true; } catch { return false; }
+export function clearLegacy(key) {
+  try {
+    const ls = storage();
+    if (key) ls?.removeItem(key); else for (const k of Object.values(LEGACY_KEYS)) ls?.removeItem(k);
+    return true;
+  } catch { return false; }
 }
 
 // ───────── 검증 ─────────
 const isObj = (v) => v != null && typeof v === 'object' && !Array.isArray(v);
-const str = (v, max = 200000) => (typeof v === 'string' ? v.slice(0, max) : '');
+const str = (v, max = 20000) => (typeof v === 'string' ? v.slice(0, max) : '');
 const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : null);
-const range = (v) => (Array.isArray(v) && v.length === 2 && num(v[0]) != null && num(v[1]) != null && v[1] > v[0] ? [v[0], v[1]] : null);
 const DAY_KEY = /^\d{4}-\d{2}-\d{2}$/;
-
-function labeledTimes(arr, kinds) {
-  if (!Array.isArray(arr)) return [];
-  return arr.filter((p) => isObj(p) && typeof p.label === 'string' && num(p.t) != null).slice(0, 26).map((p) => {
-    const o = { label: p.label.slice(0, 3), t: p.t };
-    if (kinds) o.kind = kinds.includes(p.kind) ? p.kind : '';
-    return o;
-  });
-}
-
 const STATION_ID = /^[A-Za-z0-9_-]{1,32}$/;
-/** 관측소 비교 설정: 비교 관측소 id, 세로축 눈금(separate 개별 / same 같은 눈금 크기) */
-function sanitizeCompare(c) {
-  if (!isObj(c) || typeof c.stationId !== 'string' || !STATION_ID.test(c.stationId)) return null;
-  return { stationId: c.stationId, yMode: c.yMode === 'same' ? 'same' : 'separate' };
-}
-const pairOf = (p) => (Array.isArray(p) ? p.slice(0, 2).map((x) => String(x).slice(0, 3)) : null);
-
-function sanitizeInq(key, a) {
-  const x = isObj(a) ? a : {};
-  if (key === 'inq1') return { view: range(x.view), points: labeledTimes(x.points, ['high', 'low']), pair: pairOf(x.pair), compare: sanitizeCompare(x.compare) };
-  if (key === 'inq2') {
-    return {
-      detailView: range(x.detailView),
-      selectedDays: Array.isArray(x.selectedDays) ? x.selectedDays.filter((d) => isObj(d) && DAY_KEY.test(d.day) && typeof d.label === 'string').slice(0, 26).map((d) => ({ label: d.label.slice(0, 3), day: d.day, kind: ['spring', 'neap'].includes(d.kind) ? d.kind : '' })) : [],
-      focusDay: typeof x.focusDay === 'string' && DAY_KEY.test(x.focusDay) ? x.focusDay : null,
-      showMoon: x.showMoon !== false,
-      contextDays: [1, 2, 3].includes(x.contextDays) ? x.contextDays : 2,
-      pair: pairOf(x.pair),
-      compare: sanitizeCompare(x.compare),
-    };
-  }
-  if (key === 'inq3') return { view: range(x.view), points: labeledTimes(x.points), pair: pairOf(x.pair) };
-  return {
-    view: range(x.view),
-    marks: labeledTimes(x.marks),
-    cursor: num(x.cursor),
-    panels: Array.isArray(x.panels) ? [...new Set(x.panels.filter((k) => WEATHER_KEYS.includes(k)))] : null,
-  };
-}
-
-function sanitizeAnalysis(a) {
-  const src = isObj(a) ? a : {};
-  return { inq1: sanitizeInq('inq1', src.inq1), inq2: sanitizeInq('inq2', src.inq2), inq3: sanitizeInq('inq3', src.inq3), inq5: sanitizeInq('inq5', src.inq5) };
-}
+const TYPES = ['반일주조', '혼합조', '일주조', '판단 어려움'];
 
 const COLOR = /^#[0-9a-fA-F]{6}$/;
 const clampN = (v, lo, hi) => Math.min(hi, Math.max(lo, Math.round(v * 10) / 10));
@@ -208,53 +176,36 @@ export function sanitizeDrawing(d) {
   return { w, h, strokes, texts };
 }
 
-const answersOf = (o) => {
-  const out = {};
-  if (isObj(o)) for (const id of ALL_QUESTION_IDS) if (typeof o[id] === 'string') out[id] = o[id].slice(0, 200000);
-  return out;
-};
+const pick = (p) => (isObj(p) && num(p.t) != null ? { t: p.t, v: num(p.v) } : null);
+const shortText = (v, max) => str(v, max);
 
-function sanitizeReveal(r) {
+/** 답 정리: 알 수 없는 값은 버리고 빈 답으로 */
+export function sanitizeAnswers(a) {
+  const x = isObj(a) ? a : {};
+  const out = emptyAnswers();
+  const q1 = isObj(x.q1) ? x.q1 : {};
+  out.q1 = { high: pick(q1.high), low: pick(q1.low), range: shortText(q1.range, 20) };
+  const q2 = isObj(x.q2) ? x.q2 : {};
+  out.q2 = { high: shortText(q2.high, 10), low: shortText(q2.low, 10), period: shortText(q2.period, 10) };
+  const q3 = isObj(x.q3) ? x.q3 : {};
+  out.q3 = { spring: typeof q3.spring === 'string' && DAY_KEY.test(q3.spring) ? q3.spring : null, neap: typeof q3.neap === 'string' && DAY_KEY.test(q3.neap) ? q3.neap : null };
+  const q4 = isObj(x.q4) ? x.q4 : {};
+  out.q4 = { spring: sanitizeDrawing(q4.spring), neap: sanitizeDrawing(q4.neap) };
+  out.q5 = Array.isArray(x.q5) ? [0, 1, 2].map((i) => (typeof x.q5[i] === 'string' && (x.q5[i] === '' || STATION_ID.test(x.q5[i])) ? x.q5[i] : '')) : ['', '', ''];
+  out.q6 = {};
+  if (isObj(x.q6)) for (const [k, v] of Object.entries(x.q6).slice(0, 20)) if (STATION_ID.test(k) && isObj(v)) out.q6[k] = { type: TYPES.includes(v.type) ? v.type : '', reason: shortText(v.reason, 500) };
+  const q7 = isObj(x.q7) ? x.q7 : {};
+  const t0 = num(q7.t0), t1 = num(q7.t1);
+  out.q7 = { t0: t0 != null && t1 != null && t1 > t0 ? t0 : null, t1: t0 != null && t1 != null && t1 > t0 ? t1 : null, text: shortText(q7.text, 2000) };
+  for (const k of ['q8', 'q9', 'q10', 'q11', 'q12']) out[k] = shortText(x[k], 4000);
+  return out;
+}
+
+function sanitizeReveal(r, kind) {
   if (!isObj(r) || num(r.at) == null) return null;
-  return { at: r.at, answers: answersOf(r.answers), drawing: sanitizeDrawing(r.drawing) };
-}
-
-function sanitizeWorkspace(w, evIds) {
-  const x = isObj(w) ? w : {};
-  const out = emptyWorkspace();
-  out.answers = answersOf(x.answers);
-  if (isObj(x.links)) for (const id of ALL_QUESTION_IDS) if (Array.isArray(x.links[id])) out.links[id] = x.links[id].filter((e) => evIds.has(e));
-  if (isObj(x.drawings)) for (const id of DRAWING_QUESTION_IDS) { const d = sanitizeDrawing(x.drawings[id]); if (d) out.drawings[id] = d; }
-  const rv = isObj(x.reveals) ? x.reveals : {};
-  out.reveals = { moon: sanitizeReveal(rv.moon), weather: sanitizeReveal(rv.weather) };
-  out.analysis = sanitizeAnalysis(x.analysis);
-  return out;
-}
-
-function sanitizeEvidence(ev) {
-  if (!isObj(ev)) return null;
-  if (!EVIDENCE_INQUIRIES.includes(ev.inquiry)) return null;
-  if (typeof ev.id !== 'string' || typeof ev.num !== 'string') return null;
-  if (!isObj(ev.state) || !isObj(ev.values)) return null;
-  return {
-    id: ev.id.slice(0, 64),
-    num: ev.num.slice(0, 16),
-    inquiry: ev.inquiry,
-    seq: num(ev.seq) ?? 0,
-    createdAt: num(ev.createdAt) ?? Date.now(),
-    updatedAt: num(ev.updatedAt) ?? Date.now(),
-    caseId: str(ev.caseId, 100),
-    dataVersion: str(ev.dataVersion, 100),
-    station: str(ev.station, 200),
-    stationId: typeof ev.stationId === 'string' && STATION_ID.test(ev.stationId) ? ev.stationId : null,
-    stationSea: str(ev.stationSea, 20),
-    datasets: Array.isArray(ev.datasets) ? ev.datasets.filter(isObj).map((d) => ({ label: str(d.label, 200), identifier: str(d.identifier, 200) })) : [],
-    period: range(ev.period),
-    state: sanitizeInq(`inq${ev.inquiry}`, ev.state),
-    values: JSON.parse(JSON.stringify(ev.values)),
-    memo: str(ev.memo, 5000),
-    summary: str(ev.summary, 500),
-  };
+  const a = sanitizeAnswers(r.answers || {});
+  const keep = kind === 'moon' ? { q3: a.q3, q4: a.q4 } : { q9: a.q9, q10: a.q10 };
+  return { at: r.at, answers: keep };
 }
 
 /** 저장 형식 검사 및 정리. 형식이 맞지 않으면 예외 */
@@ -263,23 +214,18 @@ export function sanitizeState(obj) {
   if (obj.format !== SAVE_FORMAT) throw new Error('조석 데이터 탐구실의 저장 형식이 아닙니다.');
   if (typeof obj.schemaVersion !== 'number') throw new Error('저장 형식 버전 정보가 없습니다.');
   if (obj.schemaVersion > SCHEMA_VERSION) throw new Error(`더 새로운 버전(${obj.schemaVersion})의 앱에서 만든 파일입니다. 이 앱(버전 ${SCHEMA_VERSION})에서는 열 수 없습니다.`);
-  if (obj.schemaVersion < SCHEMA_VERSION) throw new Error(`이전 버전(${obj.schemaVersion}, 탐구 1~3 구성)의 저장 형식입니다. 탐구 순서와 문항이 바뀌어 이 앱에서는 열 수 없습니다.`);
+  if (obj.schemaVersion < SCHEMA_VERSION) throw new Error(`이전 버전(${obj.schemaVersion})의 저장 형식입니다. 탐구 구성과 문항이 바뀌어 이 앱에서는 열 수 없습니다.`);
   if (typeof obj.caseId !== 'string' || !obj.caseId) throw new Error('사례 정보가 없습니다.');
   const s = emptyState(obj.caseId, str(obj.dataVersion, 100));
   const st = isObj(obj.student) ? obj.student : {};
   s.student = { grade: str(st.grade, 10), klass: str(st.klass, 10), number: str(st.number, 10), name: str(st.name, 40) };
   s.started = !!obj.started;
   s.step = STEP_IDS.includes(obj.step) ? obj.step : 'start';
-  s.evidences = Array.isArray(obj.evidences) ? obj.evidences.map(sanitizeEvidence).filter(Boolean) : [];
-  const evIds = new Set(s.evidences.map((e) => e.id));
-  Object.assign(s, sanitizeWorkspace(obj, evIds));
-  if (isObj(obj.evSeq)) for (const k of EVIDENCE_INQUIRIES) s.evSeq[k] = num(obj.evSeq[k]) ?? 0;
-  for (const ev of s.evidences) s.evSeq[ev.inquiry] = Math.max(s.evSeq[ev.inquiry] || 0, ev.seq);
-  s.stationId = typeof obj.stationId === 'string' && STATION_ID.test(obj.stationId) ? obj.stationId : null;
-  s.byStation = {};
-  if (isObj(obj.byStation)) {
-    for (const [k, v] of Object.entries(obj.byStation).slice(0, 100)) if (STATION_ID.test(k) && k !== s.stationId) s.byStation[k] = sanitizeWorkspace(v, evIds);
-  }
+  s.answers = sanitizeAnswers(obj.answers);
+  const rv = isObj(obj.reveals) ? obj.reveals : {};
+  s.reveals = { moon: sanitizeReveal(rv.moon, 'moon'), weather: sanitizeReveal(rv.weather, 'weather') };
+  const ui = isObj(obj.ui) ? obj.ui : {};
+  s.ui = { inq2Scale: ui.inq2Scale === 'own' ? 'own' : 'same' };
   s.createdAt = num(obj.createdAt) ?? s.createdAt;
   s.updatedAt = num(obj.updatedAt) ?? s.updatedAt;
   s.lastPdfAt = num(obj.lastPdfAt);
@@ -322,13 +268,13 @@ export function parseBackup(text, { knownCaseIds, currentCaseId, currentDataVers
   if (!isObj(obj) || obj.format !== BACKUP_FORMAT) return { ok: false, error: '조석 데이터 탐구실의 백업 파일이 아닙니다.' };
   if (typeof obj.schemaVersion !== 'number') return { ok: false, error: '백업 파일에 형식 버전 정보가 없습니다.' };
   if (obj.schemaVersion > SCHEMA_VERSION) return { ok: false, error: `더 새로운 버전(${obj.schemaVersion})의 앱에서 만든 백업입니다.` };
-  if (obj.schemaVersion < SCHEMA_VERSION) return { ok: false, error: '이전 버전 앱(탐구 1~3 구성)에서 만든 백업입니다. 탐구 순서와 문항이 바뀌어 불러올 수 없습니다. 파일은 지우지 말고 보관하세요.' };
+  if (obj.schemaVersion < SCHEMA_VERSION) return { ok: false, error: '이전 버전 앱에서 만든 백업입니다. 탐구 구성과 문항이 바뀌어 불러올 수 없습니다. 파일은 지우지 말고 보관하세요.' };
   let state;
   try { state = sanitizeState(obj.work); } catch (e) { return { ok: false, error: `백업 내용이 올바르지 않습니다: ${e.message}` }; }
   if (obj.caseId !== state.caseId) return { ok: false, error: '백업 파일의 사례 정보가 서로 맞지 않습니다.' };
   if (!knownCaseIds.includes(state.caseId)) return { ok: false, error: `이 앱에 없는 사례(${state.caseId})의 백업입니다.` };
   const warnings = [];
   if (state.caseId !== currentCaseId) warnings.push(`현재 평가 사례와 다른 사례(${state.caseId})의 백업입니다.`);
-  else if (state.dataVersion !== currentDataVersion) warnings.push(`백업을 만들 때의 자료 버전(${state.dataVersion})과 현재 자료 버전(${currentDataVersion})이 다릅니다. 근거에 기록된 값은 백업 당시의 값으로 유지됩니다.`);
+  else if (state.dataVersion !== currentDataVersion) warnings.push(`백업을 만들 때의 자료 버전(${state.dataVersion})과 현재 자료 버전(${currentDataVersion})이 다릅니다. 기록된 지점의 높이는 백업 당시 값으로 유지됩니다.`);
   return { ok: true, state, warnings };
 }

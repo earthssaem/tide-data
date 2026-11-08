@@ -1,7 +1,14 @@
 {
   "formatVersion": 1,
-  "defaultCase": "khoa-multi-2022-09",
+  "defaultCase": "khoa-assess-2025-26",
   "cases": [
+    {
+      "id": "khoa-assess-2025-26",
+      "path": "khoa-assess-2025-26",
+      "label": "조석 수행평가 · 인천·부산·묵호 2025-10~2026-09 + 부산 2022-09 (국립해양조사원·기상청 자료)",
+      "enabled": true,
+      "sample": false
+    },
     {
       "id": "sample-2099",
       "path": "sample-2099",
@@ -15,20 +22,6 @@
       "label": "검증용 사례 (예측·기상·달의 위상 자료 없음)",
       "enabled": false,
       "sample": true
-    },
-    {
-      "id": "khoa-dt0005-2022-09",
-      "path": "khoa-dt0005-2022-09",
-      "label": "부산 2022년 09월 · 태풍 힌남노(HINNAMNOR) (국립해양조사원 자료)",
-      "enabled": true,
-      "sample": false
-    },
-    {
-      "id": "khoa-multi-2022-09",
-      "path": "khoa-multi-2022-09",
-      "label": "우리나라 조위관측소 비교 · 2022년 9월 (국립해양조사원·기상청 자료)",
-      "enabled": true,
-      "sample": false
     }
   ]
 }

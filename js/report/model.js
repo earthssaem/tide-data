@@ -1,198 +1,183 @@
-// 보고서 구성 — 미리보기(HTML)와 PDF가 같은 구성을 사용한다(화면 답안과 PDF 내용 일치).
-// 학생이 쓰지 않은 답안은 비워 두고 '작성하지 않음'으로만 표시한다(임의로 채우지 않음).
-// 순서: 학생·관측소 → 탐구 1 → 탐구 2 → 위치 관계 그림·글 → 위상 확인 후 답변 → 탐구 3 → 탐구 4(초기 추측)
-//       → 탐구 5(추가 자료와 수정된 설명) → 종합 결론 → 자료 출처와 분석의 한계
+// 보고서 구성 — 미리보기(HTML)와 PDF가 같은 구성을 사용한다(화면 답과 PDF 내용 일치).
+// 학생이 쓰지 않은 답은 비워 두고 '작성하지 않음'으로만 표시한다(임의로 채우지 않음).
+// 학생이 그래프에서 고른 지점·날짜·구간은 그 문항의 그래프에 그대로 그려 넣는다(같은 그래프를 쓰는 문항은 그림 하나를 함께 씀).
 // 아직 공개하지 않은 자료(달의 위상, 기상·태풍)는 보고서에도 나오지 않는다. 교사용 메모는 넣지 않는다.
 
-import { INQUIRIES, CONCLUSION, REVEALS, activeQuestions } from '../content/questions.js';
-import { unavailableText, lockedBy, revealedAnswer } from '../screens/common.js';
-import { fmtRange, fmtDateTime } from '../util/time.js';
-import { stationCaseData } from '../data/loader.js';
-import { weatherKinds, weatherLabel } from '../chart/specs.js';
+import { INQUIRIES, CONCLUSION, REVEALS, CIRCLED, PREDICTED_TEXT, OBSERVED_TEXT, DATUM_CAUTION, isEnabled, qLabel } from '../content/questions.js';
+import { answerOf } from '../screens/common.js';
+import { fmtRange, fmtDateTime, fmtDateKo, DAY, HOUR } from '../util/time.js';
+import { fmtNum } from '../util/format.js';
+import { layoutChart } from '../chart/layout.js';
+import {
+  inq1MainSpec, inq1DailySpec, inq2Specs, stationsMapLayout, inq3Specs, inq3DailySpec, inq4TideSpecs, weatherSpec,
+  typhoonMapLayout, closestTyphoonPoint, monthDays, extremaIn, periodTitle, periodCd, PERIOD_NAMES,
+} from '../chart/assess.js';
 
 const localTz = () => ({ offsetMinutes: -new Date().getTimezoneOffset(), label: '' });
+const cm = (v) => (v == null ? '자료 없음' : `${fmtNum(v, 1)} cm`);
 
 export function studentLine(st) {
   return `${st.grade || '□'}학년 ${st.klass || '□'}반 ${st.number || '□'}번 ${st.name || '(이름 없음)'}`;
 }
 
-export function caseInfoRows(cd, state = { reveals: {} }) {
-  const r = cd.ranges;
-  const rv = state.reveals || {};
-  const rows = [
-    ['관측소', `${cd.station.name}${cd.station.id ? ` (${cd.station.id}${cd.stationEntry?.sea ? `, ${cd.stationEntry.sea}` : ''})` : ''}`],
-    ['분석 기간(탐구 2)', fmtRange(r.inq2[0], r.inq2[1], cd.tz)],
-    ['기본 관찰 구간(탐구 1)', fmtRange(r.inq1[0], r.inq1[1], cd.tz)],
-    ['집중 관찰 구간(탐구 3)', fmtRange(r.inq3[0], r.inq3[1], cd.tz)],
-  ];
-  if (rv.weather && cd.typhoon) rows.push(['태풍 정보(탐구 5)', `${cd.typhoon.name} (${cd.typhoon.year}년)`]);
-  rows.push(['높이 기준면', cd.observed.datumLabel]);
-  rows.push(['관측 간격', `${cd.observed.intervalMs / 3600e3}시간`]);
-  rows.push(['시간대', cd.tz.name || cd.tz.label]);
-  rows.push(['달의 위상 자료 확인', rv.moon ? fmtDateTime(rv.moon.at, localTz()) : '확인하지 않음']);
-  rows.push(['추가 자료 확인', rv.weather ? fmtDateTime(rv.weather.at, localTz()) : '확인하지 않음']);
-  rows.push(['자료 버전', cd.dataVersion]);
-  return rows;
-}
-
-/** 관측소 하나의 자료 출처(관측·예측, 공개한 경우 기상) */
-export function stationSourceRows(cd, { prefix = '', weather = true } = {}) {
-  const out = [];
-  const ds = (label, s, extra = []) => {
-    if (!s) { out.push({ role: `${prefix}${label}`, lines: ['자료 미제공'] }); return; }
-    out.push({ role: `${prefix}${label}`, lines: [
-      s.meta?.provider && `제공: ${s.meta.provider}`, s.meta?.title && `자료명: ${s.meta.title}`, s.meta?.identifier && `식별자: ${s.meta.identifier}`,
-      ...extra,
-    ].filter(Boolean) });
-  };
-  ds('관측 조위', cd.observed, [
-    `관측 간격 ${cd.observed.intervalMs / 3600e3}시간, 단위 cm, 기준면 ${cd.observed.datumLabel}`,
-    cd.observed.conversions.length ? `전처리 변환: ${cd.observed.conversions.join(', ')}` : '',
-  ].filter(Boolean));
-  ds('천문조 예측 조위', cd.predicted, cd.predicted ? [
-    `관측 간격 ${cd.predicted.intervalMs / 3600e3}시간, 기준면 ${cd.predicted.datumLabel}`,
-    cd.predicted.conversions.length ? `전처리 변환: ${cd.predicted.conversions.join(', ')}` : '',
-    cd.residual?.ok ? '' : `잔차 계산 불가: ${cd.residual?.problems?.join(' ')}`,
-  ].filter(Boolean) : []);
-  if (weather) {
-    ds('기상 자료', cd.weather, cd.weather ? [
-      `관측 지점: ${cd.weather.station?.name || '—'}${cd.weatherDistanceKm != null ? (cd.weatherDistanceKm < 0.1 ? ' (조위 관측소와 같은 지점)' : ` (조위 관측소에서 약 ${cd.weatherDistanceKm.toFixed(1)} km${cd.weather.station?.elevation_m != null ? `, 해발 ${cd.weather.station.elevation_m} m` : ''})`) : ''}`,
-      `항목: ${weatherKinds(cd).map((k) => weatherLabel(cd, k)).join(', ')} · 관측 간격 ${cd.weather.intervalMs / 3600e3}시간 · 풍향은 바람이 불어오는 방향`,
-    ] : []);
-  }
-  return out;
-}
-
-/** 보고서 자료 출처: 현재 관측소와 근거·비교에 쓰인 관측소 모두(공개한 자료만) */
-export function reportSources(cd, state) {
-  const rv = state.reveals || {};
-  const out = [];
-  const d = cd.config.description || {};
-  out.push({ role: '자료 설명', lines: [
-    d.title && `자료명: ${d.title}`, d.period && `기간: ${d.period}`,
-    `시간대: ${cd.tz.name || cd.tz.label}`, d.interval && `관측 간격: ${d.interval}`, d.datumLabel && `높이 기준면: ${d.datumLabel}`,
-    d.identifier && `식별자: ${d.identifier}`,
-  ].filter(Boolean) });
-  const ids = [cd.station.id];
-  for (const ev of state.evidences || []) {
-    if (ev.stationId && !ids.includes(ev.stationId)) ids.push(ev.stationId);
-    const c = ev.state?.compare?.stationId;
-    if (c && (ev.inquiry === 1 || ev.inquiry === 2) && !ids.includes(c)) ids.push(c);
-  }
-  for (const id of ids) {
-    const sc = id ? stationCaseData(cd, id) : cd;
-    if (!sc) { out.push({ role: `관측소 ${id}`, lines: ['이 앱에서 자료를 찾을 수 없음(근거의 표 값은 기록 당시 값)'] }); continue; }
-    out.push(...stationSourceRows(sc, { prefix: ids.length > 1 || cd.multi ? `${sc.station.name}${id ? `(${id})` : ''} · ` : '', weather: !!rv.weather }));
-  }
-  if (rv.moon && cd.moon) out.push({ role: '달의 위상', lines: [cd.moon.meta.provider && `제공: ${cd.moon.meta.provider}`, cd.moon.meta.note, cd.moon.meta.identifier && `식별자: ${cd.moon.meta.identifier}`].filter(Boolean) });
-  if (rv.weather && cd.typhoon) out.push({ role: '태풍 정보', lines: [cd.typhoon.meta?.provider && `제공: ${cd.typhoon.meta.provider}`, cd.typhoon.meta?.identifier && `식별자: ${cd.typhoon.meta.identifier}`, cd.typhoon.trackKind && `경로 종류: ${cd.typhoon.trackKind}`, cd.typhoon.note].filter(Boolean) });
-  if (ids.length > 1) out.push({ role: '관측소 비교 시 주의', lines: ['관측소마다 조위의 높이 기준면이 다를 수 있고 확인되지 않았으므로, 관측소끼리 조위 숫자로 해수면 높낮이를 비교하지 않았다.'] });
-  return out;
-}
-
-/** 자료 처리 기준과 분석의 한계 */
-export function limitationNotes(cd, state) {
-  const rv = state.reveals || {};
-  const out = [
-    '일별 해수면 변동 폭 = 해당 날짜(00:00~24:00)의 관측 최고값 − 관측 최저값. 인접한 만조·간조 한 쌍의 조차와는 다른 값이다.',
-    '관측값 평균(탐구 3) = 그날 1시간 간격 관측값의 산술 평균. 자료가 빠진 날은 다른 날과 같은 조건으로 비교하지 않았다.',
-    '결측·오류값은 0으로 바꾸지 않고 빈 값으로 두었으며, 그래프에서는 선을 끊어 표시했다. 자료가 빠진 날의 일별 통계는 불완전으로 표시했다.',
-    '관측점은 직선으로 연결했다. 1시간 간격 자료에서 얻은 최고·최저값은 연속 관측의 실제 최고·최저값과 다를 수 있다.',
-    '만조·간조, 대조·소조 표시는 학생이 자료를 보고 판단한 것이며, 앱이 정답을 정하지 않았다.',
-    `높이 기준면: ${cd.observed.datumLabel}. ${cd.observed.datumConfirmed === false ? '기준면이 확인되지 않아 관측소끼리 조위 숫자로 해수면 높낮이를 비교하지 않았다.' : ''}`,
-  ];
-  if (/미확인/.test(cd.tz.name || '')) out.push(`시간대: ${cd.tz.name}`);
-  if (cd.residual?.ok) out.push('조위 잔차 = 같은 시각의 관측 조위 − 예측 조위. 같은 관측소·같은 기준면·같은 시각의 자료만 비교하며, 가까운 시각의 값을 연결하거나 보간하지 않았다.');
-  else out.push(`예측 조위로 관측과 예측의 차이(잔차)를 계산하지 않았다(${cd.residual?.problems?.[0] || '예측 조위 자료 없음'}). 따라서 특정 요인 때문에 높아진 정확한 높이는 이 자료만으로 구하지 않았다.`);
-  if (rv.weather && cd.weather && cd.weatherDistanceKm != null && cd.weatherDistanceKm >= 0.1) out.push(`기상 자료는 조위관측소에서 약 ${cd.weatherDistanceKm.toFixed(1)} km 떨어진 ${cd.weather.station?.name || '기상 관측 지점'}의 값이며, 두 위치의 기압·바람이 같다고 단정할 수 없다. 해면기압과 현지기압은 한 그래프에 섞지 않았다.`);
-  if (rv.weather && cd.typhoon) out.push('태풍 경로는 일정 간격의 중심 위치 자료이며, 실제 최근접 시각은 기록된 시각 사이에 있을 수 있다. 태풍 중심기압은 관측소의 기압으로 쓰지 않았다.');
-  if (rv.moon && cd.moon?.meta?.note) out.push(`달의 위상: ${cd.moon.meta.note}`);
-  return out;
-}
-
-/**
- * @returns 보고서 구성 객체
- */
-export function buildReport(cd, state) {
-  const evById = new Map(state.evidences.map((e) => [e.id, e]));
-  const missing = { answers: [], noLink: [], noEvidence: [], reveals: [], student: false };
-  const st = state.student;
-  if (!st.grade || !st.klass || !st.number || !st.name) missing.student = true;
-  const rv = state.reveals || {};
-
-  const blocksByInq = new Map();
-  const unlinkedByInq = new Map();
-  for (const inq of INQUIRIES) {
-    const placed = new Set();
-    const qs = activeQuestions(inq, cd.setup);
-    const blocks = qs.map((q, i) => {
-      const linked = (state.links[q.id] || []).filter((id) => evById.has(id)).map((id) => evById.get(id));
-      const figures = linked.filter((e) => e.inquiry === inq.no && !placed.has(e.id));
-      figures.forEach((e) => placed.add(e.id));
-      const lock = lockedBy(state, q);
-      const waiting = q.afterReveal && !rv[q.afterReveal];
-      const answer = lock ? revealedAnswer(state, q.lockAfter, q.id) : (state.answers[q.id] || '');
-      const label = `탐구 ${inq.no} 문항 ${i + 1}`;
-      if (!answer.trim()) missing.answers.push({ step: inq.step, qid: q.id, label });
-      if (inq.evidence && !linked.length) missing.noLink.push({ step: inq.step, qid: q.id, label });
-      const b = {
-        id: q.id, no: i + 1, text: q.text, answer, empty: !answer.trim(),
-        unavailable: waiting ? '' : unavailableText(cd, q),
-        linkedNums: linked.map((e) => (e.stationId && e.stationId !== cd.station.id ? `${e.num}(${e.station})` : e.num)),
-        figures,
-        waitNote: waiting ? `${REVEALS[q.afterReveal].label}를 확인하지 않아 작성하지 않음` : '',
-        lockedNote: lock ? `${REVEALS[q.lockAfter].label} 공개 전에 작성한 답(공개 ${fmtDateTime(lock.at, localTz())})` : '',
-      };
-      if (q.drawing) b.drawing = lock ? (lock.drawing || null) : (state.drawings?.[q.id] || null);
-      if (q.compareWith) {
-        b.sideBySide = {
-          leftTitle: '탐구 4 문항 1 · 추가 자료 확인 전의 초기 추측',
-          left: revealedAnswer(state, 'weather', q.compareWith),
-          rightTitle: '추가 자료를 확인한 뒤 유지·수정한 설명',
-        };
+/** 문항별 답 요약(글 줄 목록). 빈 답이면 [] */
+export function answerLines(ad, state, q) {
+  const tz = ad.tz;
+  const a = answerOf(state, q);
+  switch (q.id) {
+    case 'q1': {
+      const L = [];
+      if (a.high) L.push(`만조로 고른 지점: ${fmtDateTime(a.high.t, tz)} · ${cm(a.high.v)}`);
+      if (a.low) L.push(`간조로 고른 지점: ${fmtDateTime(a.low.t, tz)} · ${cm(a.low.v)}`);
+      if (String(a.range || '').trim()) L.push(`조차: ${a.range} cm`);
+      return L;
+    }
+    case 'q2': {
+      if (![a.high, a.low, a.period].some((x) => String(x || '').trim())) return [];
+      return [`만조 ${a.high || '□'}회 / 간조 ${a.low || '□'}회 / 만조에서 다음 만조까지 약 ${a.period || '□'}시간`];
+    }
+    case 'q3': {
+      const days = monthDays(ad.st[ad.rep], ad.win.month);
+      const t = (k) => { const d = days.find((x) => x.day === k); return d ? `${fmtDateKo(d.start, tz)} (변동 폭 ${cm(d.range)})` : k; };
+      return [a.spring && `대조로 고른 날: ${t(a.spring)}`, a.neap && `소조로 고른 날: ${t(a.neap)}`].filter(Boolean);
+    }
+    case 'q4': return [];
+    case 'q5': {
+      if (!a.some(Boolean)) return [];
+      const n = (id) => ad.stationList.find((s) => s.id === id)?.name || '□';
+      return [`${n(a[0])} > ${n(a[1])} > ${n(a[2])}`];
+    }
+    case 'q6': return ad.stationList.map((s) => { const v = a[s.id]; return v && (v.type || v.reason?.trim()) ? `${s.name}: ${v.type || '□'}${v.reason?.trim() ? ` — ${v.reason.trim()}` : ''}` : null; }).filter(Boolean);
+    case 'q7': {
+      const L = [];
+      if (a.t0 != null) {
+        const cd = ad.st[ad.rep];
+        const p = extremaIn(cd.predicted, a.t0, a.t1), o = extremaIn(cd.observed, a.t0, a.t1);
+        L.push(`고른 구간: ${fmtRange(a.t0, a.t1, tz)} (${Math.round((a.t1 - a.t0) / HOUR)}시간) · 변동 폭 예측 ${cm(p?.range)}, 관측 ${cm(o?.range)}`);
       }
-      return b;
-    });
-    blocksByInq.set(inq.no, blocks);
-    const evs = state.evidences.filter((e) => e.inquiry === inq.no);
-    if (inq.evidence && !evs.length) missing.noEvidence.push({ step: inq.step, label: `탐구 ${inq.no}` });
-    unlinkedByInq.set(inq.no, evs.filter((e) => !placed.has(e.id)));
+      if (a.text?.trim()) L.push(a.text.trim());
+      return L;
+    }
+    default: return typeof a === 'string' && a.trim() ? [a.trim()] : [];
   }
-  if (!rv.moon && cd.availability.moonPhases) missing.reveals.push({ step: 'inq2', label: '탐구 2 [달의 위상 자료 확인]을 아직 누르지 않음' });
-  if (!rv.weather) missing.reveals.push({ step: 'inq4', label: '탐구 4 [추가 자료 확인]을 아직 누르지 않음' });
+}
 
-  const pick = (no, ids) => blocksByInq.get(no).filter((b) => ids.includes(b.id));
-  const D = (no) => INQUIRIES[no - 1];
-  const moonPhaseRows = rv.moon && cd.moon
-    ? cd.moon.phases.filter((p) => p.t >= cd.ranges.inq2[0] - 3 * 864e5 && p.t <= cd.ranges.inq2[1] + 3 * 864e5).map((p) => [p.label, fmtDateTime(p.t, cd.tz), p.lunar || '자료 미제공'])
-    : null;
-  const parts = [
-    { key: 'inq1', inquiry: 1, main: true, title: `탐구 1. ${D(1).title}`, sub: `탐구 목표: ${D(1).goal}`, blocks: blocksByInq.get(1) },
-    { key: 'inq2', inquiry: 2, main: true, title: `탐구 2. ${D(2).title}`, sub: `탐구 목표: ${D(2).goal}`, blocks: pick(2, ['a2q1', 'a2q2', 'a2q3']) },
-    { key: 'inq2-pos', inquiry: 2, title: '달·태양·지구 위치 관계 그림 또는 글', sub: rv.moon ? `달의 위상 자료를 확인하기 전에 작성한 설명입니다(확인 ${fmtDateTime(rv.moon.at, localTz())}).` : '아직 달의 위상 자료를 확인하지 않았습니다.', blocks: pick(2, ['a2q4']) },
-    { key: 'inq2-moon', inquiry: 2, title: '달의 위상 확인 후 답변', sub: rv.moon ? '실제 달의 위상 자료를 확인한 뒤 앞의 판단과 비교한 답변입니다.' : '달의 위상 자료를 확인하지 않아 이 부분은 작성되지 않았습니다.', blocks: pick(2, ['a2q5']), table: moonPhaseRows ? { title: '확인한 달의 위상 (자료 기준 시각)', head: ['위상', '시각', '음력'], rows: moonPhaseRows } : null },
-    { key: 'inq3', inquiry: 3, main: true, title: `탐구 3. ${D(3).title}의 특징`, sub: `집중 관찰 구간: ${fmtRange(cd.ranges.inq3[0], cd.ranges.inq3[1], cd.tz)}`, blocks: blocksByInq.get(3) },
-    { key: 'inq4', inquiry: 4, title: '탐구 4. 추가 자료 확인 전의 초기 추측', sub: rv.weather ? `추가 자료를 확인하기 전(${fmtDateTime(rv.weather.at, localTz())})에 보관한 답입니다.` : '아직 추가 자료를 확인하지 않았습니다(현재 작성 중인 답).', blocks: blocksByInq.get(4) },
-    { key: 'inq5', inquiry: 5, main: true, title: '탐구 5. 추가 자료와 수정된 설명', sub: rv.weather ? `탐구 목표: ${D(5).goal}` : '추가 자료를 확인하지 않아 이 탐구는 진행되지 않았습니다.', blocks: rv.weather ? blocksByInq.get(5) : [] },
-  ].filter((p) => p.blocks.length || p.main || p.table);
-  for (const p of parts) {
-    p.unlinked = p.main && D(p.inquiry).evidence ? unlinkedByInq.get(p.inquiry) : [];
-    p.noEvidence = p.main && D(p.inquiry).evidence && !(p.inquiry === 5 && !rv.weather)
-      && !parts.some((x) => x.inquiry === p.inquiry && x.blocks.some((b) => b.figures.length)) && !p.unlinked.length;
-  }
+const fig = (id, caption, panels) => ({ type: 'figure', id, caption, panels });
+// panels: [{height, spec:(ctx)=>spec} | {map:(width, measure, fontSize)=>layout, maxWidth}]
 
-  const conclusion = {
-    title: CONCLUSION.title,
-    blocks: CONCLUSION.questions.map((q, i) => {
-      const linked = (state.links[q.id] || []).filter((id) => evById.has(id)).map((id) => evById.get(id));
-      const answer = state.answers[q.id] || '';
-      if (!answer.trim()) missing.answers.push({ step: 'conclusion', qid: q.id, label: `종합 결론 ${i + 1}` });
-      return { id: q.id, no: i + 1, text: q.text, answer, empty: !answer.trim(), linkedNums: linked.map((e) => e.num), figures: [] };
-    }),
+/** 그림의 각 패널을 배치(폭·글자 크기는 화면/PDF가 정함) */
+export function layoutFigure(f, { width, measure, fontSize = 9.5 }) {
+  return f.panels.map((p) => {
+    if (p.map) return p.map(Math.min(width, p.maxWidth || width), measure, fontSize);
+    return layoutChart(p.spec({ width, height: p.height, measure, fontSize }));
+  }).filter(Boolean);
+}
+
+export function buildReport(ad, state) {
+  const tz = ad.tz;
+  const rv = state.reveals || {};
+  const st = state.student;
+  const missing = [];
+  const on = (q) => isEnabled(q, ad.setup);
+  const qa = (q, step) => {
+    const lock = q.lockAfter && rv[q.lockAfter];
+    const waiting = q.afterReveal && !rv[q.afterReveal];
+    const lines = waiting ? [] : answerLines(ad, state, q);
+    const empty = !lines.length && q.id !== 'q4';
+    if (empty) missing.push({ step, qid: q.id, label: `${qLabel(q)}` });
+    return {
+      type: 'qa', id: q.id, label: qLabel(q), text: q.text, lines, empty,
+      waitNote: waiting ? `[${REVEALS[q.afterReveal].label}]을 하지 않아 작성하지 않음` : '',
+      lockedNote: lock ? `[${REVEALS[q.lockAfter].label}] 전에 작성한 답(${fmtDateTime(lock.at, localTz())})` : '',
+    };
   };
+  const [Q1, Q2, Q3, Q4] = INQUIRIES[0].questions;
+  const [Q5, Q6] = INQUIRIES[1].questions;
+  const [Q7, Q8] = INQUIRIES[2].questions;
+  const [Q9, Q10, Q11] = INQUIRIES[3].questions;
+  const view = (s) => ({ ...s.answers, q3: answerOf(s, Q3) || s.answers.q3 });
 
-  const dataVersionMismatch = state.evidences.filter((e) => e.dataVersion !== cd.dataVersion).map((e) => e.num);
+  // ── 탐구 1 ──
+  const s1 = { key: 'inq1', title: `탐구 1. ${INQUIRIES[0].title}`, sub: `부산 예측 조위 — ${PREDICTED_TEXT}`, items: [] };
+  if (on(Q1) || on(Q2)) {
+    s1.items.push(fig('f1', `그림 1. 부산 예측 조위 3일 (${fmtRange(ad.win.inq1[0], ad.win.inq1[1], tz)}) — ${[on(Q1) && '①에서 고른 지점', on(Q2) && '②의 24시간(색칠)'].filter(Boolean).join(', ')}`, [{ height: 250, spec: (ctx) => inq1MainSpec(ctx, ad, view(state), { title: false }) }]));
+    if (on(Q1)) s1.items.push(qa(Q1, 'inq1'));
+    if (on(Q2)) s1.items.push(qa(Q2, 'inq1'));
+  }
+  if (on(Q3)) {
+    s1.items.push(fig('f2', `그림 2. 부산 예측 조위 한 달 일별 변동 폭 (${ad.setup.month}) — ③에서 고른 날${rv.moon ? ', 달의 위상' : ''}`, [{ height: 220, spec: (ctx) => inq1DailySpec(ctx, ad, view(state), { showMoon: !!rv.moon, title: false }) }]));
+    s1.items.push(qa(Q3, 'inq1'));
+  }
+  if (on(Q4)) {
+    const a = answerOf(state, Q4) || {};
+    const q = qa(Q4, 'inq1');
+    if (!a.spring && !a.neap) missing.push({ step: 'inq1', qid: 'q4', label: qLabel(Q4) });
+    s1.items.push({ ...q, type: 'drawings', items: [{ title: '대조일 때', drawing: a.spring || null }, { title: '소조일 때', drawing: a.neap || null }] });
+  }
+  if (rv.moon && ad.moon) {
+    const ph = ad.moon.phases.filter((p) => p.t >= ad.win.month[0] - DAY && p.t < ad.win.month[1] + DAY);
+    s1.items.push({ type: 'table', title: `확인한 달의 위상(계산값, ${tz.label}) — 확인 ${fmtDateTime(rv.moon.at, localTz())}`, head: ['위상', '시각'], rows: ph.map((p) => [p.label, fmtDateTime(p.t, tz)]) });
+  } else if (on(Q3) || on(Q4)) s1.items.push({ type: 'note', text: '[달의 위상 확인]을 하지 않았습니다.' });
+  if (!rv.moon && (on(Q3) || on(Q4))) missing.push({ step: 'inq1', label: '[달의 위상 확인]을 아직 누르지 않음', reveal: true });
 
+  // ── 탐구 2 ──
+  const s2 = { key: 'inq2', title: `탐구 2. ${INQUIRIES[1].title}`, sub: `인천·부산·묵호 예측 조위 · ${fmtRange(ad.win.inq2[0], ad.win.inq2[1], tz)} · ${DATUM_CAUTION}`, items: [] };
+  if (on(Q5) || on(Q6)) {
+    const mode = state.ui?.inq2Scale === 'own' ? 'own' : 'same';
+    s2.items.push(fig('f3', `그림 3. 세 지역의 예측 조위(같은 시간 축, 세로 눈금: ${mode === 'same' ? '같은 눈금 크기' : '개별 눈금'})와 관측소 위치`, [
+      ...ad.stationList.map((s, i) => ({ height: i === ad.stationList.length - 1 ? 165 : 150, spec: (ctx) => inq2Specs(ctx, ad, mode)[i] })),
+      { map: (w, measure, fs) => stationsMapLayout({ stations: ad.stationList, width: w, measure, fontSize: fs, title: '관측소 위치' }), maxWidth: 240 },
+    ]));
+    if (on(Q5)) s2.items.push(qa(Q5, 'inq2'));
+    if (on(Q6)) s2.items.push(qa(Q6, 'inq2'));
+  }
+
+  // ── 탐구 3 ──
+  const s3 = { key: 'inq3', title: `탐구 3. ${INQUIRIES[2].title}`, sub: `부산 ${ad.setup.month} · 예측 조위: ${PREDICTED_TEXT} 관측 조위: ${OBSERVED_TEXT} 높이의 기준이 확인되지 않아 변동 폭만 비교함`, items: [] };
+  if (on(Q7) || on(Q8)) {
+    s3.items.push(fig('f4', `그림 4. 부산 예측 조위와 관측 조위(세로 눈금 간격 같음)${state.answers.q7?.t0 != null ? ' — ⑦에서 고른 구간' : ''}`, [
+      { height: 180, spec: (ctx) => inq3Specs(ctx, ad, state.answers)[0] },
+      { height: 195, spec: (ctx) => inq3Specs(ctx, ad, state.answers)[1] },
+      { height: 185, spec: (ctx) => inq3DailySpec(ctx, ad, state.answers) },
+    ]));
+    if (on(Q7)) s3.items.push(qa(Q7, 'inq3'));
+    if (on(Q8)) s3.items.push(qa(Q8, 'inq3'));
+  }
+
+  // ── 탐구 4 ──
+  const s4 = { key: 'inq4', title: `탐구 4. ${INQUIRIES[3].title}`, sub: '부산 관측 조위 — 두 기간 비교(세로 눈금 간격 같음)', items: [] };
+  s4.items.push(fig('f5', `그림 5. 부산 관측 조위 — ${periodTitle(ad, 'a', !!rv.weather)} / ${periodTitle(ad, 'b', !!rv.weather)}`, [0, 1].map((i) => ({ height: 185, spec: (ctx) => inq4TideSpecs(ctx, ad, { revealed: !!rv.weather })[i] }))));
+  if (on(Q9)) s4.items.push(qa(Q9, 'inq4'));
+  if (on(Q10)) s4.items.push(qa(Q10, 'inq4'));
+  if (rv.weather) {
+    s4.items.push({ type: 'note', text: `[추가 자료 확인] ${fmtDateTime(rv.weather.at, localTz())} — 아래는 그 뒤에 본 자료와 답입니다.` });
+    for (const k of ['a', 'b']) {
+      s4.items.push(fig(`f6${k}`, `그림 6${k === 'a' ? '가' : '나'}. ${periodTitle(ad, k, true)} — ${periodCd(ad, k).weather?.station?.name || '기상 관측 지점'} 해면기압·풍속·풍향(조위 그래프와 같은 시간 축)`, [
+        { height: 140, spec: (ctx) => weatherSpec(ctx, ad, k, 'pressureSea', { title: false }) },
+        { height: 125, spec: (ctx) => weatherSpec(ctx, ad, k, 'windSpeed', { title: false }) },
+        { height: 125, spec: (ctx) => weatherSpec(ctx, ad, k, 'windDir', { title: false }) },
+      ]));
+    }
+    if (ad.past?.typhoon) {
+      const c = closestTyphoonPoint(ad);
+      s4.items.push(fig('f7', `그림 7. ${ad.past.typhoon.meta?.title || ad.past.typhoon.name} — 기상청 실황 분석 위치(${PERIOD_NAMES.a})${c && ad.timeBasis?.confirmed ? ` · 부산 최근접 분석 위치 ${fmtDateTime(c.t, tz)}, 약 ${Math.round(c.km)} km` : ''}`, [{ map: (w, measure, fs) => typhoonMapLayout(ad, { width: w, measure, fontSize: fs }), maxWidth: 360 }]));
+    }
+    if (ad.recentTyphoonCheck?.text) s4.items.push({ type: 'note', text: `${PERIOD_NAMES.b} 태풍: ${ad.recentTyphoonCheck.text}` });
+    s4.items.push({ type: 'note', text: '태풍 중심기압은 부산에서 잰 기압이 아니며, 시각이 가깝다는 것만으로 원인을 확정할 수 없습니다.' });
+    if (on(Q11)) {
+      const q = qa(Q11, 'inq4');
+      s4.items.push({ ...q, type: 'side', leftTitle: `${CIRCLED[10]} 추가 자료 확인 전의 추측`, left: (answerOf(state, Q10) || '').trim(), rightTitle: `${CIRCLED[11]} 기상·태풍 자료를 근거로 한 설명`, right: q.lines.join('\n') });
+    }
+  } else {
+    s4.items.push({ type: 'note', text: '[추가 자료 확인]을 하지 않아 추가 자료와 문항 ⑪은 보고서에 없습니다.' });
+    missing.push({ step: 'inq4', label: '[추가 자료 확인]을 아직 누르지 않음', reveal: true });
+    if (on(Q11)) missing.push({ step: 'inq4', qid: 'q11', label: qLabel(Q11) });
+  }
+
+  // ── 종합 ──
+  const s5 = { key: 'conclusion', title: CONCLUSION.title, sub: CONCLUSION.goal, items: CONCLUSION.questions.filter(on).map((q) => qa(q, 'conclusion')) };
+
+  const sections = [s1, s2, s3, s4, s5].filter((s) => s.items.length);
   return {
     appName: '조석 데이터 탐구실',
     title: '조석 데이터 탐구 보고서',
@@ -200,17 +185,67 @@ export function buildReport(cd, state) {
     studentLine: studentLine(st),
     createdAt: Date.now(),
     createdText: fmtDateTime(Date.now(), localTz()),
-    isSample: cd.isSample,
-    sampleNotice: cd.sampleNotice,
-    caseTitle: `조석 데이터 탐구 — ${cd.station.name}`,
-    caseInfo: caseInfoRows(cd, state),
-    parts,
-    conclusion,
-    sources: reportSources(cd, state),
-    processing: limitationNotes(cd, state),
+    isSample: ad.isSample,
+    sampleNotice: ad.sampleNotice,
+    caseTitle: ad.title,
+    info: infoRows(ad, state),
+    sections,
+    sources: sourceRows(ad, state),
+    processing: limitationNotes(ad, state),
     missing,
-    dataVersionMismatch,
   };
+}
+
+export function infoRows(ad, state) {
+  const tz = ad.tz;
+  const W = ad.win;
+  const rv = state.reveals || {};
+  return [
+    ['학생', studentLine(state.student)],
+    ['관측소', ad.stationList.map((s) => `${s.name}(${s.id}, ${s.sea})`).join(', ') + ' · 대표 관측소 부산'],
+    ['탐구 1 (부산 예측)', `3일 ${fmtRange(W.inq1[0], W.inq1[1], tz)} · 한 달 ${ad.setup.month}`],
+    ['탐구 2 (세 지역 예측)', fmtRange(W.inq2[0], W.inq2[1], tz)],
+    ['탐구 3 (부산 예측·관측)', ad.setup.month],
+    ['탐구 4 (부산 관측)', `${PERIOD_NAMES.a} ${fmtRange(W.a[0], W.a[1], tz)} / ${PERIOD_NAMES.b} ${fmtRange(W.b[0], W.b[1], tz)}`],
+    ['시간대', `${tz.name || tz.label}${ad.timeBasis?.confirmed ? ' — 공식 자료와 대조해 확인' : ' — 확인되지 않음'}`],
+    ['달의 위상 확인', rv.moon ? fmtDateTime(rv.moon.at, localTz()) : '하지 않음'],
+    ['추가 자료 확인', rv.weather ? fmtDateTime(rv.weather.at, localTz()) : '하지 않음'],
+    ['자료 버전', ad.dataVersion],
+  ];
+}
+
+function dsLines(s, extra = []) {
+  if (!s) return ['자료 미제공'];
+  return [s.meta?.provider && `제공: ${s.meta.provider}`, s.meta?.title && `자료명: ${s.meta.title}`, s.meta?.identifier && `식별자: ${s.meta.identifier}`, ...extra].filter(Boolean);
+}
+
+export function sourceRows(ad, state) {
+  const rv = state.reveals || {};
+  const rep = ad.st[ad.rep];
+  const out = [
+    { role: '예측 조위(인천·부산·묵호)', lines: dsLines(rep.predicted, ['1시간 간격, 단위 cm. 값은 국립해양조사원 조석표의 매시 예측 조고와 같음(조석표 기준면 기준)']) },
+    { role: '관측 조위(부산)', lines: dsLines(rep.observed, ['1시간 간격, 단위 cm. 높이 기준면은 자료 문서에 없음(미확인)']) },
+  ];
+  if (rv.weather) {
+    out.push({ role: '기상(부산 ASOS)', lines: dsLines(rep.weather, [`관측 지점: ${rep.weather?.station?.name || '—'}${rep.weather?.station?.note ? ` (${rep.weather.station.note})` : ''}`, '해면기압·풍속·풍향(바람이 불어오는 방향), 1시간 간격']) });
+    if (ad.past?.typhoon) out.push({ role: '태풍 정보', lines: dsLines(ad.past.typhoon, [ad.past.typhoon.trackKind && `경로 종류: ${ad.past.typhoon.trackKind}`, ad.past.typhoon.note].filter(Boolean)) });
+  }
+  if (rv.moon && ad.moon) out.push({ role: '달의 위상', lines: [ad.moon.meta.provider && `제공: ${ad.moon.meta.provider}`, ad.moon.meta.identifier && `식별자: ${ad.moon.meta.identifier}`].filter(Boolean) });
+  out.push({ role: '시간대 확인', lines: [ad.timeBasis?.note || '', ad.timeBasis?.evidence ? `근거: ${ad.timeBasis.evidence}` : ''].filter(Boolean) });
+  return out;
+}
+
+export function limitationNotes(ad, state) {
+  const rv = state.reveals || {};
+  const out = [
+    '일별 변동 폭 = 그날(00:00~24:00) 1시간 간격 값의 최고값 − 최저값. 이웃한 만조·간조 한 쌍의 조차와는 다른 값이다.',
+    '1시간 간격 자료를 직선으로 이었다. 실제 만조·간조 시각과 높이는 1시간 간격 값과 조금 다를 수 있다.',
+    '만조·간조, 대조·소조, 조석 형태는 학생이 자료를 보고 판단한 것이며, 앱이 정답을 정하지 않았다.',
+    '관측 조위의 높이 기준면이 확인되지 않아 관측소끼리, 예측과 관측끼리 높이를 겹치거나 빼지 않았다(변동 폭만 비교).',
+    '결측·오류값은 0으로 바꾸지 않고 빈 값으로 두었다.',
+  ];
+  if (rv.weather) out.push('기상 자료는 조위관측소에서 떨어진 기상청 ASOS 지점의 값이며, 두 위치의 기압·바람이 같다고 단정할 수 없다. 해면기압만 사용했다(현지기압과 섞지 않음). 태풍 중심기압은 관측소 기압으로 쓰지 않았다.');
+  return out;
 }
 
 export function pdfFilename(st) {

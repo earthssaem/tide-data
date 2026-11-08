@@ -6,8 +6,6 @@
 import {
   normalizeTideSeries, normalizeWeather, normalizeMoonPhases, normalizeTyphoonTrack,
 } from './normalize.js';
-import { computeResidual } from '../analysis/residual.js';
-import { parseDateTime } from '../util/time.js';
 import { haversineKm } from '../analysis/geo.js';
 
 export const CASES_BASE = 'data/cases/';
@@ -25,73 +23,60 @@ export async function loadRegistry(readText = defaultReadText, base = CASES_BASE
   return reg;
 }
 
-function parseCaseTime(str, tz, what) {
-  const t = parseDateTime(str, tz.offsetMinutes);
-  if (Number.isNaN(t)) throw new Error(`사례 설정의 ${what} 시각 형식 오류: "${str}"`);
-  return t;
-}
-
-function parseRange(r, tz, what) {
-  if (!r) return null;
-  const t0 = parseCaseTime(r.start, tz, what + ' 시작');
-  const t1 = parseCaseTime(r.end, tz, what + ' 끝');
-  if (!(t1 > t0)) throw new Error(`사례 설정의 ${what} 기간이 올바르지 않습니다.`);
-  return [t0, t1];
-}
-
 /**
- * 사례 하나를 불러와 CaseData로 만든다.
+ * 사례 하나를 불러온다(형식 3: 수행평가 사례).
  * 관측 조위는 필수, 나머지 자료는 없으면 availability=false로 표시하고 값을 만들어 넣지 않는다.
  */
 export async function loadCase(entry, readText = defaultReadText, base = CASES_BASE) {
   const dir = base + entry.path.replace(/\/?$/, '/');
   const config = JSON.parse(await readText(dir + 'case.json'));
-  return buildCaseData(config, (file) => readText(dir + file));
+  return buildAssessData(config, (file) => readText(dir + file));
 }
 
 /**
- * 사례 자료 만들기. config.stations가 있으면 여러 관측소 사례:
- * 관측소마다 같은 구조의 CaseData를 만들고, 각 CaseData에 stations 목록(전체)을 붙여 돌려준다.
- * 화면은 지금 고른 관측소의 CaseData만 쓰며, 관측소를 바꾸면 다른 CaseData로 바꿔 끼운다.
+ * 수행평가 사례 자료: 관측소별 CaseData(예측·관측 조위, 대표 관측소는 기상) + 과거 비교 기간(관측·기상·태풍)
+ * @returns {{config,id,dataVersion,isSample,sampleNotice,tz,timeBasis,months,rep,stationList,st,past,moon,defaults,description,recentTyphoonCheck}}
  */
-export async function buildCaseData(config, readFile) {
-  if (!Array.isArray(config.stations)) return buildSingleCase(config, readFile);
+export async function buildAssessData(config, readFile) {
+  if (config.formatVersion !== 3 || config.kind !== 'tide-assessment') throw new Error('이 앱에서 읽을 수 없는 사례 형식입니다(형식 3 수행평가 사례가 필요합니다).');
+  const tz = config.timezone;
   const cache = new Map();
-  const cachedRead = (f) => { if (!cache.has(f)) cache.set(f, readFile(f)); return cache.get(f); };
-  const list = [];
-  const failed = [];
-  for (const st of config.stations) {
-    const sub = {
-      ...config,
-      station: { id: st.id, name: st.name, lat: st.lat, lon: st.lon, note: st.note || '' },
-      datasets: { ...config.datasets, ...st.datasets },
-      inquiry3: config.inquiry3 ? { ...config.inquiry3, keyTimes: [...(config.inquiry3.keyTimes || []), ...(st.keyTimes || [])] } : config.inquiry3,
-    };
-    try {
-      const cd = await buildSingleCase(sub, cachedRead);
-      cd.keyTimes.sort((a, b) => a.t - b.t);
-      list.push({
-        id: st.id, name: st.name, nameEn: st.nameEn || '', sea: st.sea || '', lat: st.lat, lon: st.lon, note: st.note || '',
-        weatherSource: st.weatherSource || null, unconfirmed: st.unconfirmed || [], cd,
-      });
-    } catch (e) {
-      failed.push({ id: st.id, name: st.name, error: e.message });
-    }
+  const read = (f) => { if (!cache.has(f)) cache.set(f, readFile(f)); return cache.get(f); };
+  const st = {};
+  const stationList = [];
+  for (const s of config.stations || []) {
+    const cd = await buildSingleCase({
+      ...config, station: { id: s.id, name: s.name, lat: s.lat, lon: s.lon, note: s.note || '' },
+      datasets: { ...s.datasets, moonPhases: config.moonPhases },
+    }, read);
+    if (!cd.predicted) throw new Error(`${s.name} 예측 조위 자료를 불러오지 못했습니다.`);
+    st[s.id] = cd;
+    stationList.push({ id: s.id, name: s.name, nameEn: s.nameEn || '', sea: s.sea || '', lat: s.lat, lon: s.lon, timeShiftFlags: s.timeShiftFlags || [] });
   }
-  if (!list.length) throw new Error(`불러올 수 있는 관측소가 없습니다. ${failed.map((f) => `${f.name}: ${f.error}`).join(' / ')}`);
-  for (const s of list) {
-    s.cd.multi = true;
-    s.cd.stations = list;
-    s.cd.stationEntry = s;
-    s.cd.failedStations = failed;
-  }
-  return (list.find((s) => s.id === config.defaultStation) || list[0]).cd;
-}
-
-/** 여러 관측소 사례에서 관측소 id로 CaseData 찾기(없으면 null) */
-export function stationCaseData(cd, id) {
-  if (!id || !cd?.stations) return id && cd?.station?.id !== id ? null : cd;
-  return cd.stations.find((s) => s.id === id)?.cd || null;
+  if (!st[config.representative]) throw new Error('대표 관측소 자료가 없습니다.');
+  const p = config.past;
+  const ps = stationList.find((s) => s.id === p?.stationId) || stationList.find((s) => s.id === config.representative);
+  const past = p ? await buildSingleCase({ ...config, station: { id: ps.id, name: ps.name, lat: ps.lat, lon: ps.lon }, datasets: { ...p.datasets, moonPhases: config.moonPhases } }, read) : null;
+  if (past) past.label = p.label;
+  return {
+    config,
+    id: config.id,
+    dataVersion: config.dataVersion,
+    isSample: !!config.isSample,
+    sampleNotice: config.sampleNotice || '기능 확인용 예시 데이터',
+    title: config.title || '',
+    tz,
+    timeBasis: config.timeBasis || { confirmed: false },
+    months: config.months || [],
+    rep: config.representative,
+    stationList,
+    st,
+    past,
+    moon: st[config.representative].moon,
+    defaults: config.defaults,
+    description: config.description || {},
+    recentTyphoonCheck: config.recentTyphoonCheck || null,
+  };
 }
 
 async function buildSingleCase(config, readFile) {
@@ -127,7 +112,6 @@ async function buildSingleCase(config, readFile) {
     return { name: s.name, year: s.year, note: s.note || '', meta: s.meta || {}, trackKind: s.track?.kind || '', trackNote: s.track?.note || '', track: track.track, issues: track.issues };
   });
 
-  const residual = predicted ? computeResidual(observed, predicted) : { ok: false, problems: ['예측 조위 자료가 제공되지 않았습니다.'], points: [] };
 
   const station = config.station;
   let weatherDistanceKm = null;
@@ -135,14 +119,6 @@ async function buildSingleCase(config, readFile) {
     weatherDistanceKm = haversineKm(station.lat, station.lon, weather.station.lat, weather.station.lon);
   }
 
-  const ranges = {
-    inq1: parseRange(config.inquiry1, tz, '탐구 1'),
-    inq2: parseRange(config.inquiry2, tz, '탐구 2'),
-    inq3: parseRange(config.inquiry3, tz, '탐구 3'),
-  };
-  const keyTimes = (config.inquiry3?.keyTimes || []).map((k) => ({
-    t: parseCaseTime(k.time, tz, '주요 시각'), label: k.label, note: k.note || '',
-  }));
 
   return {
     config,
@@ -158,18 +134,14 @@ async function buildSingleCase(config, readFile) {
     weather,
     moon,
     typhoon,
-    residual,
     weatherDistanceKm,
     availability: {
       observed: true,
       predicted: !!predicted,
-      residual: residual.ok,
       weather: !!weather,
       moonPhases: !!moon && moon.phases.length > 0,
       typhoon: !!typhoon,
     },
-    ranges,
-    keyTimes,
     issues,
   };
 }

@@ -1,228 +1,191 @@
-// 탐구 1 — 하루의 규칙 찾기
+// 탐구 1 — 조석의 규칙 (부산 예측 조위)
 import { h, toast } from '../util/dom.js';
-import { escapeHtml, fmtValue, fmtSignedValue } from '../util/format.js';
-import { fmtDateTime, fmtDuration, hoursDecimal } from '../util/time.js';
-import { INQUIRIES } from '../content/questions.js';
-import { ViewController, ChartView, createToolbar, tipRow } from '../chart/interactive.js';
-import { inq1Spec, inq1CompareSpec, sameSpanDomains } from '../chart/specs.js';
-import { createCompareControls } from './compare.js';
-import { nearestValid, stepValid, dataDomain } from '../analysis/series.js';
-import { inq1Values, effectivePair, KIND_LABEL } from '../state/evidence.js';
-import { inquiryHeader, createQuestionPanel, addEvidenceBar, nextLetter } from './common.js';
-
-const MAX_POINTS = 12;
-const KINDS = [['', '—'], ['high', '만조'], ['low', '간조']];
-const QUALITY = { ok: '정상', suspect: '의심', bad: '오류', missing: '결측' };
+import { fmtNum, escapeHtml } from '../util/format.js';
+import { fmtDateTime, fmtDateKo, fmtRange, DAY } from '../util/time.js';
+import { INQUIRIES, PREDICTED_TEXT } from '../content/questions.js';
+import { createPanel, tipRow } from '../chart/panel.js';
+import { inq1MainSpec, inq1DailySpec, monthDays } from '../chart/assess.js';
+import { nearestValid } from '../analysis/series.js';
+import { inquiryHeader, questionShell, answerOf, numberInput, revealCard } from './common.js';
+import { createDrawingPad } from './drawing-pad.js';
 
 export function render(app, container) {
-  const { cd, store } = app;
+  const { ad, store } = app;
   const def = INQUIRIES[0];
-  const A = () => store.state.analysis.inq1;
-  let replaceLabel = null;
+  const cd = ad.st[ad.rep];
+  const tz = ad.tz;
+  const S = () => store.state;
+  const [Q1, Q2, Q3, Q4] = def.questions;
+  const panels = [];
+  const moonShown = () => !!S().reveals.moon;
 
   container.append(inquiryHeader(def));
   const ws = h('div', { class: 'workspace' });
-  const left = h('section', { class: 'analysis', 'aria-label': '그래프와 분석 도구' });
-  ws.append(left);
+  const left = h('section', { class: 'analysis', 'aria-label': '그래프' });
+  const right = h('aside', { class: 'qpanel', 'aria-label': '문항과 답' });
+  ws.append(left, right);
   container.append(ws);
 
-  const obs = cd.observed;
-  const controller = new ViewController({
-    domain: dataDomain(obs.points),
-    initial: cd.ranges.inq1,
-    onChange: (v) => store.update((s) => { s.analysis.inq1.view = v; }, { topic: 'analysis' }),
-  });
-  if (A().view) controller.set(A().view[0], A().view[1], true);
-
-  const card = h('div', { class: 'card chart-card' });
-  card.append(h('div', { class: 'card-head' },
-    h('h2', {}, `며칠간의 관측 조위 — ${cd.station.name}`),
-    h('p', { class: 'data-line' }, `관측 간격 ${obs.intervalMs / 3600e3}시간 · 단위 cm · 높이 기준면: ${obs.datumLabel} · 시간대 ${cd.tz.name || cd.tz.label}`)));
-  card.append(createToolbar(controller, { label: '관측 조위 그래프' }));
-  const chartEl = h('div', { class: 'chart-host' });
-  card.append(chartEl);
-  card.append(h('p', { class: 'chart-help' },
-    '그래프의 자료점(●)을 누르면 A, B, C … 순서로 선택됩니다. 그래프를 좌우로 끌면 이동합니다. ',
-    h('span', { class: 'kbd-help' }, '키보드: 그래프를 선택(Tab)한 뒤 ←/→로 자료점 이동, Enter로 선택, +/−로 확대·축소')));
-  card.append(h('p', { class: 'notice notice-info' }, '이 자료는 1시간 간격 관측값입니다. 실제 만조·간조의 시각과 높이는 관측 시각 사이에 있을 수 있으므로, 선택한 값은 “관측값 중 가장 높은(낮은) 값”으로 해석하세요. 만조·간조인지는 여러분이 판단해 표에 표시합니다.'));
-  left.append(card);
-
-  const chart = new ChartView({
-    el: chartEl,
-    controller,
-    height: 420,
-    ariaLabel: `${cd.station.name} 관측 조위 그래프`,
-    build: (ctx) => inq1Spec({ ...ctx, cd, yDomain: sameDoms()?.a }, { ...A(), view: controller.view }),
-    pick: (t) => {
-      const p = nearestValid(obs.points, t, { t0: controller.view[0], t1: controller.view[1] });
-      return p ? { t: p.t, v: p.v, q: p.q } : null;
-    },
-    step: (tg, dir) => { const p = stepValid(obs.points, tg.t, dir); return p ? { t: p.t, v: p.v, q: p.q } : null; },
-    describe: (tg) => {
-      const sel = A().points.find((p) => p.t === tg.t);
-      return `<div class="tip-title">${escapeHtml(fmtDateTime(tg.t, cd.tz))}</div>${tipRow('조위', fmtValue(tg.v, 'cm'))}${tipRow('품질', QUALITY[tg.q] || tg.q)}${sel ? tipRow('선택', sel.label) : '<div class="tip-hint">누르면 선택</div>'}`;
-    },
-    onSelect: (tg) => select(tg),
-  });
-
-  // 선택 지점 표
-  // ── 다른 관측소와 비교(여러 관측소 사례) ──
-  let cmpChart = null;
-  const cmp = createCompareControls({
-    app, key: 'inq1', sameLabel: '같은 눈금 크기',
-    note: '두 그래프의 시간 범위는 함께 움직입니다. 관측소마다 조위의 높이 기준면이 다를 수 있고 아직 확인되지 않았으므로, 세로축 숫자로 어느 지역의 해수면이 더 높다고 판단하지 마세요. ‘같은 눈금 크기’는 두 그래프의 세로축 간격(높이 범위)을 같게 해 변동 폭을 비교하기 위한 것이며, 축의 숫자는 관측소마다 다릅니다.',
-    onChange: () => { buildCompareChart(); chart.render(); },
-  });
-  const sameDoms = () => {
-    const b = cmp.cdB?.();
-    return b && cmp.yMode() === 'same' ? sameSpanDomains(cd, b, controller.view) : null;
+  // ── 그래프 1: 3일 예측 조위 ──
+  let current = null; // 그래프에서 누른 점
+  const card1 = h('div', { class: 'card chart-card', id: 'inq1-main' });
+  card1.append(h('div', { class: 'card-head' },
+    h('h2', {}, `부산 예측 조위 · ${fmtRange(ad.win.inq1[0], ad.win.inq1[1], tz)}`),
+    h('p', { class: 'data-line' }, `예측 조위: ${PREDICTED_TEXT} 1시간 간격 · 단위 cm`)));
+  const host1 = h('div', { class: 'chart-host' });
+  const pickBar = h('div', { class: 'pick-bar', id: 'q1-pickbar', 'aria-live': 'polite' });
+  card1.append(host1, pickBar);
+  left.append(card1);
+  const pick1 = (t) => {
+    const p = nearestValid(cd.predicted.points, t, { t0: ad.win.inq1[0], t1: ad.win.inq1[1] });
+    return p ? { t: p.t, v: p.v } : null;
   };
-  const cmpHost = h('div', { class: 'chart-host' });
-  if (cmp.el) {
-    const cmpCard = h('div', { class: 'card chart-card compare-card' });
-    cmpCard.append(h('div', { class: 'card-head' }, h('h2', {}, '다른 관측소와 비교'), h('p', { class: 'data-line' }, '같은 기간에 다른 관측소에서는 하루 동안 해수면이 어떻게 변했는지 나란히 비교합니다. 비교 그래프의 세로선은 위에서 고른 지점(A, B, C …)의 시각입니다.')), cmp.el, cmpHost);
-    left.append(cmpCard);
-  }
-  function buildCompareChart() {
-    cmpChart?.destroy();
-    cmpChart = null;
-    cmpHost.innerHTML = '';
-    const b = cmp.cdB?.();
-    if (!b) return;
-    const el = h('div');
-    cmpHost.append(el);
-    cmpChart = new ChartView({
-      el, controller, height: 360, ariaLabel: `${b.station.name} 관측 조위 비교 그래프`,
-      build: (ctx) => inq1CompareSpec({ ...ctx, cd }, { ...A(), view: controller.view }, b, sameDoms()?.b),
-      pick: (t) => { const p = nearestValid(b.observed.points, t, { t0: controller.view[0], t1: controller.view[1] }); return p ? { t: p.t, v: p.v, q: p.q } : null; },
-      step: (tg, dir) => { const p = stepValid(b.observed.points, tg.t, dir); return p ? { t: p.t, v: p.v, q: p.q } : null; },
-      describe: (tg) => `<div class="tip-title">${escapeHtml(b.station.name)} · ${escapeHtml(fmtDateTime(tg.t, cd.tz))}</div>${tipRow('조위', fmtValue(tg.v, 'cm'))}<div class="tip-hint">비교 그래프(지점 선택은 위 그래프에서)</div>`,
-      onSelect: () => toast('지점 선택은 위쪽(분석 중인 관측소) 그래프에서 합니다.'),
-    });
-    cmpChart.render();
-  }
-  buildCompareChart();
-
-  const selCard = h('div', { class: 'card' });
-  const selHead = h('div', { class: 'card-head row' }, h('h2', {}, '선택한 지점'));
-  const clearBtn = h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => clearAll() }, '선택 모두 해제');
-  selHead.append(clearBtn);
-  const replaceNote = h('p', { class: 'notice notice-accent', hidden: true, role: 'status' });
-  const selTable = h('div', { class: 'table-host', id: 'inq1-points' });
-  const diffHost = h('div', { class: 'table-host', id: 'inq1-diffs' });
-  selCard.append(selHead, replaceNote, selTable, h('h3', { class: 'sub-h' }, '두 지점 사이의 차이'), diffHost);
-  left.append(selCard);
-  left.append(addEvidenceBar({ onAdd: () => { app.addEvidence(1, A()); panel.renderEvidence(); } }));
-
-  const panel = createQuestionPanel({
-    app, def, inquiryNo: 1,
-    getAnalysis: () => ({ ...A(), view: controller.view }),
-    applyState: (st) => {
-      store.update((s) => { s.analysis.inq1 = { ...s.analysis.inq1, ...st }; }, { topic: 'analysis' });
-      if (st.view) controller.set(st.view[0], st.view[1], true);
-      refresh();
-      toast('근거의 분석 상태를 그래프에 다시 열었습니다. 근거 자체는 바뀌지 않습니다.');
-    },
+  const p1 = createPanel({
+    host: host1, height: 330, ariaLabel: '부산 예측 조위 3일 그래프',
+    build: (ctx) => inq1MainSpec(ctx, ad, S().answers, { title: false }),
+    pick: pick1,
+    describe: (tg) => `<div class="tip-title">${escapeHtml(fmtDateTime(tg.t, tz))}</div>${tipRow('예측 조위', `${fmtNum(tg.v, 1)} cm`)}`,
+    onClick: (tg) => { current = tg; renderPickBar(); },
   });
-  ws.append(panel.el);
-
-  function select(tg) {
-    const pts = A().points;
-    if (replaceLabel) {
-      const dup = pts.find((p) => p.t === tg.t && p.label !== replaceLabel);
-      if (dup) { toast(`이미 ${dup.label}로 선택된 지점입니다.`); return; }
-      const lab = replaceLabel;
-      store.update((s) => { const p = s.analysis.inq1.points.find((x) => x.label === lab); if (p) p.t = tg.t; }, { topic: 'analysis' });
-      replaceLabel = null;
-      toast(`${lab} 지점을 바꿨습니다.`);
-      refresh();
-      return;
-    }
-    const dup = pts.find((p) => p.t === tg.t);
-    if (dup) { toast(`이미 ${dup.label}로 선택된 지점입니다. 해제하려면 표에서 [해제]를 누르세요.`); return; }
-    if (pts.length >= MAX_POINTS) { toast(`지점은 최대 ${MAX_POINTS}개까지 선택할 수 있습니다.`); return; }
-    const label = nextLetter(pts.map((p) => p.label));
-    store.update((s) => {
-      s.analysis.inq1.points.push({ label, t: tg.t, kind: '' });
-      s.analysis.inq1.points.sort((a, b) => a.label.localeCompare(b.label));
-    }, { topic: 'analysis' });
-    refresh();
-  }
-
-  function clearAll() {
-    if (!A().points.length) return;
-    store.update((s) => { s.analysis.inq1.points = []; s.analysis.inq1.pair = null; }, { topic: 'analysis' });
-    replaceLabel = null;
-    refresh();
-  }
-
-  function refresh() {
-    chart.render();
-    cmpChart?.render();
-    const v = inq1Values(cd, A());
-    replaceNote.hidden = !replaceLabel;
-    if (replaceLabel) replaceNote.textContent = `그래프에서 새 자료점을 누르면 ${replaceLabel} 지점이 그 지점으로 바뀝니다.`;
-    clearBtn.disabled = !v.points.length;
-    if (!v.points.length) {
-      selTable.innerHTML = '<p class="muted">아직 선택한 지점이 없습니다. 만조나 간조라고 판단한 자료점을 그래프에서 눌러 보세요.</p>';
-    } else {
-      selTable.innerHTML = '';
-      const tbl = h('table', { class: 'data-table' });
-      tbl.innerHTML = `<caption class="sr-only">선택한 지점 목록</caption><thead><tr><th scope="col">기호</th><th scope="col">시각 (${escapeHtml(cd.tz.label)})</th><th scope="col">조위</th><th scope="col">내 판단</th><th scope="col">품질</th><th scope="col"><span class="sr-only">작업</span></th></tr></thead>`;
-      const tb = h('tbody');
-      for (const p of v.points) {
-        const tr = h('tr', { class: replaceLabel === p.label ? 'replacing' : '' });
-        tr.innerHTML = `<th scope="row"><span class="mark-badge">${escapeHtml(p.label)}</span></th><td>${escapeHtml(fmtDateTime(p.t, cd.tz))}</td><td class="num">${escapeHtml(fmtValue(p.v, 'cm'))}</td>`;
-        const kindTd = h('td');
-        const ks = h('select', { class: 'kind-sel', 'aria-label': `${p.label} 지점 판단(만조·간조)` });
-        ks.innerHTML = KINDS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
-        ks.value = p.kind || '';
-        ks.addEventListener('change', () => { store.update((s) => { const x = s.analysis.inq1.points.find((y) => y.label === p.label); if (x) x.kind = ks.value; }, { topic: 'analysis' }); refresh(); });
-        kindTd.append(ks);
-        tr.append(kindTd, h('td', {}, QUALITY[p.q] || '—'));
-        const td = h('td', { class: 'actions' });
-        td.append(
-          h('button', { type: 'button', class: 'btn btn-ghost btn-xs', 'aria-pressed': replaceLabel === p.label ? 'true' : 'false', onclick: () => { replaceLabel = replaceLabel === p.label ? null : p.label; refresh(); } }, replaceLabel === p.label ? '변경 취소' : '변경'),
-          h('button', { type: 'button', class: 'btn btn-ghost btn-xs', onclick: () => {
-            store.update((s) => { s.analysis.inq1.points = s.analysis.inq1.points.filter((x) => x.label !== p.label); }, { topic: 'analysis' });
-            if (replaceLabel === p.label) replaceLabel = null;
-            refresh();
-          } }, '해제'),
-        );
-        tr.append(td);
-        tb.append(tr);
-      }
-      tbl.append(tb);
-      selTable.append(tbl);
-    }
-    // 차이
-    diffHost.innerHTML = '';
-    if (v.points.length < 2) {
-      diffHost.innerHTML = '<p class="muted">두 지점 이상 선택하면 시간 차이와 높이 차이(뒤 지점 − 앞 지점)가 계산됩니다.</p>';
-    } else {
-      const tbl = h('table', { class: 'data-table' });
-      tbl.innerHTML = `<thead><tr><th scope="col">구간</th><th scope="col">시간 차이</th><th scope="col">높이 차이 (뒤 − 앞)</th></tr></thead><tbody>${v.diffs.map((d) => `<tr${d.custom ? ' class="custom"' : ''}><th scope="row">${escapeHtml(d.from)} → ${escapeHtml(d.to)}</th><td class="num">${escapeHtml(fmtDuration(d.dtMs))} <span class="muted">(${escapeHtml(hoursDecimal(d.dtMs))}시간)</span></td><td class="num">${escapeHtml(fmtSignedValue(d.dv, 'cm'))}</td></tr>`).join('')}</tbody>`;
-      diffHost.append(tbl);
-      // 임의의 두 지점
-      const opts = v.points.map((p) => `<option value="${escapeHtml(p.label)}">${escapeHtml(p.label)}</option>`).join('');
-      const pair = effectivePair(A().pair, v.points);
-      const row = h('div', { class: 'pair-row' });
-      row.innerHTML = `<label>다른 두 지점 비교: <select class="sel-a" aria-label="앞 지점">${opts}</select></label> → <select class="sel-b" aria-label="뒤 지점">${opts}</select>`;
-      const sa = row.querySelector('.sel-a'), sb = row.querySelector('.sel-b');
-      sa.value = pair[0]; sb.value = pair[1];
-      const onPair = () => { store.update((s) => { s.analysis.inq1.pair = [sa.value, sb.value]; }, { topic: 'analysis' }); refresh(); };
-      sa.addEventListener('change', onPair); sb.addEventListener('change', onPair);
-      diffHost.append(row);
-    }
-    if (v.kindDiffs.length) {
-      const t2 = h('table', { class: 'data-table', id: 'inq1-kind-diffs' });
-      t2.innerHTML = `<caption>내가 같은 종류로 표시한 지점끼리의 차이(시각 순서)</caption><thead><tr><th scope="col">종류</th><th scope="col">구간</th><th scope="col">시간 차이</th><th scope="col">높이 차이</th></tr></thead><tbody>${v.kindDiffs.map((d) => `<tr><th scope="row">${KIND_LABEL[d.kind]}</th><td>${escapeHtml(d.from)} → ${escapeHtml(d.to)}</td><td class="num">${escapeHtml(fmtDuration(d.dtMs))} <span class="muted">(${escapeHtml(hoursDecimal(d.dtMs))}시간)</span></td><td class="num">${escapeHtml(fmtSignedValue(d.dv, 'cm'))}</td></tr>`).join('')}</tbody>`;
-      diffHost.append(t2);
+  panels.push(p1);
+  function renderPickBar() {
+    pickBar.innerHTML = '';
+    if (!current) { pickBar.append(h('span', { class: 'muted small' }, '그래프의 점을 누르면 여기에 시각과 높이가 나타납니다.')); return; }
+    pickBar.append(h('span', { class: 'pick-now' }, h('b', {}, '누른 점 '), `${fmtDateTime(current.t, tz)} · ${fmtNum(current.v, 1)} cm`));
+    if (Q1 && questionShellEnabled(Q1)) {
+      pickBar.append(
+        h('button', { type: 'button', class: 'btn btn-sm btn-secondary', id: 'q1-set-high', onclick: () => setQ1('high') }, '만조로 기록'),
+        h('button', { type: 'button', class: 'btn btn-sm btn-secondary', id: 'q1-set-low', onclick: () => setQ1('low') }, '간조로 기록'));
     }
   }
+  const questionShellEnabled = (q) => app.ad.setup?.questions?.[q.id] !== false;
+  function setQ1(kind) {
+    if (!current) return;
+    store.update((s) => { s.answers.q1[kind] = { t: current.t, v: current.v }; }, { topic: 'answer', immediate: true });
+    toast(`${kind === 'high' ? '만조' : '간조'}로 기록했습니다.`);
+    p1.render();
+    renderQ1();
+  }
+  renderPickBar();
 
-  refresh();
-  return {
-    destroy() { chart.destroy(); cmpChart?.destroy(); },
-  };
+  // ── 그래프 2: 한 달 일별 변동 폭 ──
+  let currentDay = null;
+  const days = monthDays(cd, ad.win.month);
+  const card2 = h('div', { class: 'card chart-card', id: 'inq1-daily' });
+  card2.append(h('div', { class: 'card-head' },
+    h('h2', {}, `부산 예측 조위 · 한 달 일별 변동 폭 (${ad.setup.month})`),
+    h('p', { class: 'data-line' }, '막대 하나 = 하루 동안 예측 조위의 최고값 − 최저값. 막대를 누르면 그날을 고릅니다.')));
+  const host2 = h('div', { class: 'chart-host' });
+  const dayBar = h('div', { class: 'pick-bar', id: 'q3-pickbar', 'aria-live': 'polite' });
+  const moonList = h('div', { class: 'moon-list small', id: 'moon-list' });
+  card2.append(host2, dayBar, moonList);
+  left.append(card2);
+  const dayAt = (t) => days.find((d) => t >= d.start && t < d.end) || null;
+  const p2 = createPanel({
+    host: host2, height: 280, ariaLabel: '한 달 일별 변동 폭 막대그래프', step: DAY,
+    build: (ctx) => inq1DailySpec(ctx, ad, answerQ3View(), { showMoon: moonShown(), focusDay: currentDay?.day, title: false }),
+    pick: (t) => { const d = dayAt(t); return d ? { t: d.start + DAY / 2, v: d.range, day: d } : null; },
+    describe: (tg) => `<div class="tip-title">${escapeHtml(fmtDateKo(tg.day.start, tz))}</div>${tipRow('변동 폭', tg.day.range != null ? `${fmtNum(tg.day.range, 1)} cm` : '자료 미제공')}${tg.day.complete ? '' : tipRow('주의', `결측 ${tg.day.missing}시간`)}`,
+    onClick: (tg) => { currentDay = tg.day; renderDayBar(); p2.render(); },
+  });
+  panels.push(p2);
+  function answerQ3View() { return { q3: answerOf(S(), Q3) || {} }; }
+  function renderDayBar() {
+    dayBar.innerHTML = '';
+    if (!currentDay) { dayBar.append(h('span', { class: 'muted small' }, '막대를 누르면 여기에 날짜와 변동 폭이 나타납니다.')); return; }
+    dayBar.append(h('span', { class: 'pick-now' }, h('b', {}, '누른 날 '), `${fmtDateKo(currentDay.start, tz)} · 변동 폭 ${currentDay.range != null ? `${fmtNum(currentDay.range, 1)} cm` : '자료 미제공'}`));
+    if (Q3 && questionShellEnabled(Q3) && !S().reveals.moon) {
+      dayBar.append(
+        h('button', { type: 'button', class: 'btn btn-sm btn-secondary', id: 'q3-set-spring', onclick: () => setQ3('spring') }, '대조로 기록'),
+        h('button', { type: 'button', class: 'btn btn-sm btn-secondary', id: 'q3-set-neap', onclick: () => setQ3('neap') }, '소조로 기록'));
+    }
+  }
+  function setQ3(kind) {
+    if (!currentDay || S().reveals.moon) return;
+    store.update((s) => { s.answers.q3[kind] = currentDay.day; }, { topic: 'answer', immediate: true });
+    toast(`${kind === 'spring' ? '대조' : '소조'}로 기록했습니다.`);
+    p2.render();
+    renderQ3();
+  }
+  renderDayBar();
+  function renderMoonList() {
+    moonList.innerHTML = '';
+    if (!moonShown() || !cd.moon) return;
+    const ph = cd.moon.phases.filter((p) => p.t >= ad.win.month[0] - DAY && p.t < ad.win.month[1] + DAY);
+    moonList.append(h('p', {}, h('b', {}, '달의 위상 '), ph.map((p) => `${p.label} ${fmtDateTime(p.t, tz, { year: false })}`).join(' · '), h('span', { class: 'muted' }, ' (계산값, KST)')));
+  }
+  renderMoonList();
+
+  // ── 문항 ──
+  const list = h('ol', { class: 'questions' });
+  right.append(list);
+  // ①
+  const q1Host = h('div');
+  function renderQ1() {
+    q1Host.innerHTML = '';
+    const sh = questionShell(app, Q1);
+    if (!sh) return;
+    const a = S().answers.q1;
+    const row = (label, p, id) => h('tr', { id }, h('th', {}, label), h('td', {}, p ? fmtDateTime(p.t, tz) : '—'), h('td', {}, p ? `${fmtNum(p.v, 1)} cm` : '—'),
+      h('td', {}, p ? h('button', { type: 'button', class: 'btn btn-ghost btn-xs', onclick: () => { store.update((s) => { s.answers.q1[id === 'q1-row-high' ? 'high' : 'low'] = null; }, { topic: 'answer', immediate: true }); p1.render(); renderQ1(); } }, '지우기') : ''));
+    sh.body.append(h('table', { class: 'data-table compact', id: 'q1-table' },
+      h('thead', {}, h('tr', {}, h('th', {}, ''), h('th', {}, '시각'), h('th', {}, '높이'), h('th', {}, ''))),
+      h('tbody', {}, row('만조', a.high, 'q1-row-high'), row('간조', a.low, 'q1-row-low'))));
+    sh.body.append(h('p', { class: 'answer-line' }, '조차 ', numberInput({ id: 'q1-range', value: a.range, label: '조차(cm)', unit: 'cm', onInput: (v) => store.update((s) => { s.answers.q1.range = v; }, { topic: 'answer' }) })));
+    q1Host.append(sh.li);
+  }
+  // ②
+  const q2Li = (() => {
+    const sh = questionShell(app, Q2);
+    if (!sh) return null;
+    const a = S().answers.q2;
+    const set = (k) => (v) => store.update((s) => { s.answers.q2[k] = v; }, { topic: 'answer' });
+    sh.body.append(h('p', { class: 'small muted' }, `24시간: ${fmtRange(ad.win.count[0], ad.win.count[1], tz)}`),
+      h('p', { class: 'answer-line' }, '만조 ', numberInput({ id: 'q2-high', value: a.high, label: '만조 횟수', unit: '회', width: 3, onInput: set('high') }),
+        ' / 간조 ', numberInput({ id: 'q2-low', value: a.low, label: '간조 횟수', unit: '회', width: 3, onInput: set('low') })),
+      h('p', { class: 'answer-line' }, '만조에서 다음 만조까지 약 ', numberInput({ id: 'q2-period', value: a.period, label: '만조에서 다음 만조까지 시간', unit: '시간', width: 4, onInput: set('period') })));
+    return sh.li;
+  })();
+  // ③
+  const q3Host = h('div');
+  function renderQ3() {
+    q3Host.innerHTML = '';
+    const sh = questionShell(app, Q3);
+    if (!sh) return;
+    const a = answerOf(S(), Q3) || {};
+    const dayText = (k) => { if (!k) return '—'; const d = days.find((x) => x.day === k); return d ? `${fmtDateKo(d.start, tz)} (변동 폭 ${d.range != null ? `${fmtNum(d.range, 1)} cm` : '자료 미제공'})` : k; };
+    sh.body.append(h('table', { class: 'data-table compact', id: 'q3-table' }, h('tbody', {},
+      h('tr', {}, h('th', {}, '대조'), h('td', { id: 'q3-spring' }, dayText(a.spring))),
+      h('tr', {}, h('th', {}, '소조'), h('td', { id: 'q3-neap' }, dayText(a.neap))))));
+    q3Host.append(sh.li);
+  }
+  // ④
+  const q4Li = (() => {
+    const sh = questionShell(app, Q4);
+    if (!sh) return null;
+    const a = answerOf(S(), Q4) || {};
+    const grid = h('div', { class: 'draw-grid' });
+    for (const [k, label] of [['spring', '대조'], ['neap', '소조']]) {
+      const pad = createDrawingPad({
+        id: `draw-q4-${k}`, label: `${label}일 때의 위치 관계`, value: a[k] || null, locked: !!sh.locked,
+        onChange: (d) => store.update((s) => { s.answers.q4[k] = d; }, { topic: 'drawing' }),
+      });
+      grid.append(h('div', { class: 'draw-cell' }, h('p', { class: 'draw-label' }, `${label}일 때`), pad.el));
+    }
+    sh.body.append(h('p', { class: 'small muted' }, '태양·지구·달을 간단한 원과 글자로 그리세요.'), grid);
+    return sh.li;
+  })();
+
+  renderQ1();
+  renderQ3();
+  list.append(q1Host, ...(q2Li ? [q2Li] : []), q3Host, ...(q4Li ? [q4Li] : []));
+  // [달의 위상 확인] — ④ 아래
+  right.append(revealCard(app, 'moon', {
+    title: '달의 위상 확인',
+    text: `③에서 고른 날짜와 ④의 그림은 이 버튼을 누르는 순간 그대로 보관되고, 그 뒤에는 고칠 수 없습니다. 누르면 한 달 그래프에 달의 위상이 표시됩니다.`,
+    doneText: '한 달 그래프에 달의 위상을 표시했습니다. ③·④는 확인 전 답으로 고정되었습니다.',
+  }));
+
+  return { destroy() { panels.forEach((p) => p.destroy()); } };
 }
+

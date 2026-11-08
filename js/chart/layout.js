@@ -24,7 +24,7 @@ export const THEME = {
 
 const TIME_STEPS = [HOUR, 2 * HOUR, 3 * HOUR, 6 * HOUR, 12 * HOUR, DAY, 2 * DAY, 3 * DAY, 5 * DAY, 7 * DAY, 14 * DAY];
 
-function niceStep(range, target) {
+export function niceStep(range, target) {
   const raw = range / Math.max(1, target);
   const mag = 10 ** Math.floor(Math.log10(raw));
   const n = raw / mag;
@@ -32,10 +32,10 @@ function niceStep(range, target) {
   return step * mag;
 }
 
-export function yTicksFor(domain, plotH, minSpacing = 34) {
+export function yTicksFor(domain, plotH, minSpacing = 34, fixedStep = null) {
   const [a, b] = domain;
   const make = (target) => {
-    const step = niceStep(b - a, target);
+    const step = fixedStep || niceStep(b - a, target);
     const ticks = [];
     const start = Math.ceil(a / step - 1e-9) * step;
     for (let v = start; v <= b + 1e-9; v += step) ticks.push(Math.round(v / step) * step);
@@ -44,7 +44,7 @@ export function yTicksFor(domain, plotH, minSpacing = 34) {
   // 눈금이 하나만 남으면(작은 그림·축 범위가 눈금 간격과 어긋날 때) 간격을 줄여 최소 2개를 보인다
   let target = Math.max(2, Math.floor(plotH / minSpacing));
   let { step, ticks: out } = make(target);
-  for (let i = 0; i < 4 && out.length < 2; i++) ({ step, ticks: out } = make(target += 2));
+  if (!fixedStep) for (let i = 0; i < 4 && out.length < 2; i++) ({ step, ticks: out } = make(target += 2));
   const digits = step < 1 ? Math.min(3, Math.ceil(-Math.log10(step))) : 0;
   return out.map((v) => ({ v, label: fmtNum(v, digits) }));
 }
@@ -230,7 +230,7 @@ export function layoutChart(spec) {
 
   // ── 왼쪽 여백: y 눈금 라벨 + y축 제목 ──
   const approxPlotH = Hh - top - (spec.x.hideAxisTitle ? 30 : 44);
-  const yTicks = spec.y.ticks ? [...spec.y.ticks] : yTicksFor(yDomain, approxPlotH);
+  const yTicks = spec.y.ticks ? [...spec.y.ticks] : yTicksFor(yDomain, approxPlotH, 34, spec.y.tickStep || null);
   const yLabelW = Math.max(...yTicks.map((t) => measure(t.label, small)), measure('000', small));
   const padLeft = spec.padLeft ?? (yLabelW + 8 + (spec.y.label ? small + 8 : 0) + 2);
   const padRight = spec.padRight ?? 14;

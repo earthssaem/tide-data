@@ -501,3 +501,40 @@ textarea:focus { border-color: var(--teal); }
 #t-login-form label { flex-basis: 100%; }
 #t-password { flex: 1; min-width: 0; font: inherit; padding: .45rem .6rem; border: 1px solid var(--line); border-radius: 8px; }
 .t-auth-row { justify-content: flex-end; }
+
+/* ── 수행평가 4탐구 화면(형식 3) ── */
+.seg-btn { padding: .3rem .8rem; font-size: .88rem; font-weight: 700; color: var(--navy); background: #fff; border: 0; border-right: 1px solid var(--line); cursor: pointer; }
+.seg-btn:last-child { border-right: 0; }
+.seg-btn.on { background: var(--navy); color: #fff; }
+.seg-btn:focus-visible { outline: 3px solid var(--teal); outline-offset: -3px; }
+.tool-inline { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: .3rem 0 .5rem; }
+.pick-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; padding: .45rem .6rem; margin-top: .35rem; background: #f4f6f8; border-radius: 8px; min-height: 2.4rem; }
+.pick-now { font-size: .92rem; margin-right: .3rem; }
+.answer-line { display: flex; flex-wrap: wrap; align-items: center; gap: .35rem; margin: .45rem 0; font-weight: 600; }
+.num-field { display: inline-flex; align-items: center; gap: .2rem; }
+.num-input { font: inherit; padding: .25rem .4rem; border: 1.5px solid var(--line); border-radius: 6px; text-align: right; width: 4.6rem; }
+.num-input:focus { outline: 3px solid var(--teal); outline-offset: 1px; }
+.num-input[readonly] { background: #eef1f4; }
+.unit { color: var(--muted); font-size: .9rem; }
+.order-line select { font: inherit; padding: .25rem .3rem; border: 1.5px solid var(--line); border-radius: 6px; }
+.type-box { border: 1px solid var(--line); border-radius: 8px; padding: .4rem .6rem .55rem; margin: .4rem 0; }
+.type-box legend { font-weight: 700; padding: 0 .3rem; }
+.type-radios { display: flex; flex-wrap: wrap; gap: .3rem .6rem; margin-bottom: .35rem; }
+.radio-chip { display: inline-flex; align-items: center; gap: .2rem; font-size: .92rem; cursor: pointer; }
+.reason-input { width: 100%; font: inherit; padding: .3rem .45rem; border: 1.5px solid var(--line); border-radius: 6px; box-sizing: border-box; }
+.answer-short { min-height: 3.2rem; }
+.draw-grid { display: grid; grid-template-columns: 1fr; gap: .6rem; }
+.draw-cell .draw-label { margin: .2rem 0; }
+.period-block .chart-host + .chart-host { margin-top: .15rem; }
+.time-values { margin-top: .4rem; }
+.caution-list { margin: .4rem 0 0 1.1rem; padding: 0; }
+.caution-list li { margin: .15rem 0; }
+.map-card .station-map { max-width: 340px; }
+.map-card .track-map { max-width: 560px; }
+.map-card .station-map svg, .map-card .track-map svg { width: 100%; height: auto; }
+.data-table caption { caption-side: top; text-align: left; font-weight: 700; font-size: .88rem; padding: .2rem 0; }
+.rp-draw-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+.rp-draw-grid svg { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; }
+.reveal-card.done { background: #f1f8f4; }
+.moon-list { margin-top: .4rem; }
+@media (max-width: 820px) { .rp-draw-grid { grid-template-columns: 1fr; } }

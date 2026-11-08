@@ -1,18 +1,17 @@
 // 보고서 미리보기와 PDF 다운로드
 import { h, confirmDialog, downloadBlob } from '../util/dom.js';
 import { escapeHtml } from '../util/format.js';
-import { buildReport, pdfFilename } from '../report/model.js';
-import { evidenceFigureSVG, evidenceTablesHTML } from './common.js';
+import { buildReport, pdfFilename, layoutFigure } from '../report/model.js';
 import { drawingLayout, isEmptyDrawing } from '../chart/drawing.js';
-import { itemsToSVG, SCREEN_FONT } from '../chart/svg.js';
+import { itemsToSVG, layoutToSVG, screenMeasure, SCREEN_FONT } from '../chart/svg.js';
 
 export function render(app, container) {
-  const { cd, store } = app;
-  let model = buildReport(cd, store.state);
+  const { ad, store } = app;
+  let model = buildReport(ad, store.state);
 
   container.append(h('div', { class: 'inq-head' },
-    h('h1', {}, '보고서 미리보기'),
-    h('p', { class: 'inq-intro' }, '보고서에 들어갈 내용을 확인하세요. 고칠 내용이 있으면 해당 단계로 돌아가 수정한 뒤 다시 내려받을 수 있습니다.')));
+    h('h1', {}, '보고서 확인·PDF'),
+    h('p', { class: 'inq-intro' }, '보고서에 들어갈 내용을 확인하세요. 그래프에서 고른 지점·날짜·구간은 해당 그래프에 그대로 그려집니다. 고칠 내용이 있으면 해당 탐구로 돌아가 수정한 뒤 다시 내려받을 수 있습니다.')));
 
   const layout = h('div', { class: 'report-layout' });
   const side = h('aside', { class: 'report-side', 'aria-label': '확인 사항과 PDF 다운로드' });
@@ -20,63 +19,50 @@ export function render(app, container) {
   layout.append(side, paper);
   container.append(layout);
 
-  // ── 확인 사항 ──
   const check = h('section', { class: 'card check-card' });
   const goto = (step, qid) => {
     app.navigate(step);
-    if (qid) requestAnimationFrame(() => { const el = document.getElementById(`ans-${qid}`); if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); } });
+    if (qid) requestAnimationFrame(() => { const el = document.getElementById(`q-${qid}`); if (el) el.scrollIntoView({ block: 'center' }); });
   };
+  const studentMissing = () => { const s = store.state.student; return !s.grade || !s.klass || !s.number || !s.name; };
   function renderCheck() {
     const m = model.missing;
     check.innerHTML = '';
     check.append(h('h2', {}, '제출 전 확인'));
     const items = [];
-    if (m.student) items.push(h('li', { class: 'warn' }, '학생 정보가 비어 있습니다. ', h('button', { type: 'button', class: 'link-btn', onclick: () => app.navigate('start') }, '시작 화면에서 입력')));
-    if (m.answers.length) {
-      items.push(h('li', { class: 'warn' }, `작성하지 않은 문항 ${m.answers.length}개`, h('ul', {}, ...m.answers.map((a) => h('li', {}, h('button', { type: 'button', class: 'link-btn', onclick: () => goto(a.step, a.qid) }, a.label))))));
-    }
-    if (m.noEvidence.length) {
-      items.push(h('li', { class: 'warn' }, '근거를 첨부하지 않은 탐구: ', ...m.noEvidence.map((a, i) => [i ? ', ' : '', h('button', { type: 'button', class: 'link-btn', onclick: () => goto(a.step) }, a.label)])));
-    }
-    if (m.noLink.length) {
-      items.push(h('li', { class: 'info' }, `근거를 연결하지 않은 문항 ${m.noLink.length}개`, h('ul', {}, ...m.noLink.map((a) => h('li', {}, h('button', { type: 'button', class: 'link-btn', onclick: () => goto(a.step, a.qid) }, a.label))))));
-    }
-    if (m.reveals.length) items.push(h('li', { class: 'info' }, '자료 확인 단계: ', ...m.reveals.map((a, i) => [i ? ', ' : '', h('button', { type: 'button', class: 'link-btn', onclick: () => goto(a.step) }, a.label)])));
-    if (model.dataVersionMismatch.length) items.push(h('li', { class: 'info' }, `근거 ${model.dataVersionMismatch.join(', ')}은(는) 다른 자료 버전에서 기록되었습니다.`));
-    if (!items.length) check.append(h('p', { class: 'ok-text' }, '✓ 모든 문항을 작성했고 각 탐구에 근거가 있습니다.'));
+    if (studentMissing()) items.push(h('li', { class: 'warn' }, '학생 정보가 비어 있습니다. ', h('button', { type: 'button', class: 'link-btn', onclick: () => app.navigate('start') }, '시작 화면에서 입력')));
+    const qs = m.filter((x) => x.qid);
+    if (qs.length) items.push(h('li', { class: 'warn' }, `작성하지 않은 문항 ${qs.length}개`, h('ul', {}, ...qs.map((a) => h('li', {}, h('button', { type: 'button', class: 'link-btn', onclick: () => goto(a.step, a.qid) }, a.label))))));
+    for (const r of m.filter((x) => x.reveal)) items.push(h('li', { class: 'info' }, h('button', { type: 'button', class: 'link-btn', onclick: () => goto(r.step) }, r.label)));
+    if (!items.length) check.append(h('p', { class: 'ok-text' }, '✓ 모든 문항을 작성했습니다.'));
     else check.append(h('ul', { class: 'check-list' }, ...items));
-    check.append(h('p', { class: 'muted small' }, '안내 사항이 있어도 확인한 뒤 PDF를 내려받을 수 있습니다. 앱은 비어 있는 답안을 채우지 않습니다.'));
+    check.append(h('p', { class: 'muted small' }, '안내 사항이 있어도 확인한 뒤 PDF를 내려받을 수 있습니다. 앱은 비어 있는 답을 채우지 않습니다.'));
   }
 
-  // ── 다운로드 ──
   const dl = h('section', { class: 'card dl-card' });
   const dlBtn = h('button', { type: 'button', class: 'btn btn-primary btn-lg btn-block', id: 'btn-pdf' }, 'PDF 보고서 다운로드');
   const status = h('div', { class: 'pdf-status', role: 'status', 'aria-live': 'polite' });
-  const printBtn = h('button', { type: 'button', class: 'btn btn-secondary btn-sm', onclick: () => window.print() }, '인쇄하기 (보조 기능)');
   dl.append(
     h('h2', {}, 'PDF 보고서'),
-    h('p', { class: 'small' }, `파일 이름: `, h('code', { class: 'fname' }, pdfFilename(store.state.student))),
+    h('p', { class: 'small' }, '파일 이름: ', h('code', { class: 'fname' }, pdfFilename(store.state.student))),
     dlBtn, status,
     h('p', { class: 'notice notice-info submit-note' }, '다운로드한 PDF를 선생님이 안내한 곳에 제출하세요. PDF를 내려받아도 선생님께 자동으로 제출되지 않습니다.'),
-    h('p', { class: 'muted small' }, 'PDF는 이 컴퓨터의 브라우저 안에서 만들어집니다. 내려받은 뒤에도 답안을 고치고 다시 내려받을 수 있으며, 작성 내용은 자동으로 지워지지 않습니다.'),
-    printBtn,
-  );
+    h('p', { class: 'muted small' }, 'PDF는 이 컴퓨터의 브라우저 안에서 만들어집니다. 내려받은 뒤에도 답을 고치고 다시 내려받을 수 있습니다.'),
+    h('button', { type: 'button', class: 'btn btn-secondary btn-sm', onclick: () => window.print() }, '인쇄하기 (보조 기능)'));
 
   let busy = false;
   dlBtn.addEventListener('click', async () => {
     if (busy) return;
-    model = buildReport(cd, store.state);
+    model = buildReport(ad, store.state);
     renderCheck();
-    const m = model.missing;
     const issues = [];
-    if (m.student) issues.push('학생 정보가 비어 있음');
-    if (m.answers.length) issues.push(`작성하지 않은 문항 ${m.answers.length}개: ${m.answers.map((a) => a.label).join(', ')}`);
-    if (m.noEvidence.length) issues.push(`근거를 첨부하지 않은 탐구: ${m.noEvidence.map((a) => a.label).join(', ')}`);
+    if (studentMissing()) issues.push('학생 정보가 비어 있음');
+    const qs = model.missing.filter((x) => x.qid);
+    if (qs.length) issues.push(`작성하지 않은 문항 ${qs.length}개: ${qs.map((a) => a.label).join(', ')}`);
     if (issues.length) {
       const ok = await confirmDialog({
-        title: '확인이 필요한 내용이 있습니다',
-        html: true,
-        body: `<ul>${issues.map((x) => `<li>${escapeHtml(x)}</li>`).join('')}</ul><p>이대로 PDF를 만들까요? 비어 있는 답안은 PDF에 ‘작성하지 않음’으로 표시됩니다.</p>`,
+        title: '확인이 필요한 내용이 있습니다', html: true,
+        body: `<ul>${issues.map((x) => `<li>${escapeHtml(x)}</li>`).join('')}</ul><p>이대로 PDF를 만들까요? 비어 있는 답은 PDF에 ‘작성하지 않음’으로 표시됩니다.</p>`,
         okLabel: '확인했고 PDF 만들기', cancelLabel: '돌아가서 작성',
       });
       if (!ok) return;
@@ -93,7 +79,7 @@ export function render(app, container) {
     status.textContent = '준비 중…';
     try {
       const { generatePdf } = await import('../report/pdf.js');
-      const res = await generatePdf(model, cd, { onProgress: (msg) => { status.textContent = msg; } });
+      const res = await generatePdf(model, { onProgress: (msg) => { status.textContent = msg; } });
       const name = pdfFilename(store.state.student);
       downloadBlob(new Blob([res.bytes], { type: 'application/pdf' }), name);
       store.update((s) => { s.lastPdfAt = Date.now(); }, { topic: 'pdf' });
@@ -103,9 +89,8 @@ export function render(app, container) {
     } catch (e) {
       console.error(e);
       status.className = 'pdf-status err';
-      status.innerHTML = `⚠ PDF를 만들지 못했습니다: ${escapeHtml(e.message || String(e))}<br>작성한 답안과 근거는 그대로 보존되어 있습니다. `;
+      status.innerHTML = `⚠ PDF를 만들지 못했습니다: ${escapeHtml(e.message || String(e))}<br>작성한 답은 그대로 보존되어 있습니다. `;
       status.append(h('button', { type: 'button', class: 'btn btn-secondary btn-sm', onclick: () => makePdf() }, '다시 시도'));
-      status.append(' ', h('span', { class: 'small' }, '계속 실패하면 [인쇄하기]로 PDF 저장을 하거나 선생님께 알려 주세요.'));
       dlBtn.textContent = 'PDF 보고서 다운로드';
     } finally {
       dlBtn.disabled = false;
@@ -115,50 +100,42 @@ export function render(app, container) {
 
   side.append(dl, check);
   renderCheck();
-  renderPaper(paper, model, cd, app);
+  renderPaper(paper, model);
   return null;
-}
-
-function answerHtml(q) {
-  if (q.waitNote && q.empty) return `<p class="rp-empty">(${escapeHtml(q.waitNote)})</p>`;
-  return q.empty
-    ? '<p class="rp-empty">(작성하지 않음)</p>'
-    : `<p class="rp-answer">${escapeHtml(q.answer)}</p>`;
 }
 
 function drawingHtml(d) {
   if (isEmptyDrawing(d)) return '<p class="rp-empty">(그림 없음)</p>';
-  const L = drawingLayout(d, 520);
+  const L = drawingLayout(d, 320);
   return `<div class="rp-drawing"><svg viewBox="0 0 ${L.width} ${L.height}" width="${L.width}" height="${L.height}" font-family='${SCREEN_FONT}' role="img" aria-label="학생이 그린 그림">${itemsToSVG(L.items)}</svg></div>`;
 }
 
-function figureHtml(cd, ev) {
-  return `<figure class="rp-figure" id="fig-${escapeHtml(ev.num)}">
-    <figcaption><b>그림 ${escapeHtml(ev.num)}</b> (근거 ${escapeHtml(ev.num)}) <span class="muted">탐구 ${ev.inquiry} · ${escapeHtml(ev.station || '')} · ${escapeHtml(ev.summary)}</span></figcaption>
-    <div class="rp-fig-svg">${evidenceFigureSVG(cd, ev, 700, 11.5)}</div>
-    <div class="rp-fig-tables">${evidenceTablesHTML(cd, ev)}</div>
-    ${ev.memo && ev.memo.trim() ? `<p class="rp-memo"><b>학생 메모:</b> ${escapeHtml(ev.memo)}</p>` : ''}
-  </figure>`;
+const linesHtml = (q) => (q.empty || !q.lines?.length
+  ? `<p class="rp-empty">(${escapeHtml(q.waitNote || '작성하지 않음')})</p>`
+  : q.lines.map((l) => `<p class="rp-answer">${escapeHtml(l)}</p>`).join(''));
+
+function qHead(q) {
+  return `<h4>${escapeHtml(q.label)}</h4><p class="rp-qtext">${escapeHtml(q.text)}</p>${q.lockedNote ? `<p class="rp-note-lock">${escapeHtml(q.lockedNote)}</p>` : ''}`;
 }
 
-function questionHtml(cd, q, kind = '문항') {
-  const side = q.sideBySide ? `<div class="rp-side">
-      <div><p class="rp-label">${escapeHtml(q.sideBySide.leftTitle)}</p>${q.sideBySide.left.trim() ? `<p class="rp-answer">${escapeHtml(q.sideBySide.left)}</p>` : '<p class="rp-empty">(작성하지 않음)</p>'}</div>
-      <div><p class="rp-label">${escapeHtml(q.sideBySide.rightTitle)}</p>${answerHtml(q)}</div>
-    </div>` : '';
-  return `<section class="rp-q" id="rp-${escapeHtml(q.id)}">
-    <h4>${kind} ${q.no}</h4>
-    <p class="rp-qtext">${escapeHtml(q.text)}</p>
-    ${q.unavailable ? `<p class="rp-unavail">※ ${escapeHtml(q.unavailable)}</p>` : ''}
-    ${q.lockedNote ? `<p class="rp-note-lock">${escapeHtml(q.lockedNote)}</p>` : ''}
-    ${side || `<p class="rp-label">답변</p>${answerHtml(q)}`}
-    ${'drawing' in q ? `<p class="rp-label">그림</p>${drawingHtml(q.drawing)}` : ''}
-    <p class="rp-links">연결 근거: ${q.linkedNums.length ? q.linkedNums.map((n) => `그림 ${escapeHtml(n)}`).join(', ') : '없음'}</p>
-    ${(q.figures || []).map((ev) => figureHtml(cd, ev)).join('')}
-  </section>`;
+function itemHtml(it) {
+  if (it.type === 'figure') {
+    const Ls = layoutFigure(it, { width: 680, measure: screenMeasure, fontSize: 11 });
+    return `<figure class="rp-figure" id="rp-${escapeHtml(it.id)}"><figcaption><b>${escapeHtml(it.caption)}</b></figcaption>${Ls.map((L) => `<div class="rp-fig-svg">${layoutToSVG(L, { title: it.caption })}</div>`).join('')}</figure>`;
+  }
+  if (it.type === 'qa') return `<section class="rp-q" id="rp-${escapeHtml(it.id)}">${qHead(it)}<p class="rp-label">답</p>${linesHtml(it)}</section>`;
+  if (it.type === 'drawings') return `<section class="rp-q" id="rp-${escapeHtml(it.id)}">${qHead(it)}<div class="rp-draw-grid">${it.items.map((d) => `<div><p class="rp-label">${escapeHtml(d.title)}</p>${drawingHtml(d.drawing)}</div>`).join('')}</div></section>`;
+  if (it.type === 'side') {
+    return `<section class="rp-q" id="rp-${escapeHtml(it.id)}">${qHead(it)}<div class="rp-side">
+      <div><p class="rp-label">${escapeHtml(it.leftTitle)}</p>${it.left ? `<p class="rp-answer">${escapeHtml(it.left)}</p>` : '<p class="rp-empty">(작성하지 않음)</p>'}</div>
+      <div><p class="rp-label">${escapeHtml(it.rightTitle)}</p>${linesHtml(it)}</div></div></section>`;
+  }
+  if (it.type === 'table') return `<p class="rp-label">${escapeHtml(it.title)}</p><table class="data-table compact"><thead><tr>${it.head.map((x) => `<th>${escapeHtml(x)}</th>`).join('')}</tr></thead><tbody>${it.rows.map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  if (it.type === 'note') return `<p class="rp-note small">※ ${escapeHtml(it.text)}</p>`;
+  return '';
 }
 
-function renderPaper(paper, model, cd) {
+function renderPaper(paper, model) {
   paper.innerHTML = `
     <header class="rp-head">
       <h2 class="rp-title">${escapeHtml(model.title)}</h2>
@@ -166,21 +143,14 @@ function renderPaper(paper, model, cd) {
       <p class="rp-date muted small">작성일 ${escapeHtml(model.createdText)} · ${escapeHtml(model.appName)}</p>
     </header>
     ${model.isSample ? `<p class="rp-sample">기능 확인용 예시 데이터 — ${escapeHtml(model.sampleNotice)}</p>` : ''}
-    <h3 class="rp-h-sm">학생 정보와 관측소·기간</h3>
-    <table class="data-table compact rp-info"><tbody>${model.caseInfo.map(([k, v]) => `<tr><th scope="row">${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`).join('')}</tbody></table>
-    ${model.parts.map((sec) => `
+    <h3 class="rp-h-sm">학생 정보와 자료</h3>
+    <table class="data-table compact rp-info"><tbody>${model.info.map(([k, v]) => `<tr><th scope="row">${escapeHtml(k)}</th><td>${escapeHtml(v)}</td></tr>`).join('')}</tbody></table>
+    ${model.sections.map((sec) => `
       <section class="rp-section" data-part="${escapeHtml(sec.key)}">
         <h3 class="rp-h">${escapeHtml(sec.title)}</h3>
         ${sec.sub ? `<p class="muted small">${escapeHtml(sec.sub)}</p>` : ''}
-        ${sec.blocks.map((q) => questionHtml(cd, q)).join('')}
-        ${sec.table ? `<p class="rp-label">${escapeHtml(sec.table.title)}</p><table class="data-table compact"><thead><tr>${sec.table.head.map((x) => `<th>${escapeHtml(x)}</th>`).join('')}</tr></thead><tbody>${sec.table.rows.map((r) => `<tr>${r.map((c) => `<td>${escapeHtml(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>` : ''}
-        ${sec.unlinked?.length ? `<h4 class="rp-h-sm">문항에 연결하지 않은 근거</h4>${sec.unlinked.map((ev) => figureHtml(cd, ev)).join('')}` : ''}
-        ${sec.noEvidence ? '<p class="rp-empty">(첨부한 근거 없음)</p>' : ''}
+        ${sec.items.map(itemHtml).join('')}
       </section>`).join('')}
-    <section class="rp-section" data-part="conclusion">
-      <h3 class="rp-h">${escapeHtml(model.conclusion.title)}</h3>
-      ${model.conclusion.blocks.map((q) => questionHtml(cd, q, '결론')).join('')}
-    </section>
     <section class="rp-section rp-sources" data-part="sources">
       <h3 class="rp-h">자료 출처와 분석의 한계</h3>
       ${model.isSample ? '<p class="rp-unavail">이 보고서의 자료는 기능 확인용 예시 데이터입니다. 실제 관측값이 아닙니다.</p>' : ''}

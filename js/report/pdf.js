@@ -4,9 +4,8 @@
 // - 본문은 검색·복사 가능한 텍스트, 그래프는 벡터 도형으로 그려 인쇄해도 선명함
 // - 화면 캡처를 잘라 붙이지 않고 문항·답변·그래프 단위로 배치
 
-import { figurePanels, panelLayout } from '../chart/specs.js';
 import { drawingLayout, isEmptyDrawing } from '../chart/drawing.js';
-import { evidenceTables } from '../state/evidence.js';
+import { layoutFigure } from './model.js';
 
 const FONT_URL = 'fonts/NotoSansKR-Regular.ttf';
 const LIBS = ['vendor/pdf-lib.min.js', 'vendor/fontkit.umd.min.js'];
@@ -60,7 +59,7 @@ function hex(c) {
  * @param {{onProgress?:(msg:string)=>void}} opts
  * @returns {Promise<{bytes:Uint8Array, pages:number, replacedChars:number}>}
  */
-export async function generatePdf(model, cd, { onProgress = () => {} } = {}) {
+export async function generatePdf(model, { onProgress = () => {} } = {}) {
   onProgress('PDF 도구를 불러오는 중…');
   await ensureLibs();
   const { PDFDocument, pushGraphicsState, popGraphicsState, setTextRenderingMode, TextRenderingMode, setLineWidth, setStrokingColor, degrees, LineCapStyle } = window.PDFLib;
@@ -277,47 +276,6 @@ export async function generatePdf(model, cd, { onProgress = () => {} } = {}) {
     }
   }
 
-  function figure(ev) {
-    const panels = figurePanels(cd, ev, { width: CW, measure: chartMeasure, fontSize: 9.5 });
-    const layouts = panels.map((p) => panelLayout(p));
-    const capTitle = `그림 ${ev.num}  (근거 ${ev.num})`;
-    const capSub = `탐구 ${ev.inquiry} · ${ev.station || ''} · ${ev.summary}`;
-    const capH = 30;
-    // 그림 전체가 한 쪽에 들어가면 함께 두고, 아니면 첫 그래프와 캡션만 같은 쪽에 둔다
-    const figH = layouts.reduce((a, L) => a + L.height + 6, 0);
-    const avail = A4[1] - M.top - M.bottom;
-    ensure(capH + (figH + 30 <= avail ? figH + 30 : (layouts[0]?.height || 0) + 10));
-    // 캡션(그림 위)
-    y -= 4;
-    page.drawRectangle({ x: M.left, y: y - 22, width: CW, height: 22, color: hex(C.light) });
-    drawText(capTitle, M.left + 6, y - 15, { size: 10, bold: true, color: C.navy });
-    drawText(capSub, M.left + 12 + width(clean(capTitle), 10) + 6, y - 15, { size: 8.6, color: C.muted });
-    y -= capH;
-    for (const L of layouts) {
-      ensure(L.height + 6);
-      drawLayout(L, M.left + Math.max(0, (CW - L.width) / 2), y);
-      y -= L.height + 6;
-    }
-    // 측정값
-    const { meta, tables } = evidenceTables(cd, ev);
-    for (const [k, v] of meta) {
-      const line = `${k}: ${v}`;
-      paragraph(line, { size: 8.4, color: C.muted, lead: 1.4, after: 0 });
-    }
-    y -= 4;
-    for (const t of tables) {
-      ensure(40);
-      paragraph(t.title, { size: 8.8, bold: true, color: C.text, lead: 1.5, after: 2 });
-      if (t.rows.length) table(t.head, t.rows);
-      else paragraph(t.empty || '내용 없음', { size: 8.6, color: C.muted });
-      if (t.note) paragraph(t.note, { size: 8, color: C.muted, lead: 1.35, after: 4 });
-    }
-    if (ev.memo && ev.memo.trim()) {
-      paragraph(`학생 메모: ${ev.memo}`, { size: 9, color: C.text, lead: 1.5, after: 4 });
-    }
-    y -= 10;
-  }
-
   function sideBySide(sb, answer, emptyText) {
     const gap = 14;
     const colW = (CW - gap) / 2;
@@ -347,47 +305,75 @@ export async function generatePdf(model, cd, { onProgress = () => {} } = {}) {
     y -= 6;
   }
 
-  function drawingBlock(d) {
-    if (isEmptyDrawing(d)) { paragraph('(그림 없음)', { size: 9.5, color: C.muted, indent: 10, after: 4 }); return; }
-    const L = drawingLayout(d, CW * 0.78);
-    ensure(L.height + 8);
-    drawLayout(L, M.left + 10, y);
-    y -= L.height + 8;
+
+  function figureBlock(f) {
+    const layouts = layoutFigure(f, { width: CW, measure: chartMeasure, fontSize: 9 });
+    const capLines = wrap(f.caption, 9, CW - 12);
+    const capH = capLines.length * 9 * 1.45 + 8;
+    const total = capH + layouts.reduce((a, L) => a + L.height + 6, 0);
+    const avail = A4[1] - M.top - M.bottom;
+    ensure(total <= avail ? total : capH + (layouts[0]?.height || 0) + 6);
+    y -= 2;
+    page.drawRectangle({ x: M.left, y: y - capH, width: CW, height: capH, color: hex(C.light) });
+    capLines.forEach((ln, n) => drawText(ln, M.left + 6, y - 4 - (n + 1) * 9 * 1.45 + 3, { size: 9, bold: true, color: C.navy }));
+    y -= capH + 4;
+    for (const L of layouts) {
+      ensure(L.height + 6);
+      drawLayout(L, M.left + Math.max(0, (CW - L.width) / 2), y);
+      y -= L.height + 6;
+    }
+    y -= 4;
   }
 
-  function questionBlock(q, { kind = '문항' } = {}) {
-    const qText = q.text;
-    const qH = measureParagraph(qText, 10, CW - 4, 1.5) + 18;
-    const firstLines = q.empty ? 20 : Math.min(3, wrap(q.answer, 10.5, CW - 14).length) * 10.5 * 1.6 + 20;
-    ensure(qH + firstLines);
+  function qaHead(q) {
+    const qH = measureParagraph(q.text, 10, CW - 4, 1.5) + 18;
+    ensure(qH + 34);
     y -= 6;
-    drawText(`${kind} ${q.no}`, M.left, y - 11, { size: 10.5, bold: true, color: C.navy });
+    drawText(q.label, M.left, y - 11, { size: 10.5, bold: true, color: C.navy });
     y -= 16;
-    paragraph(qText, { size: 10, color: C.text, lead: 1.5, after: 3 });
-    if (q.unavailable) paragraph(`※ ${q.unavailable}`, { size: 8.4, color: C.warn, lead: 1.4, after: 3 });
+    paragraph(q.text, { size: 10, color: C.text, lead: 1.5, after: 3 });
     if (q.lockedNote) paragraph(q.lockedNote, { size: 8.4, color: C.muted, lead: 1.4, after: 3 });
-    if (q.sideBySide) {
-      sideBySide(q.sideBySide, q.answer, '(작성하지 않음)');
-    } else {
-      ensure(30);
-      drawText('답변', M.left, y - 10, { size: 8.6, bold: true, color: C.teal });
-      y -= 13;
-      if (q.empty) paragraph(q.waitNote ? `(${q.waitNote})` : '(작성하지 않음)', { size: 10, color: C.muted, indent: 10, after: 4 });
-      else {
-        const startY = y;
-        const startPage = page;
-        paragraph(q.answer, { size: 10.5, color: C.text, indent: 10, lead: 1.6, after: 2 });
-        if (page === startPage) page.drawLine({ start: { x: M.left + 3, y: startY - 2 }, end: { x: M.left + 3, y: y + 2 }, thickness: 1.4, color: hex(C.teal) });
-      }
-    }
-    if ('drawing' in q) {
-      ensure(30);
-      drawText('그림', M.left, y - 10, { size: 8.6, bold: true, color: C.teal });
-      y -= 14;
-      drawingBlock(q.drawing);
-    }
-    paragraph(`연결 근거: ${q.linkedNums.length ? q.linkedNums.map((n) => `그림 ${n}`).join(', ') : '없음'}`, { size: 8.6, color: C.muted, lead: 1.4, after: 6 });
-    for (const ev of q.figures || []) figure(ev);
+  }
+
+  function qaBlock(q) {
+    qaHead(q);
+    ensure(30);
+    drawText('답', M.left, y - 10, { size: 8.6, bold: true, color: C.teal });
+    y -= 13;
+    if (q.empty || !q.lines.length) { paragraph(q.waitNote ? `(${q.waitNote})` : '(작성하지 않음)', { size: 10, color: C.muted, indent: 10, after: 6 }); return; }
+    const startY = y, startPage = page;
+    for (const ln of q.lines) paragraph(ln, { size: 10.5, color: C.text, indent: 10, lead: 1.6, after: 1 });
+    if (page === startPage) page.drawLine({ start: { x: M.left + 3, y: startY - 2 }, end: { x: M.left + 3, y: y + 2 }, thickness: 1.4, color: hex(C.teal) });
+    y -= 6;
+  }
+
+  function drawingsBlock(q) {
+    qaHead(q);
+    const gap = 12;
+    const w = (CW - gap) / 2;
+    const Ls = q.items.map((it) => (isEmptyDrawing(it.drawing) ? null : drawingLayout(it.drawing, w)));
+    const hh = Math.max(60, ...Ls.map((L) => (L ? L.height : 60)));
+    ensure(hh + 24);
+    q.items.forEach((it, n) => {
+      const x = M.left + n * (w + gap);
+      drawText(it.title, x, y - 10, { size: 9, bold: true, color: C.teal });
+      if (Ls[n]) drawLayout(Ls[n], x, y - 14);
+      else drawText('(그림 없음)', x + 6, y - 32, { size: 9.5, color: C.muted });
+      page.drawRectangle({ x, y: y - 14 - hh, width: w, height: hh, borderColor: hex(C.rule), borderWidth: 0.6 });
+    });
+    y -= hh + 22;
+  }
+
+  function sideBlock(q) {
+    qaHead(q);
+    sideBySide({ leftTitle: q.leftTitle, left: q.left || '', rightTitle: q.rightTitle }, q.right || '', '(작성하지 않음)');
+    y -= 4;
+  }
+
+  function tableBlock(t) {
+    ensure(40);
+    paragraph(t.title, { size: 9.2, bold: true, color: C.text, after: 2 });
+    table(t.head, t.rows);
   }
 
   function sectionHeading(title, sub) {
@@ -405,69 +391,57 @@ export async function generatePdf(model, cd, { onProgress = () => {} } = {}) {
   drawText(model.title, M.left, y - 20, { size: 19, bold: true, color: C.navy });
   y -= 30;
   drawText(model.studentLine, M.left, y - 13, { size: 13, bold: true });
-  drawText(`작성일 ${model.createdText} · ${model.appName}`, M.left + CW - width(clean(`작성일 ${model.createdText} · ${model.appName}`), 8.6), y - 12, { size: 8.6, color: C.muted });
+  const stamp = `작성일 ${model.createdText} · ${model.appName}`;
+  drawText(stamp, M.left + CW - width(clean(stamp), 8.6), y - 12, { size: 8.6, color: C.muted });
   y -= 20;
   rule(C.navy, 1.2, 2, 10);
   if (model.isSample) {
     const txt = `기능 확인용 예시 데이터 — ${model.sampleNotice}`;
-    const h = measureParagraph(txt, 9.5, CW - 20, 1.45) + 12;
-    box(h, { fill: C.warnBg, stroke: '#e0a040' });
+    const hgt = measureParagraph(txt, 9.5, CW - 20, 1.45) + 12;
+    box(hgt, { fill: C.warnBg, stroke: '#e0a040' });
     y -= 6;
     paragraph(txt, { size: 9.5, color: C.warn, bold: true, indent: 10, lead: 1.45, maxW: CW - 20, after: 0 });
     y -= 10;
   }
-  paragraph('학생 정보와 관측소·기간', { size: 10.5, bold: true, color: C.navy, after: 2 });
-  table(['항목', '내용'], model.caseInfo, { size: 8.8 });
+  paragraph('학생 정보와 자료', { size: 10.5, bold: true, color: C.navy, after: 2 });
+  table(['항목', '내용'], model.info, { size: 8.6 });
 
-  // ───────── 탐구 1~5(보고서 구성 순서) ─────────
-  for (const sec of model.parts) {
+  for (const sec of model.sections) {
     sectionHeading(sec.title, sec.sub);
-    for (const q of sec.blocks) questionBlock(q);
-    if (sec.table) {
-      ensure(40);
-      paragraph(sec.table.title, { size: 9.5, bold: true, color: C.text, after: 2 });
-      table(sec.table.head, sec.table.rows);
+    for (const it of sec.items) {
+      if (it.type === 'figure') figureBlock(it);
+      else if (it.type === 'qa') qaBlock(it);
+      else if (it.type === 'drawings') drawingsBlock(it);
+      else if (it.type === 'side') sideBlock(it);
+      else if (it.type === 'table') tableBlock(it);
+      else if (it.type === 'note') paragraph(`※ ${it.text}`, { size: 8.8, color: C.muted, lead: 1.42, after: 6 });
     }
-    if (sec.unlinked?.length) {
-      ensure(40);
-      paragraph('문항에 연결하지 않은 근거', { size: 10, bold: true, color: C.navy, after: 2 });
-      for (const ev of sec.unlinked) figure(ev);
-    }
-    if (sec.noEvidence) paragraph('(첨부한 근거 없음)', { size: 9, color: C.muted, after: 6 });
   }
-
-  // ───────── 종합 결론 ─────────
-  sectionHeading(model.conclusion.title, '다섯 탐구의 근거를 바탕으로 정리한 결론');
-  for (const q of model.conclusion.blocks) questionBlock(q, { kind: '결론' });
 
   // ───────── 자료 출처 ─────────
   sectionHeading('자료 출처와 분석의 한계', model.isSample ? '이 보고서의 자료는 기능 확인용 예시 데이터입니다. 실제 관측값이 아닙니다.' : '');
-  for (const s of model.sources) {
+  for (const src of model.sources) {
     ensure(30);
-    paragraph(s.role, { size: 9.5, bold: true, color: C.text, after: 1, lead: 1.45 });
-    for (const l of s.lines) paragraph(`· ${l}`, { size: 8.8, color: C.text, indent: 8, lead: 1.42, after: 0 });
+    paragraph(src.role, { size: 9.5, bold: true, color: C.text, after: 1, lead: 1.45 });
+    for (const l of src.lines) paragraph(`· ${l}`, { size: 8.8, color: C.text, indent: 8, lead: 1.42, after: 0 });
     y -= 4;
   }
   ensure(30);
   paragraph('자료 처리 기준과 분석의 한계', { size: 9.5, bold: true, color: C.text, after: 1 });
   for (const l of model.processing) paragraph(`· ${l}`, { size: 8.8, indent: 8, lead: 1.42, after: 0 });
-  if (model.dataVersionMismatch.length) {
-    y -= 4;
-    paragraph(`※ 근거 ${model.dataVersionMismatch.join(', ')}은(는) 다른 자료 버전에서 기록되었습니다. 표의 값은 기록 당시 값입니다.`, { size: 8.6, color: C.warn });
-  }
 
   // ───────── 쪽 번호·바닥글 ─────────
   const total = pages.length;
-  pages.forEach((p, i) => {
-    page = p;
+  pages.forEach((pg, n) => {
+    page = pg;
     const fy = 30;
-    p.drawLine({ start: { x: M.left, y: fy + 14 }, end: { x: M.left + CW, y: fy + 14 }, thickness: 0.5, color: hex(C.rule) });
+    pg.drawLine({ start: { x: M.left, y: fy + 14 }, end: { x: M.left + CW, y: fy + 14 }, thickness: 0.5, color: hex(C.rule) });
     drawText(`${model.appName} · ${model.studentLine}`, M.left, fy, { size: 8, color: C.muted });
-    const num = `${i + 1} / ${total}`;
+    const num = `${n + 1} / ${total}`;
     drawText(num, M.left + CW - width(num, 8.5), fy, { size: 8.5, color: C.text });
     if (model.isSample) {
-      const s = '기능 확인용 예시 데이터 — 실제 관측값 아님';
-      drawText(s, M.left + CW / 2 - width(clean(s), 7.8) / 2, fy - 11, { size: 7.8, color: C.warn });
+      const t = '기능 확인용 예시 데이터 — 실제 관측값 아님';
+      drawText(t, M.left + CW / 2 - width(clean(t), 7.8) / 2, fy - 11, { size: 7.8, color: C.warn });
     }
   });
 
