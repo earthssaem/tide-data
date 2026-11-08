@@ -15,7 +15,12 @@
     "weather:test-day": "node tools/khoa/collect.mjs --test-day 2022-09-01 --datasets airpress,wind,asos",
     "weather:collect": "node tools/khoa/collect.mjs --start 2022-09-01 --end 2022-09-30 --datasets airpress,wind,asos",
     "kma:typhoon": "node tools/kma/typhoon.mjs --year 2022 --no 11",
-    "kma:station": "node tools/kma/station-info.mjs --stn 159"
+    "kma:station": "node tools/kma/station-info.mjs --stn 159",
+    "stations:fetch": "node tools/khoa/stations.mjs fetch && node tools/kma/asos-stations.mjs",
+    "stations:plan": "node tools/khoa/stations.mjs plan",
+    "multi:collect": "node tools/khoa/collect.mjs --plan data/stations/plan.json --datasets hourly,forecast,airpress,wind,asos",
+    "multi:test-day": "node tools/khoa/collect.mjs --plan data/stations/plan.json --datasets hourly,forecast,airpress,wind,asos --test-day 2022-09-01",
+    "multi:build": "node tools/khoa/build-multi.mjs --case-id khoa-multi-2022-09"
   },
   "license": "UNLICENSED"
 }

@@ -1,0 +1,496 @@
+{
+ "source": "https://www.data.go.kr/data/15146602/fileData.do",
+ "file": "https://www.data.go.kr/cmm/cmm/fileDownload.do?atchFileId=FILE_000000003216350&fileDetailSn=1",
+ "title": "해양수산부 국립해양조사원_조위관측소 운영 현황",
+ "fetchedAt": "2026-11-08T09:59:13.835Z",
+ "header": [
+  "조위관측소 고유번호",
+  "관측소 유형",
+  "조위관측소 명",
+  "조위관측소 위도",
+  "조위관측소 경도",
+  "조위관측소 영문명"
+ ],
+ "stations": [
+  {
+   "code": "IE_0060",
+   "type": "종합해양과학기지",
+   "name": "이어도",
+   "lat": 32.12277778,
+   "lon": 125.1822222,
+   "nameEn": "Ieodo"
+  },
+  {
+   "code": "IE_0062",
+   "type": "종합해양과학기지",
+   "name": "옹진소청초",
+   "lat": 37.423056,
+   "lon": 124.738056,
+   "nameEn": "Socheongcho"
+  },
+  {
+   "code": "IE_0061",
+   "type": "종합해양과학기지",
+   "name": "신안가거초",
+   "lat": 33.941944,
+   "lon": 124.592778,
+   "nameEn": "Gageocho"
+  },
+  {
+   "code": "DT_0002",
+   "type": "조위관측소",
+   "name": "평택",
+   "lat": 36.966944,
+   "lon": 126.822778,
+   "nameEn": "Pyeongtaek"
+  },
+  {
+   "code": "DT_0003",
+   "type": "조위관측소",
+   "name": "영광",
+   "lat": 35.426111,
+   "lon": 126.420556,
+   "nameEn": "Yeonggwang"
+  },
+  {
+   "code": "DT_0004",
+   "type": "조위관측소",
+   "name": "제주",
+   "lat": 33.5275,
+   "lon": 126.543056,
+   "nameEn": "Jeju"
+  },
+  {
+   "code": "DT_0005",
+   "type": "조위관측소",
+   "name": "부산",
+   "lat": 35.096389,
+   "lon": 129.035278,
+   "nameEn": "Busan"
+  },
+  {
+   "code": "DT_0006",
+   "type": "조위관측소",
+   "name": "묵호",
+   "lat": 37.550278,
+   "lon": 129.116389,
+   "nameEn": "Mukho"
+  },
+  {
+   "code": "DT_0007",
+   "type": "조위관측소",
+   "name": "목포",
+   "lat": 34.779722,
+   "lon": 126.375556,
+   "nameEn": "Mokpo"
+  },
+  {
+   "code": "DT_0008",
+   "type": "조위관측소",
+   "name": "안산",
+   "lat": 37.192222,
+   "lon": 126.647222,
+   "nameEn": "Ansan"
+  },
+  {
+   "code": "DT_0010",
+   "type": "조위관측소",
+   "name": "서귀포",
+   "lat": 33.24,
+   "lon": 126.561667,
+   "nameEn": "Seogwipo"
+  },
+  {
+   "code": "DT_0011",
+   "type": "조위관측소",
+   "name": "후포",
+   "lat": 36.6775,
+   "lon": 129.453056,
+   "nameEn": "Hupo"
+  },
+  {
+   "code": "DT_0012",
+   "type": "조위관측소",
+   "name": "속초",
+   "lat": 38.207222,
+   "lon": 128.594167,
+   "nameEn": "Sokcho"
+  },
+  {
+   "code": "DT_0013",
+   "type": "조위관측소",
+   "name": "울릉도",
+   "lat": 37.491389,
+   "lon": 130.913611,
+   "nameEn": "Ulleungdo"
+  },
+  {
+   "code": "DT_0016",
+   "type": "조위관측소",
+   "name": "여수",
+   "lat": 34.747222,
+   "lon": 127.765556,
+   "nameEn": "Yeosu"
+  },
+  {
+   "code": "DT_0017",
+   "type": "조위관측소",
+   "name": "대산",
+   "lat": 37.0075,
+   "lon": 126.352778,
+   "nameEn": "Daesan"
+  },
+  {
+   "code": "DT_0018",
+   "type": "조위관측소",
+   "name": "군산",
+   "lat": 35.975556,
+   "lon": 126.563056,
+   "nameEn": "Gunsan"
+  },
+  {
+   "code": "DT_0021",
+   "type": "조위관측소",
+   "name": "추자도",
+   "lat": 33.961944,
+   "lon": 126.300278,
+   "nameEn": "Chujado"
+  },
+  {
+   "code": "DT_0023",
+   "type": "조위관측소",
+   "name": "모슬포",
+   "lat": 33.214444,
+   "lon": 126.251111,
+   "nameEn": "Moseulpo"
+  },
+  {
+   "code": "DT_0028",
+   "type": "조위관측소",
+   "name": "진도",
+   "lat": 34.377778,
+   "lon": 126.308611,
+   "nameEn": "Jindo"
+  },
+  {
+   "code": "DT_0030",
+   "type": "조위관측소",
+   "name": "위도(구)",
+   "lat": 35.618056,
+   "lon": 126.301667,
+   "nameEn": "Wido"
+  },
+  {
+   "code": "DT_0032",
+   "type": "조위관측소",
+   "name": "강화대교",
+   "lat": 37.731944,
+   "lon": 126.522222,
+   "nameEn": "Ganghwa(Bridge)"
+  },
+  {
+   "code": "DT_0019",
+   "type": "조위관측소",
+   "name": "가덕도(구)",
+   "lat": 35.024167,
+   "lon": 128.810833,
+   "nameEn": "Gadeokdo"
+  },
+  {
+   "code": "DT_0020",
+   "type": "조위관측소",
+   "name": "울산",
+   "lat": 35.501944,
+   "lon": 129.387222,
+   "nameEn": "Ulsan"
+  },
+  {
+   "code": "DT_0022",
+   "type": "조위관측소",
+   "name": "성산포",
+   "lat": 33.474722,
+   "lon": 126.927778,
+   "nameEn": "Seongsanpo"
+  },
+  {
+   "code": "DT_0024",
+   "type": "조위관측소",
+   "name": "장항",
+   "lat": 36.006944,
+   "lon": 126.6875,
+   "nameEn": "Janghang"
+  },
+  {
+   "code": "DT_0026",
+   "type": "조위관측소",
+   "name": "고흥발포",
+   "lat": 34.481111,
+   "lon": 127.342778,
+   "nameEn": "Goheung(Balpo)"
+  },
+  {
+   "code": "DT_0027",
+   "type": "조위관측소",
+   "name": "완도",
+   "lat": 34.315556,
+   "lon": 126.759722,
+   "nameEn": "Wando"
+  },
+  {
+   "code": "DT_0029",
+   "type": "조위관측소",
+   "name": "거제도",
+   "lat": 34.801389,
+   "lon": 128.699167,
+   "nameEn": "Geojedo"
+  },
+  {
+   "code": "DT_0031",
+   "type": "조위관측소",
+   "name": "거문도",
+   "lat": 34.028333,
+   "lon": 127.308889,
+   "nameEn": "Geomundo"
+  },
+  {
+   "code": "DT_0035",
+   "type": "조위관측소",
+   "name": "흑산도",
+   "lat": 34.684167,
+   "lon": 125.435556,
+   "nameEn": "Heuksando"
+  },
+  {
+   "code": "DT_0044",
+   "type": "조위관측소",
+   "name": "영종대교",
+   "lat": 37.545556,
+   "lon": 126.584444,
+   "nameEn": "Yeongjong(Bridge)"
+  },
+  {
+   "code": "DT_0050",
+   "type": "조위관측소",
+   "name": "태안",
+   "lat": 36.91305556,
+   "lon": 126.2388889,
+   "nameEn": "Taean"
+  },
+  {
+   "code": "DT_0051",
+   "type": "조위관측소",
+   "name": "서천마량",
+   "lat": 36.12888889,
+   "lon": 126.4952778,
+   "nameEn": "Seocheon(Maryang)"
+  },
+  {
+   "code": "DT_0049",
+   "type": "조위관측소",
+   "name": "광양",
+   "lat": 34.903672,
+   "lon": 127.754836,
+   "nameEn": "Gwangyang"
+  },
+  {
+   "code": "DT_0056",
+   "type": "조위관측소",
+   "name": "부산항신항",
+   "lat": 35.0775,
+   "lon": 128.786944,
+   "nameEn": "Busan(New Port)"
+  },
+  {
+   "code": "DT_0057",
+   "type": "조위관측소",
+   "name": "동해항",
+   "lat": 37.494722,
+   "lon": 129.143889,
+   "nameEn": "Donghae(Port)"
+  },
+  {
+   "code": "DT_0055",
+   "type": "조위관측소",
+   "name": "순천만",
+   "lat": 34.88411111,
+   "lon": 127.5125556,
+   "nameEn": "Sooncheon(Bay)"
+  },
+  {
+   "code": "DT_0058",
+   "type": "조위관측소",
+   "name": "경인항",
+   "lat": 37.560833,
+   "lon": 126.601111,
+   "nameEn": "Gyeongin(Port)"
+  },
+  {
+   "code": "DT_0038",
+   "type": "조위관측소",
+   "name": "굴업도",
+   "lat": 37.194444,
+   "lon": 125.995,
+   "nameEn": "Gureopdo"
+  },
+  {
+   "code": "DT_0025",
+   "type": "조위관측소",
+   "name": "보령",
+   "lat": 36.406389,
+   "lon": 126.486111,
+   "nameEn": "Boryeong"
+  },
+  {
+   "code": "DT_0034",
+   "type": "조위관측소",
+   "name": "안흥(구)",
+   "lat": 36.673611,
+   "lon": 126.132222,
+   "nameEn": "Anheung"
+  },
+  {
+   "code": "DT_0001",
+   "type": "조위관측소",
+   "name": "인천",
+   "lat": 37.451944,
+   "lon": 126.592222,
+   "nameEn": "Incheon"
+  },
+  {
+   "code": "DT_0052",
+   "type": "조위관측소",
+   "name": "인천송도",
+   "lat": 37.33805556,
+   "lon": 126.5861111,
+   "nameEn": "Incheon Songdo"
+  },
+  {
+   "code": "DT_0014",
+   "type": "조위관측소",
+   "name": "통영",
+   "lat": 34.827778,
+   "lon": 128.434722,
+   "nameEn": "Tongyeong"
+  },
+  {
+   "code": "DT_0037",
+   "type": "조위관측소",
+   "name": "어청도",
+   "lat": 36.117222,
+   "lon": 125.984722,
+   "nameEn": "Eocheongdo"
+  },
+  {
+   "code": "DT_0009",
+   "type": "조위관측소",
+   "name": "포항(과거)",
+   "lat": 36.04722222,
+   "lon": 129.3838889,
+   "nameEn": "Pohang"
+  },
+  {
+   "code": "DT_0043",
+   "type": "조위관측소",
+   "name": "영흥도",
+   "lat": 37.23861111,
+   "lon": 126.4286111,
+   "nameEn": "Yeongheungdo"
+  },
+  {
+   "code": "DT_0061",
+   "type": "조위관측소",
+   "name": "삼천포",
+   "lat": 34.924167,
+   "lon": 128.069722,
+   "nameEn": "Samcheonpo"
+  },
+  {
+   "code": "DT_0901",
+   "type": "조위관측소",
+   "name": "포항_구",
+   "lat": 36.051581,
+   "lon": 129.374499,
+   "nameEn": "Pohang"
+  },
+  {
+   "code": "DT_0068",
+   "type": "조위관측소",
+   "name": "위도",
+   "lat": 35.61808444,
+   "lon": 126.3018158,
+   "nameEn": "Wido"
+  },
+  {
+   "code": "DT_0065",
+   "type": "조위관측소",
+   "name": "덕적도",
+   "lat": 37.226333,
+   "lon": 126.156556,
+   "nameEn": "Deokjeokdo"
+  },
+  {
+   "code": "DT_0066",
+   "type": "조위관측소",
+   "name": "향화도",
+   "lat": 35.167667,
+   "lon": 126.359556,
+   "nameEn": "Hyanghwado"
+  },
+  {
+   "code": "DT_0067",
+   "type": "조위관측소",
+   "name": "안흥",
+   "lat": 36.67463889,
+   "lon": 126.1295556,
+   "nameEn": "Anheung"
+  },
+  {
+   "code": "DT_0091",
+   "type": "조위관측소",
+   "name": "포항",
+   "lat": 36.047128,
+   "lon": 129.383806,
+   "nameEn": "Pohang"
+  },
+  {
+   "code": "DT_0063",
+   "type": "조위관측소",
+   "name": "가덕도",
+   "lat": 35.024178,
+   "lon": 128.810933,
+   "nameEn": "Gadeokdo"
+  },
+  {
+   "code": "DT_0062",
+   "type": "조위관측소",
+   "name": "마산",
+   "lat": 35.1975,
+   "lon": 128.576389,
+   "nameEn": "Masan"
+  },
+  {
+   "code": "DT_0092",
+   "type": "조위관측소",
+   "name": "여호항",
+   "lat": 34.661944,
+   "lon": 127.469167,
+   "nameEn": "Yeoho(Port)"
+  },
+  {
+   "code": "DT_0094",
+   "type": "조위관측소",
+   "name": "서거차도",
+   "lat": 34.25142222,
+   "lon": 125.91545,
+   "nameEn": "Seogeochado"
+  },
+  {
+   "code": "DT_0093",
+   "type": "조위관측소",
+   "name": "소무의도",
+   "lat": 37.373069,
+   "lon": 126.440066,
+   "nameEn": "Somuuido"
+  }
+ ]
+}

@@ -48,9 +48,11 @@ function parseArgs(argv) {
     const v = () => argv[++i];
     if (a === '--station') o.station = v();
     else if (a === '--asos-station') o.asosStation = v(); // 기상청 ASOS 지점번호(부산 159)
+    else if (a === '--plan') o.plan = v(); // data/stations/plan.json: 여러 관측소와 짝지은 ASOS
+    else if (a === '--stations') o.onlyStations = v().split(',').map((x) => x.trim()); // 계획 중 일부만
     else if (a === '--station-name') o.stationName = v();
     else if (a === '--datasets') o.datasets = v().split(',').map((s) => s.trim()).filter(Boolean);
-    else if (a === '--start') o.start = v();
+    else if (a === '--start') { o.start = v(); o.startGiven = true; }
     else if (a === '--end') o.end = v();
     else if (a === '--test-day') o.testDay = v();
     else if (a === '--out') o.out = v();
@@ -64,8 +66,8 @@ function parseArgs(argv) {
     else throw new Error(`알 수 없는 옵션: ${a}`);
   }
   for (const d of o.datasets) if (!DATASETS[d]) throw new Error(`알 수 없는 자료: ${d} (가능: ${Object.keys(DATASETS).join(', ')})`);
-  if (o.testDay) { o.start = o.testDay; o.end = o.testDay; }
-  if (!o.start || !o.end) throw new Error('--test-day 또는 --start/--end가 필요합니다.');
+  if (o.testDay) { o.start = o.testDay; o.end = o.testDay; o.startGiven = true; }
+  if (!o.plan && (!o.start || !o.end)) throw new Error('--test-day 또는 --start/--end(또는 --plan)가 필요합니다.');
   return o;
 }
 
@@ -189,6 +191,51 @@ function summarizeTestDay(o, ds, date) {
 }
 
 // ───────── 실행 ─────────
+/** 수집할 관측소 목록: --plan(여러 관측소) 또는 --station(한 곳) */
+function stationList(o) {
+  if (!o.plan) return [{ code: o.station, name: o.stationName, asosStn: o.asosStation }];
+  const plan = JSON.parse(readFileSync(o.plan, 'utf8'));
+  let list = plan.stations.map((s) => ({ code: s.code, name: s.name, asosStn: s.asos?.stn || null }));
+  if (o.onlyStations) list = list.filter((s) => o.onlyStations.includes(s.code));
+  if (!o.startGiven && plan.period) { o.start = plan.period.start; o.end = plan.period.end; }
+  return list;
+}
+
+async function collectStation(o, st, dates, key, manifest, ctx, fatals) {
+  o.station = st.code;
+  o.stationName = st.name;
+  o.asosStation = st.asosStn;
+  console.log(`\n■ ${st.code} ${st.name}${o.datasets.includes('asos') ? ` · ASOS ${st.asosStn || '없음'}` : ''}`);
+  for (const dsKey of o.datasets) {
+    const ds = DATASETS[dsKey];
+    if (ds.stationOption && !o[ds.stationOption]) { console.log(`${dsKey.padEnd(8)} 건너뜀: 짝지은 지점 없음`); continue; }
+    const stc = stationFor(o, ds);
+    for (const date of dates) {
+      const id = `${dsKey}|${stc}|${date}`;
+      const prev = manifest.requests[id];
+      // 이미 성공(ok)했거나 자료없음(nodata)으로 확인된 요청은 다시 보내지 않는다(부산 등 기존 자료 재사용)
+      if (prev && !o.force && (prev.status === 'ok' || prev.status === 'nodata')) continue;
+      if (fatals[dsKey]) {
+        manifest.requests[id] = { dataset: dsKey, station: stc, date, status: 'pending', lastError: fatals[dsKey], attempts: prev?.attempts || 0 };
+        continue;
+      }
+      try {
+        const r = await collectDay(o, ds, key, date, ctx);
+        manifest.requests[id] = { dataset: dsKey, station: stc, date, ...r, attempts: (prev?.attempts || 0) + 1, at: new Date().toISOString() };
+        console.log(`${dsKey.padEnd(8)} ${date}  ${r.status.padEnd(6)} 행 ${String(r.items).padStart(4)}${r.totalCount != null ? `/${r.totalCount}` : ''}${r.lastError ? `  (${r.lastError})` : ''}`);
+      } catch (e) {
+        if (!(e instanceof FatalError)) throw e;
+        manifest.requests[id] = { dataset: dsKey, station: stc, date, status: 'failed', lastError: e.message, attempts: (prev?.attempts || 0) + 1, at: new Date().toISOString() };
+        // 인증키 미등록·트래픽 초과는 서비스 단위 → 다른 관측소에서도 같은 서비스는 요청하지 않음
+        fatals[dsKey] = e.message;
+        console.error(`${dsKey.padEnd(8)} ${date}  중단: ${e.message} — 이 서비스의 나머지 요청은 '대기'로 둡니다.`);
+      }
+      saveManifest(o.out, manifest);
+    }
+    saveManifest(o.out, manifest);
+  }
+}
+
 async function main() {
   const o = parseArgs(process.argv.slice(2));
   const { key, from } = loadKey();
@@ -197,60 +244,60 @@ async function main() {
     process.exit(2);
   }
   mkdirSync(o.out, { recursive: true });
+  const stations = stationList(o);
   const dates = dateRange(o.start, o.end);
   const manifest = loadManifest(o.out);
-  manifest.station = o.station;
-  manifest.stationName = o.stationName;
   const ctx = { calls: 0 };
   console.log(`인증키: ${from}에서 읽음(값은 출력하지 않음)`);
-  console.log(`관측소 ${o.station}(${o.stationName})${o.datasets.includes('asos') ? `, ASOS 지점 ${o.asosStation}` : ''}, 기간 ${o.start} ~ ${o.end} (${dates.length}일), 자료: ${o.datasets.join(', ')}`);
-  const plannedCalls = dates.length * o.datasets.length;
-  if (plannedCalls > DAILY_TRAFFIC_DEV) console.warn(`⚠ 예상 호출 ${plannedCalls}건이 개발계정 일일 트래픽(${DAILY_TRAFFIC_DEV})을 넘습니다. 기간을 나눠 실행하세요.`);
-  const fatals = {}; // 자료별 중단 사유(인증키 미등록·트래픽 초과는 서비스마다 따로 적용됨)
-  let anyKeyMissing = false;
-  for (const dsKey of o.datasets) {
-    const ds = DATASETS[dsKey];
-    const st = stationFor(o, ds);
-    for (const date of dates) {
-      const id = `${dsKey}|${st}|${date}`;
-      const prev = manifest.requests[id];
-      if (fatals[dsKey]) {
-        // 같은 서비스는 나머지 날짜도 실패할 것이므로 요청하지 않고 대기로 둔다
-        if (!prev || (prev.status !== 'ok' && prev.status !== 'nodata')) manifest.requests[id] = { dataset: dsKey, station: st, date, status: 'pending', lastError: fatals[dsKey], attempts: prev?.attempts || 0 };
-        continue;
-      }
-      // 기본: 이미 성공(ok)했거나 자료없음(nodata)으로 확인된 날은 건너뛰고, 실패·대기·미수집만 요청(이어서 수집)
-      if (prev && !o.force && (prev.status === 'ok' || prev.status === 'nodata')) continue;
-      try {
-        const r = await collectDay(o, ds, key, date, ctx);
-        manifest.requests[id] = { dataset: dsKey, station: st, date, ...r, attempts: (prev?.attempts || 0) + 1, at: new Date().toISOString() };
-        console.log(`${dsKey.padEnd(8)} ${date}  ${r.status.padEnd(6)} 행 ${String(r.items).padStart(4)}${r.totalCount != null ? `/${r.totalCount}` : ''}${r.lastError ? `  (${r.lastError})` : ''}`);
-      } catch (e) {
-        if (!(e instanceof FatalError)) throw e;
-        manifest.requests[id] = { dataset: dsKey, station: st, date, status: 'failed', lastError: e.message, attempts: (prev?.attempts || 0) + 1, at: new Date().toISOString() };
-        fatals[dsKey] = e.message;
-        if (/SERVICE_KEY_IS_NULL/.test(e.message)) anyKeyMissing = true;
-        console.error(`${dsKey.padEnd(8)} ${date}  중단: ${e.message} — 이 자료의 나머지 날짜는 '대기'로 둡니다.`);
-      }
-      saveManifest(o.out, manifest);
+  console.log(`관측소 ${stations.length}곳, 기간 ${o.start} ~ ${o.end} (${dates.length}일), 자료: ${o.datasets.join(', ')}`);
+  const plannedCalls = dates.length * o.datasets.length * stations.length;
+  if (plannedCalls > DAILY_TRAFFIC_DEV) console.warn(`⚠ 최대 예상 호출 ${plannedCalls}건이 서비스별 개발계정 일일 트래픽(${DAILY_TRAFFIC_DEV})을 넘을 수 있습니다. 넘으면 그 서비스만 멈추고, 다음 날 같은 명령으로 이어서 받습니다.`);
+  const fatals = {};
+  const stationErrors = [];
+  for (const st of stations) {
+    try {
+      await collectStation(o, st, dates, key, manifest, ctx, fatals);
+    } catch (e) {
+      // 한 관측소에서 예기치 않은 오류가 나도 다른 관측소는 계속
+      stationErrors.push(`${st.code}: ${e.message}`);
+      console.error(`${st.code} 수집 중 오류: ${e.message} — 다음 관측소로 넘어갑니다.`);
     }
-    saveManifest(o.out, manifest);
-    if (anyKeyMissing) break;
+    if (Object.values(fatals).some((m) => /SERVICE_KEY_IS_NULL/.test(m))) break;
   }
+  saveManifest(o.out, manifest);
   const fatal = Object.keys(fatals).length ? Object.entries(fatals).map(([k, m]) => `${k}: ${m}`).join(' / ') : null;
-  if (fatal) console.error(`\n일부 자료 수집을 멈췄습니다 — ${fatal}\n해당 서비스의 활용신청·승인, 인증키, 일일 트래픽을 확인한 뒤 같은 명령을 다시 실행하세요.`);
-  const reqs = Object.values(manifest.requests).filter((r) => r.station === stationFor(o, DATASETS[r.dataset] || {}) && dates.includes(r.date) && o.datasets.includes(r.dataset));
-  const count = (s) => reqs.filter((r) => r.status === s).length;
-  console.log(`\n요청 ${reqs.length}건: 성공 ${count('ok')}, 자료없음 ${count('nodata')}, 실패 ${count('failed')}, 대기 ${count('pending')} · 이번 실행 API 호출 ${ctx.calls}회`);
+  if (fatal) console.error(`\n일부 서비스 수집을 멈췄습니다 — ${fatal}\n해당 서비스의 활용신청·승인, 인증키, 일일 트래픽을 확인한 뒤 같은 명령을 다시 실행하세요.`);
+  // 요약(관측소 × 자료)
+  console.log('\n── 관측소별 요약 (성공/자료없음/실패/대기, 일 단위) ──');
+  let failed = 0;
+  for (const st of stations) {
+    const cells = o.datasets.map((dsKey) => {
+      const ds = DATASETS[dsKey];
+      const stc = ds.stationOption ? st.asosStn : st.code;
+      if (!stc) return `${dsKey} -`;
+      const rs = dates.map((d) => manifest.requests[`${dsKey}|${stc}|${d}`]?.status || 'none');
+      const c = (s) => rs.filter((x) => x === s).length;
+      failed += c('failed');
+      return `${dsKey} ${c('ok')}/${c('nodata')}/${c('failed')}/${c('pending') + c('none')}`;
+    });
+    console.log(`${st.code} ${st.name.padEnd(4)} ${cells.join('  ')}`);
+  }
+  console.log(`이번 실행 API 호출 ${ctx.calls}회${stationErrors.length ? ` · 관측소 오류 ${stationErrors.length}건` : ''}`);
   if (o.testDay) {
     console.log('\n── 하루 시험 결과 ──');
-    for (const dsKey of o.datasets) {
-      const st = manifest.requests[`${dsKey}|${stationFor(o, DATASETS[dsKey])}|${o.testDay}`];
-      if (!st || st.status === 'failed') { console.log(`${dsKey}: 실패 ${st?.lastError || ''}`); continue; }
-      console.log(`${dsKey}:`, JSON.stringify(summarizeTestDay(o, DATASETS[dsKey], o.testDay), null, 1));
+    for (const st of stations) {
+      o.station = st.code; o.stationName = st.name; o.asosStation = st.asosStn;
+      for (const dsKey of o.datasets) {
+        const ds = DATASETS[dsKey];
+        if (ds.stationOption && !st.asosStn) continue;
+        const r = manifest.requests[`${dsKey}|${stationFor(o, ds)}|${o.testDay}`];
+        if (!r || r.status === 'failed' || r.status === 'pending') { console.log(`${st.code} ${dsKey}: ${r?.status || '없음'} ${r?.lastError || ''}`); continue; }
+        if (r.status === 'nodata') { console.log(`${st.code} ${dsKey}: 자료 없음(NODATA)`); continue; }
+        console.log(`${st.code} ${dsKey}:`, JSON.stringify(summarizeTestDay(o, ds, o.testDay)));
+      }
     }
   }
-  process.exit(fatal || count('failed') ? 1 : 0);
+  process.exit(fatal || failed || stationErrors.length ? 1 : 0);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

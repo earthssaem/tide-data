@@ -53,7 +53,7 @@ function parseArgs(argv) {
 }
 
 // ───────── 원본 읽기 ─────────
-function loadDataset(o, manifest, dsKey, dates) {
+export function loadDataset(o, manifest, dsKey, dates) {
   const ds = DATASETS[dsKey];
   const days = {};
   const rows = [];
@@ -86,7 +86,7 @@ function numOrNull(v) {
 }
 
 /** 시계열 정리 + 품질 점검 */
-function buildSeries(o, loaded, field, label) {
+export function buildSeries(o, loaded, field, label) {
   const { ds, rows } = loaded;
   const issues = [];
   const byTime = new Map();
@@ -119,7 +119,7 @@ function buildSeries(o, loaded, field, label) {
   return { label, field, series, issues, names: Object.fromEntries(names), coords: Object.fromEntries(coords) };
 }
 
-function hourlyCompleteness(series, dates, dayStatus) {
+export function hourlyCompleteness(series, dates, dayStatus) {
   const have = new Map(series.map((p) => [p.time, p]));
   const missingTimes = [];
   const offHour = series.filter((p) => p.minute !== 0).map((p) => p.time);
@@ -144,15 +144,15 @@ function hourlyCompleteness(series, dates, dayStatus) {
   return { expected, valid, missing: missingTimes.length, ranges, offHour };
 }
 
-function addDays(d, n) { return new Date(Date.parse(`${d}T00:00:00Z`) + n * 86400e3).toISOString().slice(0, 10); }
+export function addDays(d, n) { return new Date(Date.parse(`${d}T00:00:00Z`) + n * 86400e3).toISOString().slice(0, 10); }
 /** 탐구 구간: 지정값 → 기본값(기간 안일 때) → 기간 첫 n일 */
-function pickRange(arg, dflt, dates, n) {
+export function pickRange(arg, dflt, dates, n) {
   const [a, b] = arg ? arg.split(',') : dflt;
   if (dates.includes(a) && (dates.includes(b) || b === addDays(dates[dates.length - 1], 1))) return { start: `${a} 00:00`, end: `${b} 00:00` };
   return { start: `${dates[0]} 00:00`, end: `${addDays(dates[0], Math.min(n, dates.length))} 00:00` };
 }
 
-function fmtNum(v) { return v == null ? '' : String(Math.round(v * 100) / 100); }
+export function fmtNum(v) { return v == null ? '' : String(Math.round(v * 100) / 100); }
 
 function main() {
   const o = parseArgs(process.argv.slice(2));
@@ -403,4 +403,5 @@ ${typhoon ? `- ${typhoon.meta.typhoon}: 실황 분석 위치 ${typhoon.meta.anal
   console.log(o.setDefault ? '학생 앱의 기본 사례로 지정했습니다.' : `학생 앱에서 쓰려면 --set-default를 붙이거나 data/cases/index.json의 defaultCase를 "${o.caseId}"로 바꾸세요.`);
 }
 
-main();
+// 직접 실행할 때만(다른 모듈이 함수를 가져다 쓸 때는 실행하지 않음)
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) main();

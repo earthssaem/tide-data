@@ -1,0 +1,445 @@
+{
+ "format": "tide-station-plan",
+ "version": 1,
+ "builtAt": "2026-11-08T09:59:13.962Z",
+ "period": {
+  "start": "2022-09-01",
+  "end": "2022-09-30"
+ },
+ "sources": {
+  "tideStations": "https://www.data.go.kr/data/15146602/fileData.do",
+  "asosStations": "https://data.kma.go.kr/tmeta/stn/selectStnList.do?pgmNo=123 (종관기상관측 관측지점정보 CSV)"
+ },
+ "rule": "기상: 조위관측소 자체 관측 우선. 없으면 기간 중 운영한 ASOS 가운데 가장 가까운 지점(최대 40 km)을 관측소마다 따로 선정",
+ "stations": [
+  {
+   "code": "DT_0001",
+   "name": "인천",
+   "nameEn": "Incheon",
+   "type": "조위관측소",
+   "sea": "서해",
+   "lat": 37.451944,
+   "lon": 126.592222,
+   "note": "조차가 큰 서해 중부",
+   "asos": {
+    "stn": "112",
+    "name": "인천",
+    "lat": 37.4777,
+    "lon": 126.6249,
+    "elevation_m": 68.99,
+    "barometerHeight_m": 70.19,
+    "address": "인천광역시 제물포구 전동",
+    "distKm": 4.1,
+    "validFrom": "2013-10-22",
+    "validTo": null
+   },
+   "asosCandidates": [
+    {
+     "stn": "112",
+     "name": "인천",
+     "distKm": 4.1
+    },
+    {
+     "stn": "201",
+     "name": "강화",
+     "distKm": 31.2
+    },
+    {
+     "stn": "108",
+     "name": "서울",
+     "distKm": 35.5
+    }
+   ]
+  },
+  {
+   "code": "DT_0018",
+   "name": "군산",
+   "nameEn": "Gunsan",
+   "type": "조위관측소",
+   "sea": "서해",
+   "lat": 35.975556,
+   "lon": 126.563056,
+   "note": "서해 중남부",
+   "asos": {
+    "stn": "140",
+    "name": "군산",
+    "lat": 36.0053,
+    "lon": 126.7614,
+    "elevation_m": 27.85,
+    "barometerHeight_m": 24.6,
+    "address": "전북특별자치도 군산시 금동",
+    "distKm": 18.1,
+    "validFrom": "2003-12-31",
+    "validTo": null
+   },
+   "asosCandidates": [
+    {
+     "stn": "140",
+     "name": "군산",
+     "distKm": 18.1
+    },
+    {
+     "stn": "243",
+     "name": "부안",
+     "distKm": 30.7
+    },
+    {
+     "stn": "235",
+     "name": "보령",
+     "distKm": 39.1
+    }
+   ]
+  },
+  {
+   "code": "DT_0007",
+   "name": "목포",
+   "nameEn": "Mokpo",
+   "type": "조위관측소",
+   "sea": "서해",
+   "lat": 34.779722,
+   "lon": 126.375556,
+   "note": "서해 남부(목포)",
+   "asos": {
+    "stn": "165",
+    "name": "목포",
+    "lat": 34.8173,
+    "lon": 126.3815,
+    "elevation_m": 44.7,
+    "barometerHeight_m": 39.2,
+    "address": "전남광주통합특별시 목포시 연산동",
+    "distKm": 4.2,
+    "validFrom": "2019-10-31",
+    "validTo": null
+   },
+   "asosCandidates": [
+    {
+     "stn": "165",
+     "name": "목포",
+     "distKm": 4.2
+    },
+    {
+     "stn": "261",
+     "name": "해남",
+     "distKm": 30.7
+    },
+    {
+     "stn": "268",
+     "name": "진도군",
+     "distKm": 35.7
+    }
+   ]
+  },
+  {
+   "code": "DT_0016",
+   "name": "여수",
+   "nameEn": "Yeosu",
+   "type": "조위관측소",
+   "sea": "남해",
+   "lat": 34.747222,
+   "lon": 127.765556,
+   "note": "남해 중부",
+   "asos": {
+    "stn": "168",
+    "name": "여수",
+    "lat": 34.7393,
+    "lon": 127.7406,
+    "elevation_m": 65.93,
+    "barometerHeight_m": 66.1,
+    "address": "전남광주통합특별시 여수시 고소동",
+    "distKm": 2.4,
+    "validFrom": "1942-03-01",
+    "validTo": null
+   },
+   "asosCandidates": [
+    {
+     "stn": "168",
+     "name": "여수",
+     "distKm": 2.4
+    },
+    {
+     "stn": "295",
+     "name": "남해",
+     "distKm": 16.6
+    },
+    {
+     "stn": "266",
+     "name": "광양시",
+     "distKm": 22.8
+    }
+   ]
+  },
+  {
+   "code": "DT_0014",
+   "name": "통영",
+   "nameEn": "Tongyeong",
+   "type": "조위관측소",
+   "sea": "남해",
+   "lat": 34.827778,
+   "lon": 128.434722,
+   "note": "힌남노 상륙 지점(거제) 인근",
+   "asos": {
+    "stn": "162",
+    "name": "통영",
+    "lat": 34.8454,
+    "lon": 128.4356,
+    "elevation_m": 31.24,
+    "barometerHeight_m": 33.2,
+    "address": "경상남도 통영시 정량동",
+    "distKm": 2,
+    "validFrom": "1968-01-01",
+    "validTo": null
+   },
+   "asosCandidates": [
+    {
+     "stn": "162",
+     "name": "통영",
+     "distKm": 2
+    },
+    {
+     "stn": "294",
+     "name": "거제",
+     "distKm": 16.9
+    },
+    {
+     "stn": "155",
+     "name": "창원",
+     "distKm": 40.1
+    }
+   ]
+  },
+  {
+   "code": "DT_0005",
+   "name": "부산",
+   "nameEn": "Busan",
+   "type": "조위관측소",
+   "sea": "남해",
+   "lat": 35.096389,
+   "lon": 129.035278,
+   "note": "첫 작동 확인 사례(이미 수집)",
+   "asos": {
+    "stn": "159",
+    "name": "부산",
+    "lat": 35.1047,
+    "lon": 129.032,
+    "elevation_m": 69.56,
+    "barometerHeight_m": 70.9,
+    "address": "부산광역시 중구 대청동1가",
+    "distKm": 1,
+    "validFrom": "1904-04-09",
+    "validTo": null
+   },
+   "asosCandidates": [
+    {
+     "stn": "159",
+     "name": "부산",
+     "distKm": 1
+    },
+    {
+     "stn": "253",
+     "name": "김해시",
+     "distKm": 19.8
+    },
+    {
+     "stn": "257",
+     "name": "양산시",
+     "distKm": 23.5
+    }
+   ]
+  },
+  {
+   "code": "DT_0004",
+   "name": "제주",
+   "nameEn": "Jeju",
+   "type": "조위관측소",
+   "sea": "남해",
+   "lat": 33.5275,
+   "lon": 126.543056,
+   "note": "제주 북부",
+   "asos": {
+    "stn": "184",
+    "name": "제주",
+    "lat": 33.5141,
+    "lon": 126.5297,
+    "elevation_m": 20.79,
+    "barometerHeight_m": 21.99,
+    "address": "제주특별자치도 제주시 건입동",
+    "distKm": 1.9,
+    "validFrom": "1923-05-01",
+    "validTo": null
+   },
+   "asosCandidates": [
+    {
+     "stn": "184",
+     "name": "제주",
+     "distKm": 1.9
+    },
+    {
+     "stn": "189",
+     "name": "서귀포",
+     "distKm": 31.3
+    },
+    {
+     "stn": "188",
+     "name": "성산",
+     "distKm": 35
+    }
+   ]
+  },
+  {
+   "code": "DT_0020",
+   "name": "울산",
+   "nameEn": "Ulsan",
+   "type": "조위관측소",
+   "sea": "동해",
+   "lat": 35.501944,
+   "lon": 129.387222,
+   "note": "동해 남부, 힌남노 진출 경로",
+   "asos": {
+    "stn": "152",
+    "name": "울산",
+    "lat": 35.5824,
+    "lon": 129.3347,
+    "elevation_m": 81.14,
+    "barometerHeight_m": 83.2,
+    "address": "울산광역시 중구 약사동",
+    "distKm": 10.1,
+    "validFrom": "2017-08-25",
+    "validTo": null
+   },
+   "asosCandidates": [
+    {
+     "stn": "152",
+     "name": "울산",
+     "distKm": 10.1
+    },
+    {
+     "stn": "283",
+     "name": "경주시",
+     "distKm": 38.9
+    },
+    {
+     "stn": "257",
+     "name": "양산시",
+     "distKm": 39.7
+    }
+   ]
+  },
+  {
+   "code": "DT_0091",
+   "name": "포항",
+   "nameEn": "Pohang",
+   "type": "조위관측소",
+   "sea": "동해",
+   "lat": 36.047128,
+   "lon": 129.383806,
+   "note": "동해 남부(포항)",
+   "asos": {
+    "stn": "138",
+    "name": "포항",
+    "lat": 36.032,
+    "lon": 129.38,
+    "elevation_m": 3.94,
+    "barometerHeight_m": 4.92,
+    "address": "경상북도 포항시남구 송도동",
+    "distKm": 1.7,
+    "validFrom": "1943-01-01",
+    "validTo": null
+   },
+   "asosCandidates": [
+    {
+     "stn": "138",
+     "name": "포항",
+     "distKm": 1.7
+    },
+    {
+     "stn": "283",
+     "name": "경주시",
+     "distKm": 30.4
+    },
+    {
+     "stn": "281",
+     "name": "영천",
+     "distKm": 39.7
+    }
+   ]
+  },
+  {
+   "code": "DT_0006",
+   "name": "묵호",
+   "nameEn": "Mukho",
+   "type": "조위관측소",
+   "sea": "동해",
+   "lat": 37.550278,
+   "lon": 129.116389,
+   "note": "동해 중부(묵호)",
+   "asos": {
+    "stn": "106",
+    "name": "동해",
+    "lat": 37.5071,
+    "lon": 129.1243,
+    "elevation_m": 40.46,
+    "barometerHeight_m": 41.66,
+    "address": "강원특별자치도 동해시 용정동",
+    "distKm": 4.9,
+    "validFrom": "1992-05-01",
+    "validTo": null
+   },
+   "asosCandidates": [
+    {
+     "stn": "106",
+     "name": "동해",
+     "distKm": 4.9
+    },
+    {
+     "stn": "105",
+     "name": "강릉",
+     "distKm": 29.9
+    },
+    {
+     "stn": "104",
+     "name": "북강릉",
+     "distKm": 36.4
+    }
+   ]
+  },
+  {
+   "code": "DT_0012",
+   "name": "속초",
+   "nameEn": "Sokcho",
+   "type": "조위관측소",
+   "sea": "동해",
+   "lat": 38.207222,
+   "lon": 128.594167,
+   "note": "동해 북부(속초)",
+   "asos": {
+    "stn": "90",
+    "name": "속초",
+    "lat": 38.2509,
+    "lon": 128.5647,
+    "elevation_m": 17.53,
+    "barometerHeight_m": 18.73,
+    "address": "강원특별자치도 고성군 토성면 봉포리",
+    "distKm": 5.5,
+    "validFrom": "1968-01-01",
+    "validTo": null
+   },
+   "asosCandidates": [
+    {
+     "stn": "90",
+     "name": "속초",
+     "distKm": 5.5
+    },
+    {
+     "stn": "211",
+     "name": "인제",
+     "distKm": 40.8
+    },
+    {
+     "stn": "104",
+     "name": "북강릉",
+     "distKm": 50.3
+    }
+   ]
+  }
+ ]
+}
