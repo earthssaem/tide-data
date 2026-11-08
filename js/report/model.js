@@ -216,7 +216,7 @@ export function sourceRows(ad, state) {
     { role: '관측 조위(부산)', lines: dsLines(rep.observed, ['1시간 간격, 단위 cm. 높이 기준면은 자료 문서에 없음(미확인)']) },
   ];
   if (rv.weather) {
-    out.push({ role: '기상(부산 ASOS)', lines: dsLines(rep.weather, [`관측 지점: ${rep.weather?.station?.name || '—'}${rep.weather?.station?.note ? ` (${rep.weather.station.note})` : ''}`, '해면기압·풍속, 1시간 간격']) });
+    out.push({ role: '기상(부산 ASOS)', lines: dsLines(rep.weather, [...(ad.weatherSite?.text ? [ad.weatherSite.text] : []), `관측 지점: ${rep.weather?.station?.name || '—'}${rep.weather?.station?.note ? ` (${rep.weather.station.note})` : ''}`, '해면기압·풍속, 1시간 간격']) });
     if (ad.past?.typhoon) out.push({ role: '태풍 정보', lines: dsLines(ad.past.typhoon, [ad.past.typhoon.trackKind && `경로 종류: ${ad.past.typhoon.trackKind}`, ad.past.typhoon.note].filter(Boolean)) });
   }
   if (rv.moon && ad.moon) out.push({ role: '달의 위상', lines: [ad.moon.meta.provider && `제공: ${ad.moon.meta.provider}`, ad.moon.meta.identifier && `식별자: ${ad.moon.meta.identifier}`].filter(Boolean) });
@@ -235,7 +235,7 @@ export function limitationNotes(ad, state) {
     '관측 조위의 높이 기준면이 확인되지 않아 관측소끼리, 예측과 관측끼리 높이를 겹치거나 빼지 않았다(변동 폭만 비교).',
     '결측·오류값은 0으로 바꾸지 않고 빈 값으로 두었다.',
   ];
-  if (rv.weather) out.push('기상 자료는 조위관측소에서 떨어진 기상청 ASOS 지점의 값이며, 두 위치의 기압·바람이 같다고 단정할 수 없다. 해면기압만 사용했다(현지기압과 섞지 않음). 태풍 중심기압은 관측소 기압으로 쓰지 않았다.');
+  if (rv.weather) out.push('기상 자료는 조위관측소에서 약 1 km 떨어진 기상청 ASOS 지점의 값이다(2022년 9월은 조위관측소 기상 자료가 제공되지 않음). 기압은 조위관측소 자체 기압과 거의 같았으나 바람은 장소에 따라 다를 수 있다. 해면기압만 사용했다(현지기압과 섞지 않음). 태풍 중심기압은 관측소 기압으로 쓰지 않았다.');
   return out;
 }
 

@@ -226,3 +226,13 @@ test('탐구 2 같은 축: 지역마다 기간 평균을 0으로, 세 그래프 
   const raw = ad.st.DT_0005.predicted.points.find((p) => p.t === ad.win.inq2[0]).v;
   assert.equal(Math.round((d.series.points.find((p) => p.t === ad.win.inq2[0]).v + d.mean) * 100) / 100, raw, '원래 값 = 차이 + 평균');
 });
+
+test('기상 지점: ASOS(약 1 km)와 조위관측소 자체 기압 1년 비교 기록, 2022년 9월은 조위관측소 기상 자료 없음', async () => {
+  const ad = await load('khoa-assess-2025-26');
+  const c = ad.weatherSite.check;
+  assert.ok(c.pressure.n > 8000 && Math.abs(c.pressure.mean) < 0.5 && c.pressure.p95abs <= 0.5);
+  assert.ok(c.wind.p95abs > 1, '바람은 지점에 따라 차이');
+  assert.match(ad.weatherSite.text, /2022년 9월에는 조위관측소에서 잰 기압·바람 자료가 제공되지 않아/);
+  const m = JSON.parse(readFileSync(join(ROOT, 'data/raw/khoa/manifest.json'), 'utf8'));
+  assert.ok(Object.entries(m.requests).filter(([k]) => k.startsWith('airpress|DT_0005|2022-09')).every(([, r]) => r.status === 'nodata'));
+});

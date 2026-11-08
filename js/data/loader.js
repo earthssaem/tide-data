@@ -77,6 +77,7 @@ export async function buildAssessData(config, readFile) {
     description: config.description || {},
     typhoonTracks: (config.typhoonTracks?.tracks || []).map((t) => ({ name: t.name, source: t.source, points: t.points.map(([k, lat, lon]) => ({ t: Date.parse(`${k.replace(' ', 'T')}:00Z`) - tz.offsetMinutes * 60000, lat, lon })) })),
     typhoonTracksNote: config.typhoonTracks?.note || '',
+    weatherSite: config.weatherSite || null,
   };
 }
 

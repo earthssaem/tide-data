@@ -47,6 +47,9 @@ export function render(app, container) {
       panels.push(createPanel({ host, height: 240, ariaLabel: `부산 관측 조위 ${periodTitle(ad, k, false)}`, build: (ctx) => inq4TideSpecs(ctx, ad, { revealed: false })[i], pick: tidePick(k), describe: tideTip(k) }));
     });
   } else {
+    const site = ad.weatherSite;
+    if (site?.check?.pressure) left.append(h('p', { class: 'notice notice-info small', id: 'wx-site' },
+      `기압·풍속은 조위관측소에서 약 ${site.distKm} km 떨어진 기상청 기상관측소에서 잰 값입니다. 기압은 조위관측소에서 잰 값과 거의 같지만(차이 ${site.check.pressure.p95abs} hPa 안팎), 바람은 장소에 따라 조금 다를 수 있습니다.`));
     if (!timeOk) left.append(h('p', { class: 'notice notice-warn', id: 'time-gate' }, '자료의 시간대가 확인되지 않아 시각 연결(같은 시각의 조위·기압·바람 함께 보기)을 켜지 않았습니다.'));
     for (const k of ['a', 'b']) {
       const cd = periodCd(ad, k);

@@ -13,7 +13,8 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { DATASETS, dateRange } from './khoa-api.mjs';
+import { DATASETS, dateRange, parseResponse } from './khoa-api.mjs';
+import { readRawPage } from '../lib/rawpack.mjs';
 import { loadDataset, buildSeries, hourlyCompleteness, addDays, fmtNum } from './build-case.mjs';
 import { buildWeather } from './weather-build.mjs';
 import { moonPhasesBetween } from '../lib/moon.mjs';
@@ -157,6 +158,27 @@ for (const ps of plan.stations) {
   report.push({ pred10: pred10 ? { months: pred10.months, ...pred10.check } : null, code: ps.code, name: ps.name, sea: ps.sea, obs: obsComp, pred: predComp, obsIssues: obs.issues.length, predIssues: pred.issues.length, shifts, weather: w ? { station: w.station.name, completeness: w.completeness } : null });
 }
 
+// 기상 지점 확인: 조위관측소 자체 기압·풍속(국립해양조사원)과 ASOS(약 1 km 떨어진 기상청 지점)를 같은 시각끼리 비교
+// (2022년 9월에는 조위관측소 기상 자료가 제공되지 않아 두 기간 모두 ASOS를 쓰고, 이 비교로 차이를 밝힌다)
+function weatherSiteCheck(code, asosStn) {
+  const read = (ds, st, f, tf) => {
+    const out = new Map();
+    for (const [k, r] of Object.entries(manifest.requests)) {
+      const [d, s2] = k.split('|');
+      if (d !== ds || s2 !== st || r.status !== 'ok') continue;
+      for (const fl of r.files) { const pr = parseResponse(readRawPage(o.raw, fl).rawText); if (pr.ok) for (const it of pr.items) if (it[f] != null && it[f] !== '') out.set(String(it[tf]).slice(0, 16), Number(it[f])); }
+    }
+    return out;
+  };
+  const ok = (m, lo, hi) => { const bad = [...m].filter(([, v]) => !(v >= lo && v <= hi)).length; for (const [k, v] of [...m]) if (!(v >= lo && v <= hi)) m.delete(k); return bad; };
+  const kp = read('airpress', code, 'atmpr', 'obsrvnDt'), kw = read('wind', code, 'wspd', 'obsrvnDt');
+  const excluded = { pressure: ok(kp, 850, 1100), wind: ok(kw, 0, 75) }; // 허용 범위 밖 값(오류값)은 비교에서 뺀다
+  const ap = read('asos', asosStn, 'ps', 'tm'), aw = read('asos', asosStn, 'ws', 'tm');
+  const diff = (a, b) => { const v = [...a].filter(([k]) => k.endsWith(':00') && b.has(k)).map(([k, x]) => x - b.get(k)); v.sort((x, y) => x - y); return v.length ? { n: v.length, mean: +(v.reduce((s2, x) => s2 + x, 0) / v.length).toFixed(2), p95abs: +[...v].map(Math.abs).sort((x, y) => x - y)[Math.floor(v.length * 0.95)].toFixed(1), min: +v[0].toFixed(1), max: +v.at(-1).toFixed(1) } : null; };
+  return { period: plan.period, pressure: diff(kp, ap), wind: diff(kw, aw), excludedOutOfRange: excluded };
+}
+const siteCheck = weatherSiteCheck(REP, '159');
+
 // 부산 2022년 9월(관측 조위·기상·태풍)
 const busan = plan.stations.find((s) => s.code === REP);
 const pdir = join(outDir, 'past', 'DT_0005-2022-09');
@@ -263,6 +285,13 @@ const caseJson = {
         meta: { provider: '기상청 기상자료개방포털(data.kma.go.kr) 태풍정보', title: `${tyMeta.typhoon} 태풍정보(실황 분석)`, identifier: `KMA typhoon 2022-11, 수집 ${tyMeta.fetchedAt.slice(0, 10)}` },
       },
     },
+  },
+  weatherSite: {
+    tideStation: `${busan.name} 조위관측소(${REP})`,
+    weatherStation: `기상청 ${busan.asos.name} ASOS(${busan.asos.stn})`,
+    distKm: busan.asos.distKm, elevationM: busan.asos.elevation_m,
+    check: siteCheck,
+    text: `기압·풍속은 조위관측소에서 약 ${busan.asos.distKm} km 떨어진 기상청 ${busan.asos.name} 기상관측소(해발 약 ${Math.round(busan.asos.elevation_m)} m)의 값입니다. 2022년 9월에는 조위관측소에서 잰 기압·바람 자료가 제공되지 않아 두 기간 모두 이 기상관측소 자료를 씁니다. 1년(${plan.period.start}~${plan.period.end}) 동안 조위관측소에서 잰 기압과 비교하면 차이가 평균 ${String(siteCheck.pressure.mean).replace('-', '−')} hPa(95%가 ${siteCheck.pressure.p95abs} hPa 이내)로 거의 같았지만, 풍속은 장소에 따라 차이가 있었습니다(95%가 ${siteCheck.wind.p95abs} m/s 이내).`,
   },
   typhoonTracks: {
     note: '기상청 기상자료개방포털 태풍경로(CSV). 파일에 시간대 표기가 없어 UTC로 해석해 KST로 바꿈(제11호 힌남노 위치를 태풍정보 KST와 맞춰 확인). 기간 확인은 앞뒤 하루를 포함해 거리만 봄',

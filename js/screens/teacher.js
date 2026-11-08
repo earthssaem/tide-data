@@ -293,6 +293,7 @@ function editor(app, T) {
       h('span', { class: 'muted small' }, ` ${fmtRange(A.win[k][0], A.win[k][1], tz)} · ${periodTyphoonText(A, k)}`)));
   }
   fs4.append(h('p', { class: 'muted small' }, `학생에게는 [추가 자료 확인] 전까지 날짜와 관측 조위만 보이고, 확인 뒤 기간 B 제목에 ‘확인한 기압·바람이 상대적으로 안정적인 기간’이 붙습니다. 기간 B는 기압·바람이 안정적인 기간으로 고르세요(시작일은 부산 2022년 9월 또는 2025-10~2026-09).`));
+  if (ad.weatherSite?.text) fs4.append(h('p', { class: 'small muted', id: 't-wx-site' }, `기상 자료 지점: ${ad.weatherSite.text}`));
   fs4.append(chartBox('t-inq4-chart', 190, (ctx) => inq4TideSpecs(ctx, A, { revealed: false }), '탐구 3 미리보기'));
   card.append(fs4);
   if (cfg.questions.q7 !== undefined || cfg.questions.q8 !== undefined) { delete cfg.questions.q7; delete cfg.questions.q8; }

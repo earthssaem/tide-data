@@ -231,6 +231,7 @@ try {
     assert.equal(await page.$('#inq4-windDir-a'), null, '풍향은 보여 주지 않음(자료 줄임)');
     assert.ok(await page.$('#inq4-typhoon .track-map svg'));
     assert.match(await page.textContent('#inq4-block-b h2'), /확인한 기압·바람이 상대적으로 안정적인 기간/);
+    assert.match(await page.textContent('#wx-site'), /약 1 km 떨어진 기상청 기상관측소.*0\.4 hPa/);
     assert.match(await page.textContent('#ty-caution'), /중심기압\)과는 다릅니다/);
     assert.match(await page.textContent('#ty-closest'), /2022-09-06 06:00 · 약 19 km/);
     assert.match(await page.textContent('#ty-recent'), /탈라스\(TALAS\), 약 803 km/);
