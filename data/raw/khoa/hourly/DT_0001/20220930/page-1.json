@@ -1,0 +1,28 @@
+{
+ "request": {
+  "dataset": "hourly",
+  "datasetTitle": "해양수산부 국립해양조사원_1시간 조위(조석성과)",
+  "datasetId": "15156017",
+  "endpoint": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService",
+  "url": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService?serviceKey=***&type=json&obsCode=DT_0001&reqDate=20220930&pageNo=1&numOfRows=300",
+  "station": "DT_0001",
+  "reqDate": "20220930",
+  "pageNo": 1,
+  "numOfRows": 300,
+  "attempt": 1,
+  "fetchedAt": "2026-11-08T10:03:58.647Z"
+ },
+ "http": {
+  "status": 200
+ },
+ "result": {
+  "code": "00",
+  "codeName": "NORMAL_SERVICE",
+  "message": "NORMAL_SERVICE",
+  "totalCount": 24,
+  "pageNo": 1,
+  "numOfRows": 300,
+  "itemCount": 24
+ },
+ "rawText": "{\"header\":{\"resultCode\":\"00\",\"resultMsg\":\"NORMAL_SERVICE\"},\"body\":{\"items\":{\"item\":[{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 00:00\",\"tdlvVl\":193.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 01:00\",\"tdlvVl\":99.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 02:00\",\"tdlvVl\":119.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 03:00\",\"tdlvVl\":258.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 04:00\",\"tdlvVl\":456.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 05:00\",\"tdlvVl\":643.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 06:00\",\"tdlvVl\":782.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 07:00\",\"tdlvVl\":846.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 08:00\",\"tdlvVl\":809.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 09:00\",\"tdlvVl\":676.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 10:00\",\"tdlvVl\":497.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 11:00\",\"tdlvVl\":319.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 12:00\",\"tdlvVl\":162.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 13:00\",\"tdlvVl\":61.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 14:00\",\"tdlvVl\":71.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 15:00\",\"tdlvVl\":204.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 16:00\",\"tdlvVl\":405.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 17:00\",\"tdlvVl\":607.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 18:00\",\"tdlvVl\":773.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 19:00\",\"tdlvVl\":874.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 20:00\",\"tdlvVl\":880.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 21:00\",\"tdlvVl\":789.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 22:00\",\"tdlvVl\":636.0},{\"obsvtrNm\":\"인천\",\"lot\":126.59222,\"lat\":37.45194,\"obsrvnDt\":\"2022-09-30 23:00\",\"tdlvVl\":468.0}]},\"pageNo\":1,\"numOfRows\":300,\"totalCount\":24,\"type\":\"json\"}}"
+}

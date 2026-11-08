@@ -1,0 +1,28 @@
+{
+ "request": {
+  "dataset": "hourly",
+  "datasetTitle": "해양수산부 국립해양조사원_1시간 조위(조석성과)",
+  "datasetId": "15156017",
+  "endpoint": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService",
+  "url": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService?serviceKey=***&type=json&obsCode=DT_0020&reqDate=20220930&pageNo=1&numOfRows=300",
+  "station": "DT_0020",
+  "reqDate": "20220930",
+  "pageNo": 1,
+  "numOfRows": 300,
+  "attempt": 1,
+  "fetchedAt": "2026-11-08T10:12:59.191Z"
+ },
+ "http": {
+  "status": 200
+ },
+ "result": {
+  "code": "00",
+  "codeName": "NORMAL_SERVICE",
+  "message": "NORMAL_SERVICE",
+  "totalCount": 24,
+  "pageNo": 1,
+  "numOfRows": 300,
+  "itemCount": 24
+ },
+ "rawText": "{\"header\":{\"resultCode\":\"00\",\"resultMsg\":\"NORMAL_SERVICE\"},\"body\":{\"items\":{\"item\":[{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 00:00\",\"tdlvVl\":57.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 01:00\",\"tdlvVl\":49.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 02:00\",\"tdlvVl\":40.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 03:00\",\"tdlvVl\":34.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 04:00\",\"tdlvVl\":32.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 05:00\",\"tdlvVl\":34.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 06:00\",\"tdlvVl\":40.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 07:00\",\"tdlvVl\":50.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 08:00\",\"tdlvVl\":60.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 09:00\",\"tdlvVl\":66.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 10:00\",\"tdlvVl\":67.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 11:00\",\"tdlvVl\":64.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 12:00\",\"tdlvVl\":57.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 13:00\",\"tdlvVl\":47.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 14:00\",\"tdlvVl\":35.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 15:00\",\"tdlvVl\":27.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 16:00\",\"tdlvVl\":25.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 17:00\",\"tdlvVl\":28.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 18:00\",\"tdlvVl\":34.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 19:00\",\"tdlvVl\":42.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 20:00\",\"tdlvVl\":52.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 21:00\",\"tdlvVl\":60.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 22:00\",\"tdlvVl\":62.0},{\"obsvtrNm\":\"울산\",\"lot\":129.38722,\"lat\":35.50194,\"obsrvnDt\":\"2022-09-30 23:00\",\"tdlvVl\":61.0}]},\"pageNo\":1,\"numOfRows\":300,\"totalCount\":24,\"type\":\"json\"}}"
+}

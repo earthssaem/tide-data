@@ -1,0 +1,28 @@
+{
+ "request": {
+  "dataset": "wind",
+  "datasetTitle": "해양수산부 국립해양조사원_조위관측소 실측 풍향/풍속 조회",
+  "datasetId": "15142518",
+  "endpoint": "https://apis.data.go.kr/1192136/surveyWind/GetSurveyWindApiService",
+  "url": "https://apis.data.go.kr/1192136/surveyWind/GetSurveyWindApiService?serviceKey=***&type=json&obsCode=DT_0004&reqDate=20220927&min=60&pageNo=1&numOfRows=300",
+  "station": "DT_0004",
+  "reqDate": "20220927",
+  "pageNo": 1,
+  "numOfRows": 300,
+  "attempt": 1,
+  "fetchedAt": "2026-11-08T10:12:23.131Z"
+ },
+ "http": {
+  "status": 200
+ },
+ "result": {
+  "code": "03",
+  "codeName": "NODATA_ERROR",
+  "message": "NODATA_ERROR",
+  "totalCount": null,
+  "pageNo": null,
+  "numOfRows": null,
+  "itemCount": 0
+ },
+ "rawText": "{\"header\":{\"resultCode\":\"03\",\"resultMsg\":\"NODATA_ERROR\"}}"
+}

@@ -1,0 +1,28 @@
+{
+ "request": {
+  "dataset": "hourly",
+  "datasetTitle": "해양수산부 국립해양조사원_1시간 조위(조석성과)",
+  "datasetId": "15156017",
+  "endpoint": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService",
+  "url": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService?serviceKey=***&type=json&obsCode=DT_0007&reqDate=20220903&pageNo=1&numOfRows=300",
+  "station": "DT_0007",
+  "reqDate": "20220903",
+  "pageNo": 1,
+  "numOfRows": 300,
+  "attempt": 1,
+  "fetchedAt": "2026-11-08T10:06:27.309Z"
+ },
+ "http": {
+  "status": 200
+ },
+ "result": {
+  "code": "00",
+  "codeName": "NORMAL_SERVICE",
+  "message": "NORMAL_SERVICE",
+  "totalCount": 24,
+  "pageNo": 1,
+  "numOfRows": 300,
+  "itemCount": 24
+ },
+ "rawText": "{\"header\":{\"resultCode\":\"00\",\"resultMsg\":\"NORMAL_SERVICE\"},\"body\":{\"items\":{\"item\":[{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 00:00\",\"tdlvVl\":130.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 01:00\",\"tdlvVl\":208.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 02:00\",\"tdlvVl\":248.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 03:00\",\"tdlvVl\":284.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 04:00\",\"tdlvVl\":321.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 05:00\",\"tdlvVl\":363.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 06:00\",\"tdlvVl\":393.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 07:00\",\"tdlvVl\":392.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 08:00\",\"tdlvVl\":340.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 09:00\",\"tdlvVl\":252.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 10:00\",\"tdlvVl\":160.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 11:00\",\"tdlvVl\":87.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 12:00\",\"tdlvVl\":82.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 13:00\",\"tdlvVl\":152.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 14:00\",\"tdlvVl\":206.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 15:00\",\"tdlvVl\":250.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 16:00\",\"tdlvVl\":297.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 17:00\",\"tdlvVl\":352.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 18:00\",\"tdlvVl\":408.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 19:00\",\"tdlvVl\":441.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 20:00\",\"tdlvVl\":419.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 21:00\",\"tdlvVl\":358.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 22:00\",\"tdlvVl\":277.0},{\"obsvtrNm\":\"목포\",\"lot\":126.37555,\"lat\":34.77972,\"obsrvnDt\":\"2022-09-03 23:00\",\"tdlvVl\":199.0}]},\"pageNo\":1,\"numOfRows\":300,\"totalCount\":24,\"type\":\"json\"}}"
+}

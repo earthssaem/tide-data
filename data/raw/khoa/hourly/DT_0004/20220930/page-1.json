@@ -1,0 +1,28 @@
+{
+ "request": {
+  "dataset": "hourly",
+  "datasetTitle": "해양수산부 국립해양조사원_1시간 조위(조석성과)",
+  "datasetId": "15156017",
+  "endpoint": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService",
+  "url": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService?serviceKey=***&type=json&obsCode=DT_0004&reqDate=20220930&pageNo=1&numOfRows=300",
+  "station": "DT_0004",
+  "reqDate": "20220930",
+  "pageNo": 1,
+  "numOfRows": 300,
+  "attempt": 1,
+  "fetchedAt": "2026-11-08T10:11:37.320Z"
+ },
+ "http": {
+  "status": 200
+ },
+ "result": {
+  "code": "00",
+  "codeName": "NORMAL_SERVICE",
+  "message": "NORMAL_SERVICE",
+  "totalCount": 24,
+  "pageNo": 1,
+  "numOfRows": 300,
+  "itemCount": 24
+ },
+ "rawText": "{\"header\":{\"resultCode\":\"00\",\"resultMsg\":\"NORMAL_SERVICE\"},\"body\":{\"items\":{\"item\":[{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 00:00\",\"tdlvVl\":255.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 01:00\",\"tdlvVl\":258.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 02:00\",\"tdlvVl\":239.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 03:00\",\"tdlvVl\":206.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 04:00\",\"tdlvVl\":170.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 05:00\",\"tdlvVl\":134.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 06:00\",\"tdlvVl\":98.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 07:00\",\"tdlvVl\":74.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 08:00\",\"tdlvVl\":78.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 09:00\",\"tdlvVl\":111.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 10:00\",\"tdlvVl\":162.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 11:00\",\"tdlvVl\":215.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 12:00\",\"tdlvVl\":257.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 13:00\",\"tdlvVl\":279.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 14:00\",\"tdlvVl\":280.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 15:00\",\"tdlvVl\":263.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 16:00\",\"tdlvVl\":237.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 17:00\",\"tdlvVl\":207.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 18:00\",\"tdlvVl\":172.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 19:00\",\"tdlvVl\":140.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 20:00\",\"tdlvVl\":124.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 21:00\",\"tdlvVl\":134.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 22:00\",\"tdlvVl\":165.0},{\"obsvtrNm\":\"제주\",\"lot\":126.54305,\"lat\":33.52750,\"obsrvnDt\":\"2022-09-30 23:00\",\"tdlvVl\":201.0}]},\"pageNo\":1,\"numOfRows\":300,\"totalCount\":24,\"type\":\"json\"}}"
+}

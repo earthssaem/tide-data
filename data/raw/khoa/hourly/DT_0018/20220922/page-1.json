@@ -1,0 +1,28 @@
+{
+ "request": {
+  "dataset": "hourly",
+  "datasetTitle": "해양수산부 국립해양조사원_1시간 조위(조석성과)",
+  "datasetId": "15156017",
+  "endpoint": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService",
+  "url": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService?serviceKey=***&type=json&obsCode=DT_0018&reqDate=20220922&pageNo=1&numOfRows=300",
+  "station": "DT_0018",
+  "reqDate": "20220922",
+  "pageNo": 1,
+  "numOfRows": 300,
+  "attempt": 1,
+  "fetchedAt": "2026-11-08T10:05:16.256Z"
+ },
+ "http": {
+  "status": 200
+ },
+ "result": {
+  "code": "00",
+  "codeName": "NORMAL_SERVICE",
+  "message": "NORMAL_SERVICE",
+  "totalCount": 24,
+  "pageNo": 1,
+  "numOfRows": 300,
+  "itemCount": 24
+ },
+ "rawText": "{\"header\":{\"resultCode\":\"00\",\"resultMsg\":\"NORMAL_SERVICE\"},\"body\":{\"items\":{\"item\":[{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 00:00\",\"tdlvVl\":554.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 01:00\",\"tdlvVl\":578.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 02:00\",\"tdlvVl\":566.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 03:00\",\"tdlvVl\":521.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 04:00\",\"tdlvVl\":457.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 05:00\",\"tdlvVl\":388.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 06:00\",\"tdlvVl\":324.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 07:00\",\"tdlvVl\":276.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 08:00\",\"tdlvVl\":256.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 09:00\",\"tdlvVl\":277.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 10:00\",\"tdlvVl\":338.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 11:00\",\"tdlvVl\":415.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 12:00\",\"tdlvVl\":480.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 13:00\",\"tdlvVl\":512.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 14:00\",\"tdlvVl\":503.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 15:00\",\"tdlvVl\":458.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 16:00\",\"tdlvVl\":390.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 17:00\",\"tdlvVl\":318.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 18:00\",\"tdlvVl\":253.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 19:00\",\"tdlvVl\":204.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 20:00\",\"tdlvVl\":191.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 21:00\",\"tdlvVl\":232.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 22:00\",\"tdlvVl\":321.0},{\"obsvtrNm\":\"군산\",\"lot\":126.56305,\"lat\":35.97555,\"obsrvnDt\":\"2022-09-22 23:00\",\"tdlvVl\":431.0}]},\"pageNo\":1,\"numOfRows\":300,\"totalCount\":24,\"type\":\"json\"}}"
+}

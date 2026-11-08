@@ -1,0 +1,28 @@
+{
+ "request": {
+  "dataset": "hourly",
+  "datasetTitle": "해양수산부 국립해양조사원_1시간 조위(조석성과)",
+  "datasetId": "15156017",
+  "endpoint": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService",
+  "url": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService?serviceKey=***&type=json&obsCode=DT_0006&reqDate=20220916&pageNo=1&numOfRows=300",
+  "station": "DT_0006",
+  "reqDate": "20220916",
+  "pageNo": 1,
+  "numOfRows": 300,
+  "attempt": 1,
+  "fetchedAt": "2026-11-08T10:15:36.060Z"
+ },
+ "http": {
+  "status": 200
+ },
+ "result": {
+  "code": "00",
+  "codeName": "NORMAL_SERVICE",
+  "message": "NORMAL_SERVICE",
+  "totalCount": 24,
+  "pageNo": 1,
+  "numOfRows": 300,
+  "itemCount": 24
+ },
+ "rawText": "{\"header\":{\"resultCode\":\"00\",\"resultMsg\":\"NORMAL_SERVICE\"},\"body\":{\"items\":{\"item\":[{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 00:00\",\"tdlvVl\":31.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 01:00\",\"tdlvVl\":32.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 02:00\",\"tdlvVl\":34.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 03:00\",\"tdlvVl\":36.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 04:00\",\"tdlvVl\":39.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 05:00\",\"tdlvVl\":42.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 06:00\",\"tdlvVl\":43.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 07:00\",\"tdlvVl\":43.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 08:00\",\"tdlvVl\":41.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 09:00\",\"tdlvVl\":40.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 10:00\",\"tdlvVl\":38.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 11:00\",\"tdlvVl\":35.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 12:00\",\"tdlvVl\":32.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 13:00\",\"tdlvVl\":31.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 14:00\",\"tdlvVl\":31.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 15:00\",\"tdlvVl\":31.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 16:00\",\"tdlvVl\":32.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 17:00\",\"tdlvVl\":35.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 18:00\",\"tdlvVl\":38.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 19:00\",\"tdlvVl\":41.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 20:00\",\"tdlvVl\":43.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 21:00\",\"tdlvVl\":44.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 22:00\",\"tdlvVl\":44.0},{\"obsvtrNm\":\"묵호\",\"lot\":129.11638,\"lat\":37.55027,\"obsrvnDt\":\"2022-09-16 23:00\",\"tdlvVl\":44.0}]},\"pageNo\":1,\"numOfRows\":300,\"totalCount\":24,\"type\":\"json\"}}"
+}

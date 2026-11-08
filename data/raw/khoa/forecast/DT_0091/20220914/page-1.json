@@ -1,0 +1,28 @@
+{
+ "request": {
+  "dataset": "forecast",
+  "datasetTitle": "해양수산부 국립해양조사원_조석예보(시계열)",
+  "datasetId": "15156022",
+  "endpoint": "https://apis.data.go.kr/1192136/tideFcstTime/GetTideFcstTimeApiService",
+  "url": "https://apis.data.go.kr/1192136/tideFcstTime/GetTideFcstTimeApiService?serviceKey=***&type=json&obsCode=DT_0091&reqDate=20220914&min=60&pageNo=1&numOfRows=300",
+  "station": "DT_0091",
+  "reqDate": "20220914",
+  "pageNo": 1,
+  "numOfRows": 300,
+  "attempt": 1,
+  "fetchedAt": "2026-11-08T10:14:28.614Z"
+ },
+ "http": {
+  "status": 200
+ },
+ "result": {
+  "code": "03",
+  "codeName": "NODATA_ERROR",
+  "message": "NODATA_ERROR",
+  "totalCount": null,
+  "pageNo": null,
+  "numOfRows": null,
+  "itemCount": 0
+ },
+ "rawText": "{\"header\":{\"resultCode\":\"03\",\"resultMsg\":\"NODATA_ERROR\"}}"
+}

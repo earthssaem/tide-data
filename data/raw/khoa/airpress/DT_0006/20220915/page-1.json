@@ -1,0 +1,28 @@
+{
+ "request": {
+  "dataset": "airpress",
+  "datasetTitle": "해양수산부 국립해양조사원_조위관측소 실측 기압 조회",
+  "datasetId": "15142509",
+  "endpoint": "https://apis.data.go.kr/1192136/surveyAirPress/GetSurveyAirPressApiService",
+  "url": "https://apis.data.go.kr/1192136/surveyAirPress/GetSurveyAirPressApiService?serviceKey=***&type=json&obsCode=DT_0006&reqDate=20220915&min=60&pageNo=1&numOfRows=300",
+  "station": "DT_0006",
+  "reqDate": "20220915",
+  "pageNo": 1,
+  "numOfRows": 300,
+  "attempt": 1,
+  "fetchedAt": "2026-11-08T10:16:07.254Z"
+ },
+ "http": {
+  "status": 200
+ },
+ "result": {
+  "code": "03",
+  "codeName": "NODATA_ERROR",
+  "message": "NODATA_ERROR",
+  "totalCount": null,
+  "pageNo": null,
+  "numOfRows": null,
+  "itemCount": 0
+ },
+ "rawText": "{\"header\":{\"resultCode\":\"03\",\"resultMsg\":\"NODATA_ERROR\"}}"
+}

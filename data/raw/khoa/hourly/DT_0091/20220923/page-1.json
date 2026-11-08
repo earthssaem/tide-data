@@ -1,0 +1,28 @@
+{
+ "request": {
+  "dataset": "hourly",
+  "datasetTitle": "해양수산부 국립해양조사원_1시간 조위(조석성과)",
+  "datasetId": "15156017",
+  "endpoint": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService",
+  "url": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService?serviceKey=***&type=json&obsCode=DT_0091&reqDate=20220923&pageNo=1&numOfRows=300",
+  "station": "DT_0091",
+  "reqDate": "20220923",
+  "pageNo": 1,
+  "numOfRows": 300,
+  "attempt": 1,
+  "fetchedAt": "2026-11-08T10:14:17.609Z"
+ },
+ "http": {
+  "status": 200
+ },
+ "result": {
+  "code": "00",
+  "codeName": "NORMAL_SERVICE",
+  "message": "NORMAL_SERVICE",
+  "totalCount": 24,
+  "pageNo": 1,
+  "numOfRows": 300,
+  "itemCount": 24
+ },
+ "rawText": "{\"header\":{\"resultCode\":\"00\",\"resultMsg\":\"NORMAL_SERVICE\"},\"body\":{\"items\":{\"item\":[{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 00:00\",\"tdlvVl\":41.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 01:00\",\"tdlvVl\":44.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 02:00\",\"tdlvVl\":45.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 03:00\",\"tdlvVl\":47.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 04:00\",\"tdlvVl\":49.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 05:00\",\"tdlvVl\":50.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 06:00\",\"tdlvVl\":50.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 07:00\",\"tdlvVl\":50.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 08:00\",\"tdlvVl\":50.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 09:00\",\"tdlvVl\":51.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 10:00\",\"tdlvVl\":52.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 11:00\",\"tdlvVl\":53.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 12:00\",\"tdlvVl\":53.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 13:00\",\"tdlvVl\":54.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 14:00\",\"tdlvVl\":53.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 15:00\",\"tdlvVl\":51.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 16:00\",\"tdlvVl\":50.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 17:00\",\"tdlvVl\":48.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 18:00\",\"tdlvVl\":45.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 19:00\",\"tdlvVl\":42.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 20:00\",\"tdlvVl\":40.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 21:00\",\"tdlvVl\":38.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 22:00\",\"tdlvVl\":37.0},{\"obsvtrNm\":\"포항\",\"lot\":129.37627,\"lat\":36.05177,\"obsrvnDt\":\"2022-09-23 23:00\",\"tdlvVl\":37.0}]},\"pageNo\":1,\"numOfRows\":300,\"totalCount\":24,\"type\":\"json\"}}"
+}

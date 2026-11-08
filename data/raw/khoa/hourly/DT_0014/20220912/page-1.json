@@ -1,0 +1,28 @@
+{
+ "request": {
+  "dataset": "hourly",
+  "datasetTitle": "해양수산부 국립해양조사원_1시간 조위(조석성과)",
+  "datasetId": "15156017",
+  "endpoint": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService",
+  "url": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService?serviceKey=***&type=json&obsCode=DT_0014&reqDate=20220912&pageNo=1&numOfRows=300",
+  "station": "DT_0014",
+  "reqDate": "20220912",
+  "pageNo": 1,
+  "numOfRows": 300,
+  "attempt": 1,
+  "fetchedAt": "2026-11-08T10:09:15.890Z"
+ },
+ "http": {
+  "status": 200
+ },
+ "result": {
+  "code": "00",
+  "codeName": "NORMAL_SERVICE",
+  "message": "NORMAL_SERVICE",
+  "totalCount": 24,
+  "pageNo": 1,
+  "numOfRows": 300,
+  "itemCount": 24
+ },
+ "rawText": "{\"header\":{\"resultCode\":\"00\",\"resultMsg\":\"NORMAL_SERVICE\"},\"body\":{\"items\":{\"item\":[{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 00:00\",\"tdlvVl\":231.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 01:00\",\"tdlvVl\":167.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 02:00\",\"tdlvVl\":100.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 03:00\",\"tdlvVl\":53.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 04:00\",\"tdlvVl\":41.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 05:00\",\"tdlvVl\":65.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 06:00\",\"tdlvVl\":114.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 07:00\",\"tdlvVl\":172.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 08:00\",\"tdlvVl\":226.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 09:00\",\"tdlvVl\":269.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 10:00\",\"tdlvVl\":285.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 11:00\",\"tdlvVl\":268.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 12:00\",\"tdlvVl\":226.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 13:00\",\"tdlvVl\":169.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 14:00\",\"tdlvVl\":106.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 15:00\",\"tdlvVl\":53.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 16:00\",\"tdlvVl\":34.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 17:00\",\"tdlvVl\":57.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 18:00\",\"tdlvVl\":107.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 19:00\",\"tdlvVl\":159.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 20:00\",\"tdlvVl\":212.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 21:00\",\"tdlvVl\":263.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 22:00\",\"tdlvVl\":292.0},{\"obsvtrNm\":\"통영\",\"lot\":128.43472,\"lat\":34.82777,\"obsrvnDt\":\"2022-09-12 23:00\",\"tdlvVl\":284.0}]},\"pageNo\":1,\"numOfRows\":300,\"totalCount\":24,\"type\":\"json\"}}"
+}

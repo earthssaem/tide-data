@@ -1,0 +1,28 @@
+{
+ "request": {
+  "dataset": "hourly",
+  "datasetTitle": "해양수산부 국립해양조사원_1시간 조위(조석성과)",
+  "datasetId": "15156017",
+  "endpoint": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService",
+  "url": "https://apis.data.go.kr/1192136/hourlyTide/GetHourlyTideApiService?serviceKey=***&type=json&obsCode=DT_0016&reqDate=20220921&pageNo=1&numOfRows=300",
+  "station": "DT_0016",
+  "reqDate": "20220921",
+  "pageNo": 1,
+  "numOfRows": 300,
+  "attempt": 1,
+  "fetchedAt": "2026-11-08T10:07:58.911Z"
+ },
+ "http": {
+  "status": 200
+ },
+ "result": {
+  "code": "00",
+  "codeName": "NORMAL_SERVICE",
+  "message": "NORMAL_SERVICE",
+  "totalCount": 24,
+  "pageNo": 1,
+  "numOfRows": 300,
+  "itemCount": 24
+ },
+ "rawText": "{\"header\":{\"resultCode\":\"00\",\"resultMsg\":\"NORMAL_SERVICE\"},\"body\":{\"items\":{\"item\":[{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 00:00\",\"tdlvVl\":184.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 01:00\",\"tdlvVl\":180.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 02:00\",\"tdlvVl\":184.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 03:00\",\"tdlvVl\":195.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 04:00\",\"tdlvVl\":211.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 05:00\",\"tdlvVl\":224.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 06:00\",\"tdlvVl\":233.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 07:00\",\"tdlvVl\":237.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 08:00\",\"tdlvVl\":228.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 09:00\",\"tdlvVl\":203.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 10:00\",\"tdlvVl\":175.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 11:00\",\"tdlvVl\":155.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 12:00\",\"tdlvVl\":147.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 13:00\",\"tdlvVl\":151.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 14:00\",\"tdlvVl\":169.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 15:00\",\"tdlvVl\":197.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 16:00\",\"tdlvVl\":228.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 17:00\",\"tdlvVl\":258.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 18:00\",\"tdlvVl\":283.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 19:00\",\"tdlvVl\":293.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 20:00\",\"tdlvVl\":285.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 21:00\",\"tdlvVl\":264.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 22:00\",\"tdlvVl\":232.0},{\"obsvtrNm\":\"여수\",\"lot\":127.76555,\"lat\":34.74722,\"obsrvnDt\":\"2022-09-21 23:00\",\"tdlvVl\":197.0}]},\"pageNo\":1,\"numOfRows\":300,\"totalCount\":24,\"type\":\"json\"}}"
+}
