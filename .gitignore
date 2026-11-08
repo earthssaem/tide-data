@@ -6,3 +6,5 @@ tests/e2e/out/
 .env
 .env.*
 !.env.example
+# 수집 작업용 원본(월별 압축본만 data/raw/에 커밋)
+data/raw-work/

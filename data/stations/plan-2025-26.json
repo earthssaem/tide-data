@@ -1,0 +1,134 @@
+{
+ "format": "tide-station-plan",
+ "version": 1,
+ "builtAt": "2026-11-08T09:59:13.962Z",
+ "period": {
+  "start": "2025-10-01",
+  "end": "2026-09-30"
+ },
+ "sources": {
+  "tideStations": "https://www.data.go.kr/data/15146602/fileData.do",
+  "asosStations": "https://data.kma.go.kr/tmeta/stn/selectStnList.do?pgmNo=123 (종관기상관측 관측지점정보 CSV)"
+ },
+ "rule": "기상: 조위관측소 자체 관측 우선. 없으면 기간 중 운영한 ASOS 가운데 가장 가까운 지점(최대 40 km)을 관측소마다 따로 선정",
+ "stations": [
+  {
+   "code": "DT_0001",
+   "name": "인천",
+   "nameEn": "Incheon",
+   "type": "조위관측소",
+   "sea": "서해",
+   "lat": 37.451944,
+   "lon": 126.592222,
+   "note": "서해 대표",
+   "asos": {
+    "stn": "112",
+    "name": "인천",
+    "lat": 37.4777,
+    "lon": 126.6249,
+    "elevation_m": 68.99,
+    "barometerHeight_m": 70.19,
+    "address": "인천광역시 제물포구 전동",
+    "distKm": 4.1,
+    "validFrom": "2013-10-22",
+    "validTo": null
+   },
+   "asosCandidates": [
+    {
+     "stn": "112",
+     "name": "인천",
+     "distKm": 4.1
+    },
+    {
+     "stn": "201",
+     "name": "강화",
+     "distKm": 31.2
+    },
+    {
+     "stn": "108",
+     "name": "서울",
+     "distKm": 35.5
+    }
+   ]
+  },
+  {
+   "code": "DT_0005",
+   "name": "부산",
+   "nameEn": "Busan",
+   "type": "조위관측소",
+   "sea": "남해",
+   "lat": 35.096389,
+   "lon": 129.035278,
+   "note": "남해 대표(탐구 기준 관측소)",
+   "asos": {
+    "stn": "159",
+    "name": "부산",
+    "lat": 35.1047,
+    "lon": 129.032,
+    "elevation_m": 69.56,
+    "barometerHeight_m": 70.9,
+    "address": "부산광역시 중구 대청동1가",
+    "distKm": 1,
+    "validFrom": "1904-04-09",
+    "validTo": null
+   },
+   "asosCandidates": [
+    {
+     "stn": "159",
+     "name": "부산",
+     "distKm": 1
+    },
+    {
+     "stn": "253",
+     "name": "김해시",
+     "distKm": 19.8
+    },
+    {
+     "stn": "257",
+     "name": "양산시",
+     "distKm": 23.5
+    }
+   ]
+  },
+  {
+   "code": "DT_0006",
+   "name": "묵호",
+   "nameEn": "Mukho",
+   "type": "조위관측소",
+   "sea": "동해",
+   "lat": 37.550278,
+   "lon": 129.116389,
+   "note": "동해 대표",
+   "asos": {
+    "stn": "106",
+    "name": "동해",
+    "lat": 37.5071,
+    "lon": 129.1243,
+    "elevation_m": 40.46,
+    "barometerHeight_m": 41.66,
+    "address": "강원특별자치도 동해시 용정동",
+    "distKm": 4.9,
+    "validFrom": "1992-05-01",
+    "validTo": null
+   },
+   "asosCandidates": [
+    {
+     "stn": "106",
+     "name": "동해",
+     "distKm": 4.9
+    },
+    {
+     "stn": "105",
+     "name": "강릉",
+     "distKm": 29.9
+    },
+    {
+     "stn": "104",
+     "name": "북강릉",
+     "distKm": 36.4
+    }
+   ]
+  }
+ ],
+ "comment": "2025-10~2026-09 지역 비교용(인천·부산·묵호). 관측·예측 조위, 조위관측소 기압·바람, 기상청 ASOS"
+}
