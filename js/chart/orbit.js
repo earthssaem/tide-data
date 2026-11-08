@@ -1,5 +1,7 @@
 // 태양·지구·달 배치판(문항 ④): 태양과 지구는 고정, 달은 지구 둘레의 공전 궤도 위에서만 움직인다.
-// 저장 값은 달의 위치각(도, 지구에서 오른쪽=0°, 시계 반대 방향으로 증가). 앱은 '맞는 배치'를 판정·표시하지 않는다.
+// 조석 자료만으로는 같은 대조(소조)라도 달의 위치가 어느 쪽인지 구별할 수 없으므로, 달을 두 개(달 1·달 2) 두고
+// '달이 있을 수 있는 위치를 모두' 나타내게 한다.
+// 저장 값은 달마다 위치각(도, 지구에서 오른쪽=0°, 시계 반대 방향으로 증가). 앱은 '맞는 배치'를 판정·표시하지 않는다.
 // 그리기 목록 형식이라 화면(SVG)과 PDF가 같이 쓴다.
 export const ORBIT_W = 560;
 export const ORBIT_H = 300;
@@ -7,7 +9,9 @@ export const SUN = { x: 66, y: 150, r: 44, label: '태양' };
 export const EARTH = { x: 360, y: 150, r: 18, label: '지구' };
 export const MOON_R = 10;
 export const ORBIT_R = 100;
-export const START_ANGLE = 45; // 처음 위치(대조·소조 어느 쪽과도 겹치지 않는 각도). 옮기기 전에는 '배치하지 않음'
+// 처음 위치: 대조·소조 어느 쪽과도 겹치지 않고, 서로 마주 보지도 않는 각도(정답 모양을 암시하지 않음). 옮기기 전에는 '배치하지 않음'
+export const START_ANGLES = [35, 125];
+export const MOON_COUNT = 2;
 const rad = (d) => (d * Math.PI) / 180;
 
 export function moonXY(angle) {
@@ -18,11 +22,18 @@ export function angleAt(x, y) {
   const a = (Math.atan2(-(y - EARTH.y), x - EARTH.x) * 180) / Math.PI;
   return ((Math.round(a) % 360) + 360) % 360;
 }
-export function emptyOrbit() { return { moon: { angle: START_ANGLE, placed: false } }; }
-export const isEmptyOrbit = (o) => !o || !o.moon?.placed;
+export function emptyOrbit() { return { moons: START_ANGLES.map((angle) => ({ angle, placed: false })) }; }
+/** 이전 저장 형식({moon})도 읽는다 */
+export function normalizeOrbit(o) {
+  const e = emptyOrbit();
+  if (Array.isArray(o?.moons)) return { moons: e.moons.map((d, i) => (o.moons[i] && typeof o.moons[i].angle === 'number' ? { angle: o.moons[i].angle, placed: !!o.moons[i].placed } : d)) };
+  if (o?.moon && typeof o.moon.angle === 'number') return { moons: [{ angle: o.moon.angle, placed: !!o.moon.placed }, e.moons[1]] };
+  return e;
+}
+export const isEmptyOrbit = (o) => !o || !normalizeOrbit(o).moons.some((m) => m.placed);
 
 export function orbitLayout(o, width = ORBIT_W, { forReport = false } = {}) {
-  const v = o?.moon ? o : emptyOrbit();
+  const v = normalizeOrbit(o);
   const s = width / ORBIT_W;
   const S = (n) => n * s;
   const items = [{ type: 'rect', x: 0, y: 0, w: width, h: S(ORBIT_H), fill: '#0f1b2d', stroke: '#c5ced8', strokeWidth: 0.8 }];
@@ -39,13 +50,14 @@ export function orbitLayout(o, width = ORBIT_W, { forReport = false } = {}) {
   items.push({ type: 'text', x: S(SUN.x), y: S(SUN.y + 4), text: SUN.label, size: S(12), anchor: 'middle', fill: '#5c3a00', bold: true });
   items.push({ type: 'circle', cx: S(EARTH.x), cy: S(EARTH.y), r: S(EARTH.r), fill: '#3c7dd9', stroke: '#1f4f99', strokeWidth: 1.4 });
   items.push({ type: 'text', x: S(EARTH.x), y: S(EARTH.y + EARTH.r + 13), text: EARTH.label, size: S(11), anchor: 'middle', fill: '#e8edf3', bold: true });
-  // 달
-  const m = moonXY(v.moon.angle);
-  const placed = !!v.moon.placed;
-  if (!(forReport && !placed)) {
+  // 달 1·달 2
+  v.moons.forEach((mn, i) => {
+    const m = moonXY(mn.angle);
+    const placed = !!mn.placed;
+    if (forReport && !placed) return;
     items.push({ type: 'circle', cx: S(m.x), cy: S(m.y), r: S(MOON_R), fill: placed ? '#d7dbe2' : '#7b8494', stroke: placed ? '#ffffff' : '#9aa5b1', strokeWidth: 1.2 });
-    items.push({ type: 'text', x: S(m.x), y: S(m.y - MOON_R - 5), text: placed ? '달' : '달(옮기기 전)', size: S(10.5), anchor: 'middle', fill: placed ? '#e8edf3' : '#9aa5b1', bold: true });
-  }
+    items.push({ type: 'text', x: S(m.x), y: S(m.y - MOON_R - 5), text: `달 ${i + 1}${placed ? '' : '(옮기기 전)'}`, size: S(10.5), anchor: 'middle', fill: placed ? '#e8edf3' : '#9aa5b1', bold: true });
+  });
   return { items, width, height: S(ORBIT_H) };
 }
 

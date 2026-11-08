@@ -175,7 +175,7 @@ export function render(app, container) {
       });
       grid.append(h('div', { class: 'draw-cell' }, h('p', { class: 'draw-label' }, `${label}일 때`), board.el));
     }
-    sh.body.append(h('p', { class: 'small muted' }, '태양과 지구는 고정되어 있습니다. 달을 공전 궤도를 따라 옮겨 위치 관계를 나타내세요.'), grid);
+    sh.body.append(h('p', { class: 'small muted' }, '태양과 지구는 고정되어 있습니다. 조위 자료만으로는 달이 궤도의 어느 쪽에 있었는지 하나로 정할 수 없을 수 있으니, 달이 있을 수 있는 위치를 모두(달 1·달 2) 옮겨 나타내세요.'), grid);
     sh.body.append(h('p', { class: 'answer-label', id: 'q4-reason-label' }, '대조일 때 조차가 크고, 소조일 때 조차가 작은 이유'),
       textAnswer(app, Q4, { id: 'q4-reason', value: a.reason || '', readOnly: !!sh.locked, rows: 3, max: 800, placeholder: '위 배치를 바탕으로 1~2문장으로 쓰세요.', onInput: (v) => store.update((s) => { s.answers.q4.reason = v; }, { topic: 'answer' }) }));
     return sh.li;

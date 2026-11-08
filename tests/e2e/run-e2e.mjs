@@ -152,22 +152,22 @@ try {
     assert.ok(await page.$('#inq1-daily svg polyline'));
     assert.ok(!(await visibleText(page)).includes('변동 폭 막대'));
   });
-  // ④ 달만 공전 궤도 위에서 옮기기: 대조는 끌기(태양 반대편, 180° → 지구 왼쪽이 아니라 오른쪽 끝 0°), 소조는 키보드
+  // ④ 달 1·달 2를 공전 궤도 위에서 옮기기: 대조는 끌기(0°, 180°), 소조는 키보드(달 1만 35°→80°)
   await page.$eval('#orbit-q4-spring', (e) => e.scrollIntoView({ block: 'center' }));
-  {
-    const hb = await page.locator('#orbit-q4-spring [data-body=moon]').boundingBox();
+  for (const [i, x, y] of [[0, 520, 150], [1, 200, 150]]) {
+    const hb = await page.locator(`#orbit-q4-spring [data-i="${i}"]`).boundingBox();
     const sv = await page.locator('#orbit-q4-spring svg').boundingBox(); const sc = sv.width / 560;
     await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await page.mouse.down();
-    await page.mouse.move(sv.x + 520 * sc, sv.y + 150 * sc, { steps: 8 }); await page.mouse.up(); // 지구(360,150)의 오른쪽 → 0°
+    await page.mouse.move(sv.x + x * sc, sv.y + y * sc, { steps: 8 }); await page.mouse.up(); // 지구(360,150)의 오른쪽 0°, 왼쪽 180°
   }
-  await page.focus('#orbit-q4-neap [data-body=moon]');
-  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowLeft'); // 45° + 3×15° = 90°
+  await page.focus('#orbit-q4-neap [data-i="0"]');
+  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowLeft'); // 35° + 3×15° = 80°
   await page.fill('#q4-reason', '대조일 때는 태양·지구·달이 일직선이 되어 인력이 더해지기 때문이다.');
   await page.waitForTimeout(300);
-  await check('탐구 1 ④: 태양·지구 고정, 달은 궤도 위 위치각으로 저장(끌기·키보드), 이유 작성', async () => {
+  await check('탐구 1 ④: 태양·지구 고정, 달 1·달 2는 궤도 위 위치각으로 저장(끌기·키보드), 이유 작성', async () => {
     const st = await stateOf(page);
-    assert.deepEqual(st.answers.q4.spring, { moon: { angle: 0, placed: true } });
-    assert.deepEqual(st.answers.q4.neap, { moon: { angle: 90, placed: true } });
+    assert.deepEqual(st.answers.q4.spring, { moons: [{ angle: 0, placed: true }, { angle: 180, placed: true }] });
+    assert.deepEqual(st.answers.q4.neap, { moons: [{ angle: 80, placed: true }, { angle: 125, placed: false }] });
     assert.match(st.answers.q4.reason, /일직선/);
     assert.equal(await page.$('#orbit-q4-spring [data-body=sun]'), null, '태양은 옮길 수 없음');
     assert.equal(await page.$('#orbit-q4-spring [data-body=earth]'), null, '지구는 옮길 수 없음');
@@ -181,7 +181,7 @@ try {
     assert.equal(await page.$('#orbit-q4-spring [data-body]'), null, '고정 뒤에는 옮길 수 없음');
     const st = await stateOf(page);
     assert.equal(st.reveals.moon.answers.q3.spring, '2026-09-12');
-    assert.equal(st.reveals.moon.answers.q4.spring.moon.angle, 0);
+    assert.equal(st.reveals.moon.answers.q4.spring.moons[1].angle, 180);
     assert.match(st.reveals.moon.answers.q4.reason, /일직선/);
     assert.equal(await page.$eval('#q4-reason', (e) => e.readOnly), true);
   });

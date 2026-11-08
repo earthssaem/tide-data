@@ -190,11 +190,13 @@ test('10분 간격 예측(부산 2026-09): 정시 값은 1시간 예측과 같�
   assert.equal(inq1Series(other), other.st.DT_0005.predicted, '10분 자료가 없는 달은 1시간 자료');
 });
 
-test('문항 ④ 배치판: 달의 위치각만 저장, 옮기지 않은 판은 빈 답, 이유 저장, 이전 형식은 보관', () => {
+test('문항 ④ 배치판: 달 1·달 2의 위치각 저장, 옮기지 않은 판은 빈 답, 이유 저장, 이전 형식은 보관', () => {
   const st = emptyState('x', 'v');
-  st.answers.q4 = { spring: { moon: { angle: 365, placed: true } }, neap: { moon: { angle: 45, placed: false } }, reason: '일직선' };
+  st.answers.q4 = { spring: { moons: [{ angle: 365, placed: true }, { angle: 180, placed: true }] }, neap: { moons: [{ angle: 35, placed: false }, { angle: 125, placed: false }] }, reason: '일직선' };
   let c = sanitizeState(JSON.parse(JSON.stringify(st)));
-  assert.deepEqual(c.answers.q4.spring, { moon: { angle: 5, placed: true } });
+  assert.deepEqual(c.answers.q4.spring, { moons: [{ angle: 5, placed: true }, { angle: 180, placed: true }] });
+  // 달 하나만 있던 이전 형식도 읽음(달 2는 옮기지 않은 상태)
+  assert.deepEqual(sanitizeState({ ...JSON.parse(JSON.stringify(st)), answers: { q4: { spring: { moon: { angle: 90, placed: true } } } } }).answers.q4.spring, { moons: [{ angle: 90, placed: true }, { angle: 125, placed: false }] });
   assert.equal(c.answers.q4.neap, null);
   assert.equal(c.answers.q4.reason, '일직선');
   st.answers.q4 = {

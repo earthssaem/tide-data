@@ -176,10 +176,18 @@ export function sanitizeDrawing(d) {
   return { w, h, strokes, texts };
 }
 
-/** 태양·지구·달 배치(문항 ④): 달의 위치각만 저장(태양·지구 고정). 옮기지 않았으면 null */
+/** 태양·지구·달 배치(문항 ④): 달 1·달 2의 위치각(태양·지구 고정). 하나도 옮기지 않았으면 null. 이전 형식({moon})도 읽음 */
 export function sanitizeOrbit(o) {
-  if (!isObj(o) || !isObj(o.moon) || num(o.moon.angle) == null || o.moon.placed !== true || 'x' in o.moon) return null;
-  return { moon: { angle: Math.round((((o.moon.angle % 360) + 360) % 360) * 10) / 10, placed: true } };
+  if (!isObj(o)) return null;
+  const list = Array.isArray(o.moons) ? o.moons.slice(0, 2) : isObj(o.moon) && !('x' in o.moon) ? [o.moon] : null;
+  if (!list) return null;
+  const START = [35, 125];
+  const moons = [0, 1].map((i) => {
+    const m = list[i];
+    if (!isObj(m) || num(m.angle) == null) return { angle: START[i], placed: false };
+    return { angle: Math.round((((m.angle % 360) + 360) % 360) * 10) / 10, placed: m.placed === true };
+  });
+  return moons.some((m) => m.placed) ? { moons } : null;
 }
 /** 이전 배치판(태양·지구·달을 모두 옮기던 형식) — 지우지 않고 보관 */
 function sanitizeFreeOrbit(o) {
