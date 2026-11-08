@@ -26,13 +26,15 @@ export function emptyState(caseId, dataVersion) {
     evidences: [],
     evSeq: { 1: 0, 2: 0, 3: 0 },
     analysis: {
-      inq1: { view: null, points: [], pair: null },
-      inq2: { detailView: null, selectedDays: [], focusDay: null, showMoon: false, contextDays: 2, pair: null },
+      inq1: { view: null, points: [], pair: null, compare: null },
+      inq2: { detailView: null, selectedDays: [], focusDay: null, showMoon: false, contextDays: 2, pair: null, compare: null },
       inq3: { view: null, marks: [], cursor: null, bottom: null, panels: null },
     },
     createdAt: now,
     updatedAt: now,
     lastPdfAt: null,
+    stationId: null, // 여러 관측소 사례에서 학생이 고른 관측소
+    analysisByStation: {}, // 관측소별 분석 상태(관측소를 바꿔도 선택이 섞이지 않게)
   };
 }
 
@@ -97,6 +99,13 @@ function labeledTimes(arr) {
   return arr.filter((p) => isObj(p) && typeof p.label === 'string' && num(p.t) != null).slice(0, 26).map((p) => ({ label: p.label.slice(0, 3), t: p.t }));
 }
 
+const STATION_ID = /^[A-Za-z0-9_-]{1,32}$/;
+/** 관측소 비교 설정: 비교 관측소 id, 세로축 눈금(separate 개별 / same 같은 눈금 크기) */
+function sanitizeCompare(c) {
+  if (!isObj(c) || typeof c.stationId !== 'string' || !STATION_ID.test(c.stationId)) return null;
+  return { stationId: c.stationId, yMode: c.yMode === 'same' ? 'same' : 'separate' };
+}
+
 function sanitizeAnalysis(a) {
   const e = emptyState('', '').analysis;
   if (!isObj(a)) return e;
@@ -104,7 +113,7 @@ function sanitizeAnalysis(a) {
   const i2 = isObj(a.inq2) ? a.inq2 : {};
   const i3 = isObj(a.inq3) ? a.inq3 : {};
   return {
-    inq1: { view: range(i1.view), points: labeledTimes(i1.points), pair: Array.isArray(i1.pair) ? i1.pair.slice(0, 2).map(String) : null },
+    inq1: { view: range(i1.view), points: labeledTimes(i1.points), pair: Array.isArray(i1.pair) ? i1.pair.slice(0, 2).map(String) : null, compare: sanitizeCompare(i1.compare) },
     inq2: {
       detailView: range(i2.detailView),
       selectedDays: Array.isArray(i2.selectedDays) ? i2.selectedDays.filter((d) => isObj(d) && /^\d{4}-\d{2}-\d{2}$/.test(d.day) && typeof d.label === 'string').slice(0, 26).map((d) => ({ label: d.label.slice(0, 3), day: d.day })) : [],
@@ -112,6 +121,7 @@ function sanitizeAnalysis(a) {
       showMoon: !!i2.showMoon,
       contextDays: [1, 2, 3].includes(i2.contextDays) ? i2.contextDays : 2,
       pair: Array.isArray(i2.pair) ? i2.pair.slice(0, 2).map(String) : null,
+      compare: sanitizeCompare(i2.compare),
     },
     inq3: {
       view: range(i3.view),
@@ -139,6 +149,8 @@ function sanitizeEvidence(ev) {
     caseId: str(ev.caseId, 100),
     dataVersion: str(ev.dataVersion, 100),
     station: str(ev.station, 200),
+    stationId: typeof ev.stationId === 'string' && STATION_ID.test(ev.stationId) ? ev.stationId : null,
+    stationSea: str(ev.stationSea, 20),
     datasets: Array.isArray(ev.datasets) ? ev.datasets.filter(isObj).map((d) => ({ label: str(d.label, 200), identifier: str(d.identifier, 200) })) : [],
     period: range(ev.period),
     state: st,
@@ -167,6 +179,11 @@ export function sanitizeState(obj) {
   if (isObj(obj.evSeq)) for (const k of [1, 2, 3]) s.evSeq[k] = num(obj.evSeq[k]) ?? 0;
   for (const ev of s.evidences) s.evSeq[ev.inquiry] = Math.max(s.evSeq[ev.inquiry], ev.seq);
   s.analysis = sanitizeAnalysis(obj.analysis);
+  s.stationId = typeof obj.stationId === 'string' && STATION_ID.test(obj.stationId) ? obj.stationId : null;
+  s.analysisByStation = {};
+  if (isObj(obj.analysisByStation)) {
+    for (const [k, v] of Object.entries(obj.analysisByStation).slice(0, 100)) if (STATION_ID.test(k)) s.analysisByStation[k] = sanitizeAnalysis(v);
+  }
   s.createdAt = num(obj.createdAt) ?? s.createdAt;
   s.updatedAt = num(obj.updatedAt) ?? s.updatedAt;
   s.lastPdfAt = num(obj.lastPdfAt);

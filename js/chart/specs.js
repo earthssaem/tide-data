@@ -2,7 +2,8 @@
 // 같은 함수를 화면(현재 분석 상태)과 근거·PDF(고정된 분석 상태)에 함께 사용한다.
 
 import { MARK_SHAPES } from './layout.js';
-import { pointAt } from '../analysis/series.js';
+import { pointAt, extent } from '../analysis/series.js';
+import { stationCaseData } from '../data/loader.js';
 import { dailyRanges } from '../analysis/daily.js';
 import { fmtRange, fmtDateTime, fmtDateKo, DAY } from '../util/time.js';
 import { fmtValue, fmtWindDir } from '../util/format.js';
@@ -105,13 +106,49 @@ export function inq1Spec(ctx, a) {
       subtitle: `${fmtRange(view[0], view[1], cd.tz)} · 높이 기준면: ${cd.observed.datumLabel}${sampleTag(cd)}`,
     } : null,
     legend,
-    y: { label: '조위 (cm)' },
+    y: { label: '조위 (cm)', domain: ctx.yDomain || null },
     series: [obsSeries(cd)],
     marks,
   };
 }
 
+// ───────────────────────── 관측소 비교 ─────────────────────────
+/**
+ * '같은 눈금': 두 관측소 그래프의 세로축 높이 범위(cm 간격)를 같게 하되, 각자 자기 자료의 가운데에 맞춘다.
+ * 관측소마다 조위 기준면이 달라(미확인) 숫자를 직접 비교할 수 없으므로, 두 축을 같은 절대값으로 맞추지 않는다.
+ */
+export function sameSpanDomains(cdA, cdB, view) {
+  const ea = extent(cdA.observed.points, view[0], view[1]);
+  const eb = extent(cdB.observed.points, view[0], view[1]);
+  if (!ea || !eb) return null;
+  const span = Math.max(ea[1] - ea[0], eb[1] - eb[0], 10) * 1.12;
+  const dom = (e) => { const m = (e[0] + e[1]) / 2; return [m - span / 2, m + span / 2]; };
+  return { a: dom(ea), b: dom(eb), span };
+}
+
+/** 비교 관측소의 조위 그래프(선택 지점은 원래 관측소의 것이므로 시각선만 표시) */
+export function inq1CompareSpec(ctx, a, cdB, yDomain) {
+  const view = a.view || ctx.cd.ranges.inq1;
+  const s = inq1Spec({ ...ctx, cd: cdB, yDomain }, { ...a, view, points: [] });
+  s.vlines = (a.points || []).map((p) => ({ t: p.t, label: p.label, color: COLORS.accent, dash: [2, 3], width: 1, textColor: COLORS.accent }));
+  if (s.header) s.header.subtitle += ' · 비교 관측소(세로선은 원래 관측소에서 고른 지점의 시각)';
+  return s;
+}
+
+export function compareCaseData(cd, a) {
+  const id = a?.compare?.stationId;
+  if (!id || !cd.stations) return null;
+  const other = stationCaseData(cd, id);
+  return other && other !== cd ? other : null;
+}
+
 // ───────────────────────── 탐구 2 ─────────────────────────
+/** 일별 변동 폭은 기준면과 무관한 '차이'이므로, 같은 눈금이면 두 관측소에 같은 축을 쓴다 */
+export function sameDailyDomain(cdA, cdB) {
+  const max = Math.max(...[cdA, cdB].flatMap((c) => inq2Days(c).map((d) => d.range ?? 0)), 10);
+  return [0, max * 1.14];
+}
+
 export function inq2Days(cd) {
   const [t0, t1] = cd.ranges.inq2;
   return dailyRanges(cd.observed.points, cd.tz, cd.observed.intervalMs, t0, t1);
@@ -176,7 +213,7 @@ export function inq2DailySpec(ctx, a) {
       subtitle: `${fmtRange(view[0], view[1], cd.tz)} · 날짜 경계 00:00(${cd.tz.label}) · 인접 만조·간조의 조차와 다른 값${sampleTag(cd)}`,
     } : null,
     legend,
-    y: { label: '변동 폭 (cm)', includeZero: true, floorZero: true, pad: 0.14 },
+    y: ctx.yDomain ? { label: '변동 폭 (cm)', domain: ctx.yDomain } : { label: '변동 폭 (cm)', includeZero: true, floorZero: true, pad: 0.14 },
     series: [{ kind: 'bars', bars, color: COLORS.daily }],
     vlines: moonLines(cd, a.showMoon),
   };
@@ -372,18 +409,32 @@ export function inq3BottomSpec(ctx, a) {
 }
 
 /** 근거·PDF용 그림 구성: 패널 목록 */
-export function figurePanels(cd, ev, { width, measure, fontSize = 9.5, scale = 1 }) {
+export function figurePanels(cd0, ev, { width, measure, fontSize = 9.5, scale = 1 }) {
   const st = ev.state;
+  // 근거를 만든 관측소의 자료로 그린다(지금 화면에서 고른 관측소와 다를 수 있음)
+  const cd = stationCaseData(cd0, ev.stationId);
+  if (!cd) {
+    const msg = { width, height: Math.round(width * 0.2), measure, fontSize, x: { domain: ev.period || [0, 1], tz: cd0.tz, label: '' }, y: { label: '' }, series: [], message: `관측소 ${ev.station || ev.stationId} 자료를 찾을 수 없어 그래프를 그릴 수 없습니다(표의 값은 근거 당시 기록).` };
+    return [{ spec: msg }];
+  }
+  const cdB = compareCaseData(cd, st);
   const ctxBase = { cd, measure, fontSize, width };
   const H = (r) => Math.round(width * r * scale);
   if (ev.inquiry === 1) {
-    return [{ spec: inq1Spec({ ...ctxBase, height: H(0.5), header: true }, st) }];
+    if (!cdB) return [{ spec: inq1Spec({ ...ctxBase, height: H(0.5), header: true }, st) }];
+    const dom = st.compare.yMode === 'same' ? sameSpanDomains(cd, cdB, st.view || cd.ranges.inq1) : null;
+    return [
+      { spec: inq1Spec({ ...ctxBase, height: H(0.42), header: true, yDomain: dom?.a }, st) },
+      { spec: inq1CompareSpec({ ...ctxBase, height: H(0.42), header: true }, st, cdB, dom?.b) },
+    ];
   }
   if (ev.inquiry === 2) {
     const dv = st.detailView || inq2DetailView(cd, st);
+    const dd = cdB && st.compare.yMode === 'same' ? sameDailyDomain(cd, cdB) : null;
     return [
-      { spec: inq2DailySpec({ ...ctxBase, height: H(0.36), header: true }, st) },
-      { spec: inq2DetailSpec({ ...ctxBase, height: H(0.44), header: true }, st, dv) },
+      { spec: inq2DailySpec({ ...ctxBase, height: H(0.34), header: true, yDomain: dd }, st) },
+      ...(cdB ? [{ spec: inq2DailySpec({ ...ctxBase, cd: cdB, height: H(0.34), header: true, yDomain: dd }, { ...st, selectedDays: [], focusDay: null }) }] : []),
+      { spec: inq2DetailSpec({ ...ctxBase, height: H(cdB ? 0.38 : 0.44), header: true }, st, dv) },
     ];
   }
   const padLeft = measure('0000', fontSize - 1.5) + fontSize + 18;

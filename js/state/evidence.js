@@ -3,14 +3,17 @@
 // 이후 그래프를 움직여도 근거는 바뀌지 않는다(학생이 '교체'나 '삭제'를 눌러야만 바뀜).
 
 import { pairDiff } from '../analysis/series.js';
-import { obsPointAt, predAt, residualAt, weatherAt, inq2Days, inq2DetailView, WEATHER_KINDS, weatherKinds, inq3Panels, weatherLabel, fmtWeather } from '../chart/specs.js';
+import { obsPointAt, predAt, residualAt, weatherAt, inq2Days, inq2DetailView, WEATHER_KINDS, weatherKinds, inq3Panels, weatherLabel, fmtWeather, compareCaseData } from '../chart/specs.js';
+import { stationCaseData } from '../data/loader.js';
 import { fmtDateTime, fmtDuration, hoursDecimal, fmtRange, fmtDateKo, DAY } from '../util/time.js';
 import { fmtValue, fmtSignedValue, fmtWindDir, fmtNum } from '../util/format.js';
 
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
 function datasetsFor(cd, inquiry, state) {
-  const out = [{ label: `관측 조위 (${cd.observed.label})`, identifier: cd.observed.meta.identifier || cd.dataVersion }];
+  const out = [{ label: `관측 조위 (${cd.observed.label}, ${cd.station.name})`, identifier: cd.observed.meta.identifier || cd.dataVersion }];
+  const cdB = (inquiry === 1 || inquiry === 2) ? compareCaseData(cd, state) : null;
+  if (cdB) out.push({ label: `비교: 관측 조위 (${cdB.station.name}, ${state.compare.yMode === 'same' ? '같은 눈금' : '개별 눈금'})`, identifier: cdB.observed.meta.identifier || '' });
   if (inquiry === 2 && state.showMoon && cd.moon) out.push({ label: '달의 위상', identifier: cd.moon.meta.identifier || '' });
   if (inquiry === 3) {
     if (cd.predicted) out.push({ label: '천문조 예측 조위', identifier: cd.predicted.meta.identifier || '' });
@@ -122,6 +125,8 @@ export function snapshotEvidence(cd, inquiry, analysisState) {
     caseId: cd.id,
     dataVersion: cd.dataVersion,
     station: cd.station.name,
+    stationId: cd.station.id || null,
+    stationSea: cd.stationEntry?.sea || '',
     datasets: datasetsFor(cd, inquiry, st),
     period,
     state: st,
@@ -150,11 +155,13 @@ const qualityText = (q) => ({ ok: '정상', suspect: '의심', bad: '오류', mi
  * 근거의 측정값 표 — 미리보기와 PDF가 같은 표를 사용한다.
  * @returns {{meta: Array<[string,string]>, tables: Array<{title, head, rows, note?}>}}
  */
-export function evidenceTables(cd, ev) {
+export function evidenceTables(cd0, ev) {
+  const cd = stationCaseData(cd0, ev.stationId) || cd0;
   const tz = cd.tz;
   const v = ev.values;
   const meta = [
-    ['관측소', ev.station],
+    ['관측소', `${ev.station}${ev.stationId ? ` (${ev.stationId}${ev.stationSea ? `, ${ev.stationSea}` : ''})` : ''}`],
+    ...(ev.state?.compare?.stationId && (ev.inquiry === 1 || ev.inquiry === 2) ? [['비교 관측소', `${stationCaseData(cd0, ev.state.compare.stationId)?.station.name || ev.state.compare.stationId} (${ev.state.compare.stationId}) · 세로축 ${ev.state.compare.yMode === 'same' ? (ev.inquiry === 1 ? '같은 눈금 크기(관측소별 기준)' : '같은 눈금') : '개별 눈금'}`]] : []),
     ['자료 종류', ev.datasets.map((d) => d.label).join(', ')],
     ['자료 식별자', [ev.dataVersion, ...ev.datasets.map((d) => d.identifier).filter(Boolean)].filter((x, i, a) => a.indexOf(x) === i).join(', ')],
   ];

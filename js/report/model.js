@@ -4,6 +4,8 @@
 import { INQUIRIES, CONCLUSION } from '../content/questions.js';
 import { unavailableText } from '../screens/common.js';
 import { fmtRange, fmtDateTime } from '../util/time.js';
+import { stationCaseData } from '../data/loader.js';
+import { weatherKinds, weatherLabel } from '../chart/specs.js';
 
 const localTz = () => ({ offsetMinutes: -new Date().getTimezoneOffset(), label: '' });
 
@@ -14,7 +16,7 @@ export function studentLine(st) {
 export function caseInfoRows(cd) {
   const r = cd.ranges;
   const rows = [
-    ['관측소', `${cd.station.name}${cd.station.note ? ` (${cd.station.note})` : ''}`],
+    ['관측소', `${cd.station.name}${cd.station.id && cd.multi ? ` (${cd.station.id}${cd.stationEntry?.sea ? `, ${cd.stationEntry.sea}` : ''})` : ''}${cd.station.note && !cd.multi ? ` (${cd.station.note})` : ''}`],
     ['탐구 1 구간', fmtRange(r.inq1[0], r.inq1[1], cd.tz)],
     ['탐구 2 기간', fmtRange(r.inq2[0], r.inq2[1], cd.tz)],
     ['탐구 3 구간', fmtRange(r.inq3[0], r.inq3[1], cd.tz)],
@@ -42,6 +44,22 @@ export function sourceRows(cd) {
       ...extra,
     ].filter(Boolean) });
   };
+  out.push(...stationSourceRows(cd));
+  ds('달의 위상', cd.moon);
+  if (cd.typhoon) ds('태풍 정보', { meta: cd.typhoon.meta }, [cd.typhoon.note].filter(Boolean));
+  return out;
+}
+
+/** 관측소 하나의 자료 출처(관측·예측·기상) */
+export function stationSourceRows(cd, { prefix = '' } = {}) {
+  const out = [];
+  const ds = (label, s, extra = []) => {
+    if (!s) { out.push({ role: `${prefix}${label}`, lines: ['자료 미제공'] }); return; }
+    out.push({ role: `${prefix}${label}`, lines: [
+      s.meta?.provider && `제공: ${s.meta.provider}`, s.meta?.title && `자료명: ${s.meta.title}`, s.meta?.identifier && `식별자: ${s.meta.identifier}`,
+      ...extra,
+    ].filter(Boolean) });
+  };
   ds('관측 조위', cd.observed, [
     `관측 간격 ${cd.observed.intervalMs / 3600e3}시간, 단위 cm, 기준면 ${cd.observed.datumLabel}`,
     cd.observed.conversions.length ? `전처리 변환: ${cd.observed.conversions.join(', ')}` : '',
@@ -52,12 +70,30 @@ export function sourceRows(cd) {
     cd.residual?.ok ? '' : `잔차 계산 불가: ${cd.residual?.problems?.join(' ')}`,
   ].filter(Boolean) : []);
   ds('기상 자료', cd.weather, cd.weather ? [
-    `관측 지점: ${cd.weather.station?.name || '—'}${cd.weatherDistanceKm != null ? ` (조위 관측소에서 약 ${cd.weatherDistanceKm.toFixed(1)} km)` : ''}`,
-    `관측 간격 ${cd.weather.intervalMs / 3600e3}시간, 기압 hPa, 풍속 m/s, 풍향 도(바람이 불어오는 방향)`,
+    `관측 지점: ${cd.weather.station?.name || '—'}${cd.weatherDistanceKm != null ? (cd.weatherDistanceKm < 0.1 ? ' (조위 관측소와 같은 지점)' : ` (조위 관측소에서 약 ${cd.weatherDistanceKm.toFixed(1)} km${cd.weather.station?.elevation_m != null ? `, 해발 ${cd.weather.station.elevation_m} m` : ''})`) : ''}`,
+    `항목: ${weatherKinds(cd).map((k) => weatherLabel(cd, k)).join(', ')} · 관측 간격 ${cd.weather.intervalMs / 3600e3}시간 · 풍향은 바람이 불어오는 방향`,
   ] : []);
-  ds('달의 위상', cd.moon);
-  if (cd.typhoon) ds('태풍 정보', { meta: cd.typhoon.meta }, [cd.typhoon.note].filter(Boolean));
   return out;
+}
+
+/** 보고서 자료 출처: 여러 관측소 사례면 현재 관측소와 근거·비교에 쓰인 관측소 모두 */
+export function reportSources(cd, state) {
+  if (!cd.multi) return sourceRows(cd);
+  const ids = new Set([cd.station.id]);
+  for (const ev of state.evidences) {
+    if (ev.stationId) ids.add(ev.stationId);
+    if (ev.state?.compare?.stationId && (ev.inquiry === 1 || ev.inquiry === 2)) ids.add(ev.state.compare.stationId);
+  }
+  const base = sourceRows(cd).filter((r) => !/^(관측 조위|천문조 예측 조위|기상 자료)$/.test(r.role));
+  const rows = [base[0]];
+  for (const id of ids) {
+    const sc = stationCaseData(cd, id);
+    if (!sc) { rows.push({ role: `관측소 ${id}`, lines: ['이 앱에서 자료를 찾을 수 없음(근거의 표 값은 기록 당시 값)'] }); continue; }
+    rows.push(...stationSourceRows(sc, { prefix: `${sc.station.name}(${id}) · ` }));
+  }
+  rows.push(...base.slice(1));
+  rows.push({ role: '관측소 비교 시 주의', lines: ['관측소마다 조위의 높이 기준면이 다를 수 있고 확인되지 않았으므로, 관측소끼리 조위 숫자로 해수면 높낮이를 비교하지 않았다.'] });
+  return rows;
 }
 
 export const PROCESSING_NOTES = [
@@ -126,7 +162,7 @@ export function buildReport(cd, state) {
     caseInfo: caseInfoRows(cd),
     sections,
     conclusion,
-    sources: sourceRows(cd),
+    sources: reportSources(cd, state),
     processing: PROCESSING_NOTES,
     missing,
     dataVersionMismatch,

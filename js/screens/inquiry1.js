@@ -4,7 +4,8 @@ import { escapeHtml, fmtValue, fmtSignedValue } from '../util/format.js';
 import { fmtDateTime, fmtDuration, hoursDecimal } from '../util/time.js';
 import { INQUIRIES } from '../content/questions.js';
 import { ViewController, ChartView, createToolbar, tipRow } from '../chart/interactive.js';
-import { inq1Spec } from '../chart/specs.js';
+import { inq1Spec, inq1CompareSpec, sameSpanDomains } from '../chart/specs.js';
+import { createCompareControls } from './compare.js';
 import { nearestValid, stepValid, dataDomain } from '../analysis/series.js';
 import { inq1Values, effectivePair } from '../state/evidence.js';
 import { inquiryHeader, createQuestionPanel, addEvidenceBar, nextLetter } from './common.js';
@@ -50,7 +51,7 @@ export function render(app, container) {
     controller,
     height: 420,
     ariaLabel: `${cd.station.name} 관측 조위 그래프`,
-    build: (ctx) => inq1Spec({ ...ctx, cd }, { ...A(), view: controller.view }),
+    build: (ctx) => inq1Spec({ ...ctx, cd, yDomain: sameDoms()?.a }, { ...A(), view: controller.view }),
     pick: (t) => {
       const p = nearestValid(obs.points, t, { t0: controller.view[0], t1: controller.view[1] });
       return p ? { t: p.t, v: p.v, q: p.q } : null;
@@ -64,6 +65,43 @@ export function render(app, container) {
   });
 
   // 선택 지점 표
+  // ── 다른 관측소와 비교(여러 관측소 사례) ──
+  let cmpChart = null;
+  const cmp = createCompareControls({
+    app, key: 'inq1', sameLabel: '같은 눈금 크기',
+    note: '두 그래프의 시간 범위는 함께 움직입니다. 관측소마다 조위의 높이 기준면이 다를 수 있고 아직 확인되지 않았으므로, 세로축 숫자로 어느 지역의 해수면이 더 높다고 판단하지 마세요. ‘같은 눈금 크기’는 두 그래프의 세로축 간격(높이 범위)을 같게 해 변동 폭을 비교하기 위한 것이며, 축의 숫자는 관측소마다 다릅니다.',
+    onChange: () => { buildCompareChart(); chart.render(); },
+  });
+  const sameDoms = () => {
+    const b = cmp.cdB?.();
+    return b && cmp.yMode() === 'same' ? sameSpanDomains(cd, b, controller.view) : null;
+  };
+  const cmpHost = h('div', { class: 'chart-host' });
+  if (cmp.el) {
+    const cmpCard = h('div', { class: 'card chart-card compare-card' });
+    cmpCard.append(h('div', { class: 'card-head' }, h('h2', {}, '다른 관측소와 비교'), h('p', { class: 'data-line' }, '같은 기간에 다른 관측소에서는 하루 동안 해수면이 어떻게 변했는지 나란히 비교합니다. 비교 그래프의 세로선은 위에서 고른 지점(A, B, C …)의 시각입니다.')), cmp.el, cmpHost);
+    left.append(cmpCard);
+  }
+  function buildCompareChart() {
+    cmpChart?.destroy();
+    cmpChart = null;
+    cmpHost.innerHTML = '';
+    const b = cmp.cdB?.();
+    if (!b) return;
+    const el = h('div');
+    cmpHost.append(el);
+    cmpChart = new ChartView({
+      el, controller, height: 360, ariaLabel: `${b.station.name} 관측 조위 비교 그래프`,
+      build: (ctx) => inq1CompareSpec({ ...ctx, cd }, { ...A(), view: controller.view }, b, sameDoms()?.b),
+      pick: (t) => { const p = nearestValid(b.observed.points, t, { t0: controller.view[0], t1: controller.view[1] }); return p ? { t: p.t, v: p.v, q: p.q } : null; },
+      step: (tg, dir) => { const p = stepValid(b.observed.points, tg.t, dir); return p ? { t: p.t, v: p.v, q: p.q } : null; },
+      describe: (tg) => `<div class="tip-title">${escapeHtml(b.station.name)} · ${escapeHtml(fmtDateTime(tg.t, cd.tz))}</div>${tipRow('조위', fmtValue(tg.v, 'cm'))}<div class="tip-hint">비교 그래프(지점 선택은 위 그래프에서)</div>`,
+      onSelect: () => toast('지점 선택은 위쪽(분석 중인 관측소) 그래프에서 합니다.'),
+    });
+    cmpChart.render();
+  }
+  buildCompareChart();
+
   const selCard = h('div', { class: 'card' });
   const selHead = h('div', { class: 'card-head row' }, h('h2', {}, '선택한 지점'));
   const clearBtn = h('button', { type: 'button', class: 'btn btn-ghost btn-sm', onclick: () => clearAll() }, '선택 모두 해제');
@@ -119,6 +157,7 @@ export function render(app, container) {
 
   function refresh() {
     chart.render();
+    cmpChart?.render();
     const v = inq1Values(cd, A());
     replaceNote.hidden = !replaceLabel;
     if (replaceLabel) replaceNote.textContent = `그래프에서 새 자료점을 누르면 ${replaceLabel} 지점이 그 지점으로 바뀝니다.`;
@@ -171,6 +210,6 @@ export function render(app, container) {
 
   refresh();
   return {
-    destroy() { chart.destroy(); },
+    destroy() { chart.destroy(); cmpChart?.destroy(); },
   };
 }

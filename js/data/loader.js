@@ -49,7 +49,52 @@ export async function loadCase(entry, readText = defaultReadText, base = CASES_B
   return buildCaseData(config, (file) => readText(dir + file));
 }
 
+/**
+ * 사례 자료 만들기. config.stations가 있으면 여러 관측소 사례:
+ * 관측소마다 같은 구조의 CaseData를 만들고, 각 CaseData에 stations 목록(전체)을 붙여 돌려준다.
+ * 화면은 지금 고른 관측소의 CaseData만 쓰며, 관측소를 바꾸면 다른 CaseData로 바꿔 끼운다.
+ */
 export async function buildCaseData(config, readFile) {
+  if (!Array.isArray(config.stations)) return buildSingleCase(config, readFile);
+  const cache = new Map();
+  const cachedRead = (f) => { if (!cache.has(f)) cache.set(f, readFile(f)); return cache.get(f); };
+  const list = [];
+  const failed = [];
+  for (const st of config.stations) {
+    const sub = {
+      ...config,
+      station: { id: st.id, name: st.name, lat: st.lat, lon: st.lon, note: st.note || '' },
+      datasets: { ...config.datasets, ...st.datasets },
+      inquiry3: config.inquiry3 ? { ...config.inquiry3, keyTimes: [...(config.inquiry3.keyTimes || []), ...(st.keyTimes || [])] } : config.inquiry3,
+    };
+    try {
+      const cd = await buildSingleCase(sub, cachedRead);
+      cd.keyTimes.sort((a, b) => a.t - b.t);
+      list.push({
+        id: st.id, name: st.name, nameEn: st.nameEn || '', sea: st.sea || '', lat: st.lat, lon: st.lon, note: st.note || '',
+        weatherSource: st.weatherSource || null, unconfirmed: st.unconfirmed || [], cd,
+      });
+    } catch (e) {
+      failed.push({ id: st.id, name: st.name, error: e.message });
+    }
+  }
+  if (!list.length) throw new Error(`불러올 수 있는 관측소가 없습니다. ${failed.map((f) => `${f.name}: ${f.error}`).join(' / ')}`);
+  for (const s of list) {
+    s.cd.multi = true;
+    s.cd.stations = list;
+    s.cd.stationEntry = s;
+    s.cd.failedStations = failed;
+  }
+  return (list.find((s) => s.id === config.defaultStation) || list[0]).cd;
+}
+
+/** 여러 관측소 사례에서 관측소 id로 CaseData 찾기(없으면 null) */
+export function stationCaseData(cd, id) {
+  if (!id || !cd?.stations) return id && cd?.station?.id !== id ? null : cd;
+  return cd.stations.find((s) => s.id === id)?.cd || null;
+}
+
+async function buildSingleCase(config, readFile) {
   const tz = config.timezone;
   if (!tz || typeof tz.offsetMinutes !== 'number') throw new Error('사례 설정에 시간대(timezone.offsetMinutes)가 없습니다.');
   const ds = config.datasets || {};

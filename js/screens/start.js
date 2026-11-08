@@ -43,6 +43,19 @@ export function render(app, container) {
     </dl>
     <ul class="avail">${avail.map(([k, ok]) => `<li class="${ok ? 'ok' : 'no'}"><span aria-hidden="true">${ok ? '●' : '○'}</span> ${escapeHtml(k)}: ${ok ? '제공' : '<b>자료 미제공</b>'}</li>`).join('')}</ul>
     ${cd.issues.length ? `<p class="notice notice-warn">자료를 읽는 중 문제가 있었습니다: ${cd.issues.map((i) => escapeHtml(i.message)).join(' / ')}</p>` : ''}`;
+  if (cd.multi) {
+    const sec = h('div', { class: 'start-stations' });
+    sec.append(
+      h('p', {}, h('b', {}, `준비된 관측소 ${cd.stations.length}곳`), ' — 분석할 관측소를 고를 수 있고, 탐구 중에도 바꾸거나 다른 관측소와 비교할 수 있습니다.'),
+      h('p', { class: 'small' }, ['서해', '남해', '동해'].map((sea) => {
+        const list = cd.stations.filter((x) => x.sea === sea);
+        return list.length ? `${sea}: ${list.map((x) => x.name).join(', ')}` : '';
+      }).filter(Boolean).join(' · ')),
+      h('p', {}, '현재 선택: ', h('b', {}, `${cd.station.name} (${cd.station.id})`), ' ', h('button', { type: 'button', class: 'btn btn-secondary btn-sm', id: 'btn-station', onclick: () => app.openStationPicker() }, '관측소 선택')),
+      h('p', { class: 'small muted' }, '관측소마다 조위 기준면이 다를 수 있어(미확인), 관측소끼리 조위 숫자로 해수면 높낮이를 비교할 수 없습니다.'),
+    );
+    caseCard.querySelector('.case-dl').before(sec);
+  }
   grid.append(caseCard);
 
   // ── 학생 정보 ──

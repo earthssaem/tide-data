@@ -1,5 +1,6 @@
 // 앱 시작점: 사례 불러오기, 저장 상태 복구, 화면 전환, 공통 머리말
-import { loadRegistry, loadCase } from './data/loader.js';
+import { loadRegistry, loadCase, stationCaseData } from './data/loader.js';
+import { openStationPicker } from './screens/station-picker.js';
 import { Store } from './state/store.js';
 import {
   emptyState, loadLocal, clearLocal, makeBackupText, backupFilename, parseBackup, sanitizeState,
@@ -53,6 +54,8 @@ async function boot() {
       if (saved.state) app.savedOther = saved.state;
     }
     if (saved.error) app.loadError = saved.error;
+    // 여러 관측소 사례: 학생이 고른 관측소 복원
+    if (app.cd.multi && state.stationId) app.cd = stationCaseData(app.cd, state.stationId) || app.cd;
     app.store = new Store(state);
     if (saved.state && saved.state.caseId === caseId) app.store.setStatus({ kind: 'saved', time: saved.state.updatedAt, message: '저장됨' });
     setupShell();
@@ -159,10 +162,34 @@ function renderContextBar() {
   const st = s.student;
   const r = app.currentStep === 'inq1' ? cd.ranges.inq1 : app.currentStep === 'inq3' ? cd.ranges.inq3 : cd.ranges.inq2;
   bar.innerHTML = `
-    <span><b>관측소</b> ${escapeHtml(cd.station.name)}</span>
+    <span><b>관측소</b> ${escapeHtml(cd.station.name)}${cd.multi ? ` <span class="muted">(${escapeHtml(cd.station.id)}${cd.stationEntry?.sea ? ` · ${escapeHtml(cd.stationEntry.sea)}` : ''})</span> <button type="button" class="btn btn-ghost btn-xs" id="ctx-station">관측소 바꾸기</button>` : ''}</span>
     <span><b>${app.currentStep === 'inq1' || app.currentStep === 'inq3' ? '지정 구간' : '분석 기간'}</b> ${escapeHtml(fmtRange(r[0], r[1], cd.tz))}</span>
     ${cd.typhoon ? `<span><b>태풍 사례</b> ${escapeHtml(cd.typhoon.name)} (${escapeHtml(String(cd.typhoon.year))})</span>` : ''}
     <span class="ctx-student"><b>작성자</b> ${escapeHtml(`${st.grade}학년 ${st.klass}반 ${st.number}번 ${st.name}`)}</span>`;
+  const btn = bar.querySelector('#ctx-station');
+  if (btn) btn.onclick = () => openStationPicker(app);
+}
+
+/**
+ * 관측소 바꾸기(여러 관측소 사례). 분석 상태는 관측소마다 따로 보관하고, 이미 만든 근거는 바꾸지 않는다.
+ * 학생용 앱은 미리 만든 파일만 읽으므로 이때도 외부 API를 부르지 않는다.
+ */
+export function selectStation(id, { rerender = true } = {}) {
+  const next = stationCaseData(app.cd, id);
+  if (!next || next === app.cd) return false;
+  const prevId = app.cd.station.id;
+  app.store.update((s) => {
+    s.analysisByStation = s.analysisByStation || {};
+    s.analysisByStation[prevId] = s.analysis;
+    s.analysis = s.analysisByStation[id] || emptyState('', '').analysis;
+    // 비교 관측소가 새 관측소와 같으면 비교 해제
+    for (const k of ['inq1', 'inq2']) if (s.analysis[k]?.compare?.stationId === id) s.analysis[k].compare = null;
+    s.stationId = id;
+  }, { topic: 'station', immediate: true });
+  app.cd = next;
+  if (rerender) navigate(app.currentStep || 'start', { replace: true });
+  toast(`관측소를 ${next.station.name}(으)로 바꿨습니다. 이미 추가한 근거는 그대로 유지됩니다.`);
+  return true;
 }
 
 function renderBottomNav() {
@@ -323,10 +350,11 @@ export function startNew(student) {
   const st = emptyState(app.cd.id, app.cd.dataVersion);
   st.student = student;
   st.started = true;
+  if (app.cd.multi) st.stationId = app.cd.station.id;
   app.store.replace(st);
   navigate('inq1');
 }
 
-Object.assign(app, { navigate, addEvidence, replaceEvidence, deleteEvidence, downloadBackup, importBackup, clearMyWork, startNew, stepStatus });
+Object.assign(app, { navigate, selectStation, openStationPicker: () => openStationPicker(app), addEvidence, replaceEvidence, deleteEvidence, downloadBackup, importBackup, clearMyWork, startNew, stepStatus });
 
 boot();

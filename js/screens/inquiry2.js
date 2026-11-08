@@ -4,7 +4,8 @@ import { escapeHtml, fmtNum, fmtValue } from '../util/format.js';
 import { fmtDateTime, fmtDateKo, fmtTime, DAY } from '../util/time.js';
 import { INQUIRIES } from '../content/questions.js';
 import { ViewController, ChartView, createToolbar, tipRow } from '../chart/interactive.js';
-import { inq2MonthSpec, inq2DailySpec, inq2DetailSpec, inq2Days, inq2DetailView } from '../chart/specs.js';
+import { inq2MonthSpec, inq2DailySpec, inq2DetailSpec, inq2Days, inq2DetailView, sameDailyDomain } from '../chart/specs.js';
+import { createCompareControls } from './compare.js';
 import { nearestValid, stepValid, dataDomain } from '../analysis/series.js';
 import { inq2Values, effectivePair } from '../state/evidence.js';
 import { inquiryHeader, createQuestionPanel, addEvidenceBar, nextLetter, unavailableText } from './common.js';
@@ -53,7 +54,7 @@ export function render(app, container) {
 
   // ── 2. 일별 변동 폭 ──
   const dailyCard = h('div', { class: 'card chart-card' });
-  dailyCard.append(h('div', { class: 'card-head' }, h('h2', {}, '일별 해수면 변동 폭')));
+  dailyCard.append(h('div', { class: 'card-head' }, h('h2', {}, `일별 해수면 변동 폭 — ${cd.station.name}`)));
   dailyCard.append(h('div', { class: 'definition' },
     h('p', {}, h('b', {}, '일별 해수면 변동 폭'), ` = 해당 날짜(00:00~24:00, ${cd.tz.label})의 관측 최고값 − 관측 최저값`),
     h('p', { class: 'small' }, '인접한 만조와 간조 한 쌍의 높이 차이(조차)와는 다른 값입니다. 날짜 경계에 걸친 만조·간조나 하루 두 번 만조의 높이 차이(일조부등)에 영향을 받을 수 있으니 앞뒤 며칠의 양상을 함께 보세요. 자료가 빠진 날은 점선 막대(!)로 표시하며, 완전한 날과 같은 조건으로 비교하지 않습니다.')));
@@ -61,6 +62,41 @@ export function render(app, container) {
   dailyCard.append(dailyEl);
   dailyCard.append(h('p', { class: 'chart-help' }, '막대를 누르면 그 날짜가 A, B, C … 순서로 선택되고 아래에서 확대됩니다. ', h('span', { class: 'kbd-help' }, '키보드: ←/→로 날짜 이동, Enter로 선택')));
   left.append(dailyCard);
+
+  // ── 다른 관측소와 비교: 일별 변동 폭(기준면과 무관한 '차이'라 같은 눈금으로 직접 비교 가능) ──
+  let cmpChart = null;
+  const cmp = createCompareControls({
+    app, key: 'inq2', sameLabel: '같은 눈금',
+    note: '일별 변동 폭은 그날 최고값과 최저값의 차이이므로 관측소끼리 크기를 비교할 수 있습니다. 하지만 조위 자체(높이 숫자)는 관측소마다 기준면이 달라(미확인) 직접 비교해 어느 지역의 해수면이 더 높다고 판단할 수 없습니다.',
+    onChange: () => { buildCompareChart(); dailyChart.render(); },
+  });
+  const sameDaily = () => { const b = cmp.cdB?.(); return b && cmp.yMode() === 'same' ? sameDailyDomain(cd, b) : null; };
+  const cmpHost = h('div', { class: 'chart-host' });
+  if (cmp.el) {
+    const cmpCard = h('div', { class: 'card chart-card compare-card' });
+    cmpCard.append(h('div', { class: 'card-head' }, h('h2', {}, '다른 관측소와 일별 변동 폭 비교'), h('p', { class: 'data-line' }, '같은 달 다른 관측소의 일별 해수면 변동 폭입니다. 두 관측소에서 변동 폭이 커지고 작아지는 시기를 비교해 보세요.')), cmp.el, cmpHost);
+    left.append(cmpCard);
+  }
+  function buildCompareChart() {
+    cmpChart?.destroy();
+    cmpChart = null;
+    cmpHost.innerHTML = '';
+    const b = cmp.cdB?.();
+    if (!b) return;
+    const bDays = inq2Days(b);
+    const el = h('div');
+    cmpHost.append(el);
+    cmpChart = new ChartView({
+      el, controller: monthCtl, height: 270, ariaLabel: `${b.station.name} 일별 변동 폭 비교 그래프`,
+      build: (ctx) => inq2DailySpec({ ...ctx, cd: b, header: true, yDomain: sameDaily() }, { ...A(), selectedDays: [], focusDay: null }),
+      pick: (t) => { const d = bDays.find((x) => t >= x.start && t < x.end); return d ? { t: d.start + DAY / 2, v: d.range, day: d.day } : null; },
+      step: (tg, dir) => { const i = bDays.findIndex((d) => d.day === tg.day); const d = bDays[i + dir]; return d ? { t: d.start + DAY / 2, v: d.range, day: d.day } : null; },
+      describe: (tg) => { const d = bDays.find((x) => x.day === tg.day); return `<div class="tip-title">${escapeHtml(b.station.name)} · ${escapeHtml(fmtDateKo(d.start, cd.tz))}</div>${tipRow('변동 폭', d.range == null ? '자료 없음' : `${fmtNum(d.range)} cm`)}${tipRow('자료', d.complete ? `완전 ${d.valid}/${d.expected}` : `불완전 ${d.valid}/${d.expected}`)}`; },
+      onSelect: () => toast('날짜 선택은 위쪽(분석 중인 관측소) 그래프에서 합니다.'),
+    });
+    cmpChart.hoverValue = () => null;
+    cmpChart.render();
+  }
 
   // ── 3. 확대 ──
   const detailCtl = new ViewController({
@@ -131,7 +167,7 @@ export function render(app, container) {
   });
   const dailyChart = new ChartView({
     el: dailyEl, controller: monthCtl, height: 270, ariaLabel: '일별 해수면 변동 폭 막대그래프',
-    build: (ctx) => inq2DailySpec({ ...ctx, cd }, A()),
+    build: (ctx) => inq2DailySpec({ ...ctx, cd, yDomain: sameDaily() }, A()),
     pick: (t) => { const d = dayAt(t); return d ? { t: d.start + DAY / 2, v: d.range, day: d.day } : null; },
     step: (tg, dir) => { const i = days.findIndex((d) => d.day === tg.day); const d = days[i + dir]; return d ? { t: d.start + DAY / 2, v: d.range, day: d.day } : null; },
     describe: (tg) => dayTip(days.find((d) => d.day === tg.day)),
@@ -286,6 +322,7 @@ export function render(app, container) {
   function refreshAll() {
     monthChart.render();
     dailyChart.render();
+    if (!cmpChart) buildCompareChart(); else cmpChart.render();
     detailChart.render();
     renderMoonInfo();
     renderDayBox();
@@ -293,5 +330,5 @@ export function render(app, container) {
   }
 
   refreshAll();
-  return { destroy() { monthChart.destroy(); dailyChart.destroy(); detailChart.destroy(); } };
+  return { destroy() { monthChart.destroy(); dailyChart.destroy(); detailChart.destroy(); cmpChart?.destroy(); } };
 }
