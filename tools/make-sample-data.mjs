@@ -94,7 +94,7 @@ function writeCase(dir, { id, title, notice, minimal }) {
     timezone: { label: 'KST', name: '한국 표준시(UTC+9)', offsetMinutes: 540 },
     timeBasis: minimal ? { confirmed: false, note: '예시: 시간대 확인 안 됨(시각 연결 끔 시험용)' } : { confirmed: true, tide: true, weather: true, typhoon: true, note: '예시 데이터(가상)', evidence: '' },
     representative: 'SAMPLE_S', period: { start: '2098-10-01', end: '2099-09-30' }, months, stations, past,
-    recentTyphoonCheck: { text: '예시: 이 기간 가까이 지난 가상 태풍 없음.' },
+    typhoonTracks: minimal ? { tracks: [] } : { note: '가상', tracks: [{ name: '가상 태풍 예시', source: 'sample', points: TY.map(([t, la, lo]) => [fmt(t), la, lo]) }] },
     moonPhases: minimal ? { provided: false } : { file: 'moon.csv', adapter: 'csv-moon', time: { column: 'time', offset: '+09:00' }, phaseColumn: 'phase', lunarColumn: 'lunar', meta: { provider: 'Meeus 계산식(예시 사례)', identifier: 'moon-calc-meeus' } },
     defaults: { month: '2099-09', inq1: { start: '2099-09-10 00:00', end: '2099-09-13 00:00', count: { start: '2099-09-11 02:00', end: '2099-09-12 02:00' } }, inq2: { start: '2099-09-10 00:00', end: '2099-09-13 00:00' }, inq4: { a: { start: '2099-08-14 00:00', end: '2099-08-19 00:00' }, b: { start: '2099-09-20 00:00', end: '2099-09-25 00:00' } } },
     description: { provider: '예시 데이터 생성기(가상)', datumNote: '가상 자료' },

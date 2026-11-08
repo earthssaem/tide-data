@@ -155,8 +155,10 @@ export function validateSetup(ad0, cfg) {
     if (miss.length) add('warn', '탐구 2 기간', `예측 조위 결측: ${miss.map(([n, c]) => `${n} ${c.missing}개`).join(', ')}`);
     else add('ok', '탐구 2 기간', `${fmtRange(a2, b2, tz)} · 인천·부산·묵호 예측 조위 결측 없음`);
   }
-  for (const [k, label, cd] of [['a', '탐구 4 기간 A', ad.past], ['b', '탐구 4 기간 B', rep]]) {
+  const inData = (cd, a) => cd?.observed?.points.length && a >= cd.observed.points[0].t && a <= cd.observed.points.at(-1).t;
+  for (const [k, label] of [['a', '탐구 4 기간 A'], ['b', '탐구 4 기간 B']]) {
     const [a, b] = raw(st.inq4[k]);
+    const cd = inData(ad.past, a) ? ad.past : rep;
     if (!Number.isFinite(a) || !Number.isFinite(b) || b <= a) { add('error', label, `${label}의 시각 형식이 올바르지 않습니다.`); continue; }
     const o = coverage(cd, 'observed', a, b);
     if (!o.have) { add('error', label, `${label}(${fmtRange(a, b, tz)})에 관측 조위 자료가 없습니다.`); continue; }

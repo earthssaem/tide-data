@@ -6,7 +6,7 @@ import { INQUIRIES, PREDICTED_TEXT } from '../content/questions.js';
 import { createPanel, tipRow } from '../chart/panel.js';
 import { inq1MainSpec, inq1MonthSpec, inq1Series } from '../chart/assess.js';
 import { nearestValid } from '../analysis/series.js';
-import { inquiryHeader, questionShell, answerOf, numberInput, revealCard } from './common.js';
+import { inquiryHeader, questionShell, answerOf, numberInput, revealCard, textAnswer } from './common.js';
 import { createOrbitBoard } from './orbit-board.js';
 
 const dayText = (k) => { if (!k) return '—'; const [y, m, d] = k.split('-').map(Number); const w = '일월화수목금토'[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]; return `${y}년 ${m}월 ${d}일(${w})`; };
@@ -78,7 +78,7 @@ export function render(app, container) {
   const card2 = h('div', { class: 'card chart-card', id: 'inq1-daily' });
   card2.append(h('div', { class: 'card-head' },
     h('h2', {}, `부산 예측 조위 · 한 달 (${ad.setup.month})`),
-    h('p', { class: 'data-line' }, '1시간 간격 예측 조위를 이은 선입니다. 그래프를 누르면 그날을 고릅니다.')));
+    h('p', { class: 'data-line' }, '1시간 간격 예측 조위를 이은 선입니다. 마우스를 올리면 그날 하루(00시~24시)가 색칠되고, 누르면 그날을 고릅니다. 날짜 글자는 그날의 가운데에 있습니다.')));
   const host2 = h('div', { class: 'chart-host' });
   const dayBar = h('div', { class: 'pick-bar', id: 'q3-pickbar', 'aria-live': 'polite' });
   const moonList = h('div', { class: 'moon-list small', id: 'moon-list' });
@@ -88,7 +88,8 @@ export function render(app, container) {
     host: host2, height: 300, ariaLabel: '부산 예측 조위 한 달 그래프', step: DAY,
     build: (ctx) => inq1MonthSpec(ctx, ad, answerQ3View(), { showMoon: moonShown(), focusDay: currentDay, title: false }),
     pick: (t) => { const p = nearestValid(cd.predicted.points, t, { t0: ad.win.month[0], t1: ad.win.month[1] - 1 }); return p ? { t: p.t, v: p.v } : null; },
-    describe: (tg) => `<div class="tip-title">${escapeHtml(fmtDateTime(tg.t, tz))}</div>${tipRow('예측 조위', `${fmtNum(tg.v, 1)} cm`)}`,
+    hoverBand: (t) => { const k = dayKey(t, tz); const a = Date.parse(`${k}T00:00:00Z`) - tz.offsetMinutes * 60000; return [a, a + DAY]; },
+    describe: (tg) => `<div class="tip-title">${escapeHtml(dayText(dayKey(tg.t, tz)))}</div>${tipRow('시각', fmtDateTime(tg.t, tz).slice(11))}${tipRow('예측 조위', `${fmtNum(tg.v, 1)} cm`)}<div class="tip-hint">누르면 색칠된 이 날을 고릅니다</div>`,
     onClick: (tg) => { currentDay = dayKey(tg.t, tz); renderDayBar(); p2.render(); },
   });
   panels.push(p2);
@@ -174,7 +175,9 @@ export function render(app, container) {
       });
       grid.append(h('div', { class: 'draw-cell' }, h('p', { class: 'draw-label' }, `${label}일 때`), board.el));
     }
-    sh.body.append(h('p', { class: 'small muted' }, '태양·지구·달을 끌어다 놓아 위치 관계를 나타내세요.'), grid);
+    sh.body.append(h('p', { class: 'small muted' }, '태양과 지구는 고정되어 있습니다. 달을 공전 궤도를 따라 옮겨 위치 관계를 나타내세요.'), grid);
+    sh.body.append(h('p', { class: 'answer-label', id: 'q4-reason-label' }, '대조일 때 조차가 크고, 소조일 때 조차가 작은 이유'),
+      textAnswer(app, Q4, { id: 'q4-reason', value: a.reason || '', readOnly: !!sh.locked, rows: 3, max: 800, placeholder: '위 배치를 바탕으로 1~2문장으로 쓰세요.', onInput: (v) => store.update((s) => { s.answers.q4.reason = v; }, { topic: 'answer' }) }));
     return sh.li;
   })();
 

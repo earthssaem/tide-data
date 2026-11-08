@@ -4,12 +4,31 @@
  "source": "https://data.kma.go.kr/data/typhoonData/typTrack.do?pgmNo=704 (기상자료개방포털 태풍경로, CSV 내려받기)",
  "purpose": "탐구 4 기간 B(2026-09-19~23)와 그 앞뒤에 부산 가까이 지난 태풍이 있었는지 확인",
  "typhoons": [
-  { "file": "2026-24.csv", "name": "2026년 제24호 태풍 크로반(KROVANH)", "minDistToBusanKm": 606 },
-  { "file": "2026-25.csv", "name": "2026년 제25호 태풍 두쥐안(DUJUAN)", "minDistToBusanKm": 915 },
-  { "file": "2026-26.csv", "name": "2026년 제26호 태풍 수리개(SURIGAE)", "minDistToBusanKm": 865 }
+  {
+   "file": "2026-24.csv",
+   "name": "2026년 제24호 태풍 크로반(KROVANH)",
+   "minDistToBusanKm": 606,
+   "no": 24
+  },
+  {
+   "file": "2026-25.csv",
+   "name": "2026년 제25호 태풍 두쥐안(DUJUAN)",
+   "minDistToBusanKm": 915,
+   "no": 25
+  },
+  {
+   "file": "2026-26.csv",
+   "name": "2026년 제26호 태풍 수리개(SURIGAE)",
+   "minDistToBusanKm": 865,
+   "no": 26
+  }
  ],
- "busan": { "station": "DT_0005", "lat": 35.0964, "lon": 129.0353 },
- "timeZone": "파일에 표기 없음(태풍정보 KST와 위치를 맞춰 보면 UTC로 추정) — 이 확인에는 거리만 쓰고 시각은 쓰지 않음",
+ "busan": {
+  "station": "DT_0005",
+  "lat": 35.0964,
+  "lon": 129.0353
+ },
+ "timeZone": "파일에 표기 없음(UTC로 해석, data/raw/kma/typhoon/2022-09-check/meta.json 참고). 기간 확인은 앞뒤 하루를 포함해 거리만 봄",
  "encoding": "원본 CP949를 UTF-8로 바꿔 저장",
  "conclusion": "기간 B(2026-09-19~23)에 부산에서 약 900 km 이내로 접근한 태풍 중심 없음(가장 가까운 것은 제25호 두쥐안, 약 915 km)"
 }

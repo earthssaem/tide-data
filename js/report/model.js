@@ -10,7 +10,7 @@ import { fmtNum } from '../util/format.js';
 import { layoutChart } from '../chart/layout.js';
 import {
   inq1MainSpec, inq1MonthSpec, inq2Specs, stationsMapLayout, inq3Specs, inq3DailySpec, inq4TideSpecs, weatherSpec,
-  typhoonMapLayout, closestTyphoonPoint, extremaIn, periodTitle, periodCd, PERIOD_NAMES,
+  typhoonMapLayout, closestTyphoonPoint, extremaIn, periodTitle, periodCd, PERIOD_NAMES, periodTyphoonText,
 } from '../chart/assess.js';
 
 const localTz = () => ({ offsetMinutes: -new Date().getTimezoneOffset(), label: '' });
@@ -40,7 +40,7 @@ export function answerLines(ad, state, q) {
       const t = (k) => { const [y, mo, d] = k.split('-').map(Number); return `${y}년 ${mo}월 ${d}일(${'일월화수목금토'[new Date(Date.UTC(y, mo - 1, d)).getUTCDay()]})`; };
       return [a.spring && `대조로 고른 날: ${t(a.spring)}`, a.neap && `소조로 고른 날: ${t(a.neap)}`].filter(Boolean);
     }
-    case 'q4': return [];
+    case 'q4': return String(a?.reason || '').trim() ? [`조차가 크고 작은 이유: ${a.reason.trim()}`] : [];
     case 'q5': {
       if (!a.some(Boolean)) return [];
       const n = (id) => ad.stationList.find((s) => s.id === id)?.name || '□';
@@ -83,6 +83,7 @@ export function buildReport(ad, state) {
     const waiting = q.afterReveal && !rv[q.afterReveal];
     const lines = waiting ? [] : answerLines(ad, state, q);
     const empty = !lines.length && q.id !== 'q4';
+    if (q.id === 'q4' && !lines.length) missing.push({ step, qid: 'q4', label: `${qLabel(q)} 이유` });
     if (empty) missing.push({ step, qid: q.id, label: `${qLabel(q)}` });
     return {
       type: 'qa', id: q.id, label: qLabel(q), text: q.text, lines, empty,
@@ -110,8 +111,10 @@ export function buildReport(ad, state) {
   if (on(Q4)) {
     const a = answerOf(state, Q4) || {};
     const q = qa(Q4, 'inq1');
-    if (!a.spring && !a.neap) missing.push({ step: 'inq1', qid: 'q4', label: qLabel(Q4) });
+    if (!a.spring && !a.neap) missing.push({ step: 'inq1', qid: 'q4', label: `${qLabel(Q4)} 배치` });
     s1.items.push({ ...q, type: 'drawings', items: [{ title: '대조일 때', orbit: a.spring || null }, { title: '소조일 때', orbit: a.neap || null }] });
+    const oo = a.oldOrbits || state.answers.q4?.oldOrbits;
+    if (oo && (oo.spring || oo.neap)) s1.items.push({ type: 'drawings', id: 'q4-old-orbit', label: `${qLabel(Q4)} (이전 배치판에 놓은 배치)`, text: '배치판 방식이 바뀌기 전에 놓은 배치입니다.', lines: [], items: [{ title: '대조일 때', freeOrbit: oo.spring || null }, { title: '소조일 때', freeOrbit: oo.neap || null }] });
     const od = a.oldDrawings || state.answers.q4?.oldDrawings;
     if (od && (od.spring || od.neap)) s1.items.push({ type: 'drawings', id: 'q4-old', label: `${qLabel(Q4)} (이전 그림판에 그린 그림)`, text: '배치판으로 바뀌기 전에 그린 그림입니다.', lines: [], items: [{ title: '대조일 때', drawing: od.spring || null }, { title: '소조일 때', drawing: od.neap || null }] });
   }
@@ -125,7 +128,7 @@ export function buildReport(ad, state) {
   const s2 = { key: 'inq2', title: `탐구 2. ${INQUIRIES[1].title}`, sub: `인천·부산·묵호 예측 조위 · ${fmtRange(ad.win.inq2[0], ad.win.inq2[1], tz)} · ${DATUM_CAUTION}`, items: [] };
   if (on(Q5) || on(Q6)) {
     const mode = state.ui?.inq2Scale === 'own' ? 'own' : 'same';
-    s2.items.push(fig('f3', `그림 3. 세 지역의 예측 조위(같은 시간 축, 세로 눈금: ${mode === 'same' ? '같은 눈금 크기' : '개별 눈금'})와 관측소 위치`, [
+    s2.items.push(fig('f3', `그림 3. 세 지역의 예측 조위(같은 시간 축, 세로축: ${mode === 'same' ? '세 지역 같은 축(지역마다 기간 평균을 0으로)' : '지역마다 따로'})와 관측소 위치`, [
       ...ad.stationList.map((s, i) => ({ height: i === ad.stationList.length - 1 ? 165 : 150, spec: (ctx) => inq2Specs(ctx, ad, mode)[i] })),
       { map: (w, measure, fs) => stationsMapLayout({ stations: ad.stationList, width: w, measure, fontSize: fs, title: '관측소 위치' }), maxWidth: 240 },
     ]));
@@ -163,7 +166,8 @@ export function buildReport(ad, state) {
       const c = closestTyphoonPoint(ad);
       s4.items.push(fig('f7', `그림 7. ${ad.past.typhoon.meta?.title || ad.past.typhoon.name} — 기상청 실황 분석 위치(${PERIOD_NAMES.a})${c && ad.timeBasis?.confirmed ? ` · 부산 최근접 분석 위치 ${fmtDateTime(c.t, tz)}, 약 ${Math.round(c.km)} km` : ''}`, [{ map: (w, measure, fs) => typhoonMapLayout(ad, { width: w, measure, fontSize: fs }), maxWidth: 360 }]));
     }
-    if (ad.recentTyphoonCheck?.text) s4.items.push({ type: 'note', text: `${PERIOD_NAMES.b} 태풍: ${ad.recentTyphoonCheck.text}` });
+    s4.items.push({ type: 'note', text: `${PERIOD_NAMES.a} 태풍: ${periodTyphoonText(ad, 'a')}` });
+    s4.items.push({ type: 'note', text: `${PERIOD_NAMES.b} 태풍: ${periodTyphoonText(ad, 'b')}` });
     s4.items.push({ type: 'note', text: '태풍 중심기압은 부산에서 잰 기압이 아니며, 시각이 가깝다는 것만으로 원인을 확정할 수 없습니다.' });
     if (on(Q11)) {
       const q = qa(Q11, 'inq4');

@@ -1,40 +1,33 @@
-// 태양·지구·달 끌어 놓기 판(문항 ④). 마우스·펜·손가락으로 끌거나, 천체를 Tab으로 고른 뒤 화살표로 옮긴다.
+// 태양·지구·달 배치판(문항 ④): 태양·지구는 고정, 달만 공전 궤도 위에서 끌어 옮긴다.
+// 키보드: 달을 Tab으로 고른 뒤 ←/→(또는 ↑/↓)로 궤도를 따라 15°씩(Shift는 5°) 옮긴다.
 import { h } from '../util/dom.js';
 import { SCREEN_FONT, itemsToSVG } from '../chart/svg.js';
-import { orbitLayout, emptyOrbit, isEmptyOrbit, BODIES, BODY_KEYS, TRAY, ORBIT_W, ORBIT_H } from '../chart/orbit.js';
+import { orbitLayout, emptyOrbit, isEmptyOrbit, moonXY, angleAt, MOON_R, ORBIT_W, ORBIT_H } from '../chart/orbit.js';
 
 /**
  * @param {{value:object|null, onChange:(v)=>void, locked?:boolean, label:string, id:string}} o
  */
 export function createOrbitBoard({ value, onChange, locked = false, label = '배치판', id = 'orbit' }) {
-  let v = value ? JSON.parse(JSON.stringify(value)) : emptyOrbit();
-  for (const k of BODY_KEYS) if (!v[k]) v[k] = { ...TRAY[k], placed: false };
+  let v = value?.moon ? JSON.parse(JSON.stringify(value)) : emptyOrbit();
   const wrap = h('div', { class: `orbit-board${locked ? ' locked' : ''}`, id });
   const host = h('div', { class: 'orbit-surface' });
   const status = h('p', { class: 'muted small orbit-status', 'aria-live': 'polite' });
   wrap.append(host);
   if (!locked) {
     wrap.append(h('div', { class: 'orbit-bar' },
-      h('span', { class: 'small muted' }, '천체를 끌어다 놓으세요(키보드: Tab으로 천체 고르기 → 화살표로 옮기기).'),
+      h('span', { class: 'small muted' }, '달을 끌어 공전 궤도를 따라 옮기세요(키보드: Tab으로 달 고르기 → 화살표).'),
       h('button', { type: 'button', class: 'btn btn-ghost btn-xs', id: `${id}-reset`, onclick: () => { v = emptyOrbit(); commit(); } }, '처음 위치로')));
   }
   wrap.append(status);
 
   const render = () => {
     const L = orbitLayout(v, ORBIT_W);
-    const handles = locked ? '' : BODY_KEYS.map((k) => {
-      const b = BODIES[k];
-      return `<circle class="orbit-handle" data-body="${k}" cx="${v[k].x}" cy="${v[k].y}" r="${b.r + 6}" fill="transparent" tabindex="0" role="button" aria-label="${b.label}. 화살표로 옮기기 (지금 위치 가로 ${Math.round(v[k].x)}, 세로 ${Math.round(v[k].y)})"/>`;
-    }).join('');
-    host.innerHTML = `<svg viewBox="0 0 ${ORBIT_W} ${ORBIT_H}" font-family='${SCREEN_FONT}' preserveAspectRatio="xMidYMid meet" aria-label="${label}" role="group">${itemsToSVG(L.items)}${handles}</svg>`;
-    const placed = BODY_KEYS.filter((k) => v[k].placed).map((k) => BODIES[k].label);
-    status.textContent = placed.length ? `옮긴 천체: ${placed.join(', ')}` : (locked ? '배치하지 않음' : '아직 옮긴 천체가 없습니다.');
+    const m = moonXY(v.moon.angle);
+    const handle = locked ? '' : `<circle class="orbit-handle" data-body="moon" cx="${m.x}" cy="${m.y}" r="${MOON_R + 9}" fill="transparent" tabindex="0" role="slider" aria-label="달의 위치(공전 궤도 위)" aria-valuemin="0" aria-valuemax="359" aria-valuenow="${Math.round(v.moon.angle)}" aria-valuetext="${v.moon.placed ? '옮김' : '처음 위치'}"/>`;
+    host.innerHTML = `<svg viewBox="0 0 ${ORBIT_W} ${ORBIT_H}" font-family='${SCREEN_FONT}' preserveAspectRatio="xMidYMid meet" aria-label="${label}" role="group">${itemsToSVG(L.items)}${handle}</svg>`;
+    status.textContent = v.moon.placed ? '달을 옮겼습니다.' : (locked ? '배치하지 않음' : '아직 달을 옮기지 않았습니다.');
   };
   const commit = () => { onChange?.(isEmptyOrbit(v) ? null : JSON.parse(JSON.stringify(v))); render(); };
-  const clamp = (k, x, y) => {
-    const r = BODIES[k].r;
-    return { x: Math.round(Math.min(ORBIT_W - r, Math.max(r, x))), y: Math.round(Math.min(ORBIT_H - r, Math.max(r, y))) };
-  };
 
   if (!locked) {
     let drag = null;
@@ -46,34 +39,29 @@ export function createOrbitBoard({ value, onChange, locked = false, label = '배
       return { x: (e.clientX - r.left - ox) / s, y: (e.clientY - r.top - oy) / s };
     };
     host.addEventListener('pointerdown', (e) => {
-      const el = e.target.closest('[data-body]');
-      if (!el) return;
+      if (!e.target.closest('[data-body="moon"]')) return;
       e.preventDefault();
-      const k = el.dataset.body;
-      const p = pt(e);
-      drag = { k, dx: v[k].x - p.x, dy: v[k].y - p.y, id: e.pointerId };
+      drag = { id: e.pointerId };
       host.setPointerCapture?.(e.pointerId);
     });
     host.addEventListener('pointermove', (e) => {
       if (!drag) return;
       const p = pt(e);
-      v[drag.k] = { ...clamp(drag.k, p.x + drag.dx, p.y + drag.dy), placed: true };
+      v.moon = { angle: angleAt(p.x, p.y), placed: true };
       render();
     });
-    const end = () => { if (drag) { const k = drag.k; drag = null; commit(); host.querySelector(`[data-body="${k}"]`)?.focus?.(); } };
+    const end = () => { if (drag) { drag = null; commit(); host.querySelector('[data-body="moon"]')?.focus?.(); } };
     host.addEventListener('pointerup', end);
     host.addEventListener('pointercancel', end);
     host.addEventListener('keydown', (e) => {
-      const el = e.target.closest?.('[data-body]');
-      if (!el) return;
-      const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
-      if (!d) return;
+      if (!e.target.closest?.('[data-body="moon"]')) return;
+      const dir = { ArrowRight: -1, ArrowDown: -1, ArrowLeft: 1, ArrowUp: 1 }[e.key];
+      if (!dir) return;
       e.preventDefault();
-      const k = el.dataset.body;
-      const step = e.shiftKey ? 2 : 10;
-      v[k] = { ...clamp(k, v[k].x + d[0] * step, v[k].y + d[1] * step), placed: true };
+      const step = e.shiftKey ? 5 : 15;
+      v.moon = { angle: (((v.moon.angle + dir * step) % 360) + 360) % 360, placed: true };
       commit();
-      host.querySelector(`[data-body="${k}"]`)?.focus();
+      host.querySelector('[data-body="moon"]')?.focus();
     });
   }
   render();

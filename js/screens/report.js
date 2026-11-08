@@ -3,7 +3,7 @@ import { h, confirmDialog, downloadBlob } from '../util/dom.js';
 import { escapeHtml } from '../util/format.js';
 import { buildReport, pdfFilename, layoutFigure } from '../report/model.js';
 import { drawingLayout, isEmptyDrawing } from '../chart/drawing.js';
-import { orbitLayout, isEmptyOrbit } from '../chart/orbit.js';
+import { orbitLayout, freeOrbitLayout, isEmptyOrbit } from '../chart/orbit.js';
 import { itemsToSVG, layoutToSVG, screenMeasure, SCREEN_FONT } from '../chart/svg.js';
 
 export function render(app, container) {
@@ -107,8 +107,14 @@ export function render(app, container) {
 
 function orbitHtml(o) {
   if (isEmptyOrbit(o)) return '<p class="rp-empty">(배치하지 않음)</p>';
-  const L = orbitLayout(o, 320, { showTray: false });
+  const L = orbitLayout(o, 320, { forReport: true });
   return `<div class="rp-drawing rp-orbit"><svg viewBox="0 0 ${L.width} ${L.height}" width="${L.width}" height="${L.height}" font-family='${SCREEN_FONT}' role="img" aria-label="학생이 배치한 태양·지구·달">${itemsToSVG(L.items)}</svg></div>`;
+}
+
+function freeHtml(o) {
+  if (!o) return '<p class="rp-empty">(배치하지 않음)</p>';
+  const L = freeOrbitLayout(o, 320);
+  return `<div class="rp-drawing rp-orbit"><svg viewBox="0 0 ${L.width} ${L.height}" width="${L.width}" height="${L.height}" font-family='${SCREEN_FONT}' role="img" aria-label="이전 배치판의 배치">${itemsToSVG(L.items)}</svg></div>`;
 }
 
 function drawingHtml(d) {
@@ -131,7 +137,7 @@ function itemHtml(it) {
     return `<figure class="rp-figure" id="rp-${escapeHtml(it.id)}"><figcaption><b>${escapeHtml(it.caption)}</b></figcaption>${Ls.map((L) => `<div class="rp-fig-svg">${layoutToSVG(L, { title: it.caption })}</div>`).join('')}</figure>`;
   }
   if (it.type === 'qa') return `<section class="rp-q" id="rp-${escapeHtml(it.id)}">${qHead(it)}<p class="rp-label">답</p>${linesHtml(it)}</section>`;
-  if (it.type === 'drawings') return `<section class="rp-q" id="rp-${escapeHtml(it.id)}">${qHead(it)}<div class="rp-draw-grid">${it.items.map((d) => `<div><p class="rp-label">${escapeHtml(d.title)}</p>${'orbit' in d ? orbitHtml(d.orbit) : drawingHtml(d.drawing)}</div>`).join('')}</div></section>`;
+  if (it.type === 'drawings') return `<section class="rp-q" id="rp-${escapeHtml(it.id)}">${qHead(it)}<div class="rp-draw-grid">${it.items.map((d) => `<div><p class="rp-label">${escapeHtml(d.title)}</p>${'orbit' in d ? orbitHtml(d.orbit) : 'freeOrbit' in d ? freeHtml(d.freeOrbit) : drawingHtml(d.drawing)}</div>`).join('')}</div>${it.lines?.length || it.id === 'q4' ? `<p class="rp-label">답</p>${linesHtml(it)}` : ''}</section>`;
   if (it.type === 'side') {
     return `<section class="rp-q" id="rp-${escapeHtml(it.id)}">${qHead(it)}<div class="rp-side">
       <div><p class="rp-label">${escapeHtml(it.leftTitle)}</p>${it.left ? `<p class="rp-answer">${escapeHtml(it.left)}</p>` : '<p class="rp-empty">(작성하지 않음)</p>'}</div>

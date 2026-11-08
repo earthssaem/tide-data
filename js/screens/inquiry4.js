@@ -7,7 +7,7 @@ import { fmtNum, escapeHtml } from '../util/format.js';
 import { fmtDateTime } from '../util/time.js';
 import { INQUIRIES, OBSERVED_TEXT, CIRCLED } from '../content/questions.js';
 import { createPanel, SharedCursor, tipRow, staticLayoutHTML } from '../chart/panel.js';
-import { inq4TideSpecs, weatherSpec, periodTitle, periodCd, typhoonMapLayout, closestTyphoonPoint, fmtWx, valueAt, PERIOD_NAMES } from '../chart/assess.js';
+import { inq4TideSpecs, weatherSpec, periodTitle, periodCd, typhoonMapLayout, closestTyphoonPoint, fmtWx, valueAt, PERIOD_NAMES, periodTyphoonText } from '../chart/assess.js';
 import { screenMeasure } from '../chart/svg.js';
 import { loadKoreaMap } from '../chart/map.js';
 import { nearestValid, pointAt } from '../analysis/series.js';
@@ -87,7 +87,8 @@ export function render(app, container) {
       requestAnimationFrame(drawMap);
       loadKoreaMap().then(drawMap);
     } else tyCard.append(h('p', { class: 'muted' }, '태풍 정보: 자료 미제공'));
-    tyCard.append(h('h2', { class: 'h-sm' }, `태풍 정보 — ${PERIOD_NAMES.b}`), h('p', { class: 'small', id: 'ty-recent' }, ad.recentTyphoonCheck?.text || '자료 미제공'));
+    tyCard.append(h('p', { class: 'small', id: 'ty-a' }, `${PERIOD_NAMES.a}: ${periodTyphoonText(ad, 'a')}`));
+    tyCard.append(h('h2', { class: 'h-sm' }, `태풍 정보 — ${PERIOD_NAMES.b}`), h('p', { class: 'small', id: 'ty-recent' }, periodTyphoonText(ad, 'b')));
     tyCard.append(h('ul', { class: 'small caution-list' },
       h('li', {}, '태풍 중심기압은 태풍 한가운데의 기압입니다. 부산에서 잰 기압(해면기압 그래프)과 같은 값이 아닙니다.'),
       h('li', {}, '시각이 가깝다는 것만으로 원인이라고 확정할 수 없습니다. 조위·기압·바람·태풍 위치를 함께 근거로 드세요.'),

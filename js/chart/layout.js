@@ -270,8 +270,11 @@ export function layoutChart(spec) {
     if (x < plot.x - 0.5 || x > plot.x + plot.w + 0.5) continue;
     items.push({ type: 'line', x1: x, y1: plot.y, x2: x, y2: plot.y + plot.h, stroke: t.strong && xStep < DAY ? THEME.gridStrong : THEME.grid, width: t.strong && xStep < DAY ? 1 : 0.8 });
     items.push({ type: 'line', x1: x, y1: plot.y + plot.h, x2: x, y2: plot.y + plot.h + 4, stroke: THEME.axis, width: 1 });
-    items.push({ type: 'text', x, y: plot.y + plot.h + 6 + small, text: t.label, size: small, anchor: 'middle', fill: THEME.muted });
-    if (t.sub) items.push({ type: 'text', x, y: plot.y + plot.h + 9 + small * 2, text: t.sub, size: small, anchor: 'middle', fill: THEME.text, bold: true });
+    // 하루 단위 눈금에서 centerDayLabels이면 날짜 글자를 그날의 가운데(정오)에 둔다(눈금선은 자정)
+    const lx = spec.x.centerDayLabels && xStep >= DAY ? tToX(t.t + DAY / 2) : x;
+    if (lx > plot.x + plot.w + 0.5) continue;
+    items.push({ type: 'text', x: lx, y: plot.y + plot.h + 6 + small, text: t.label, size: small, anchor: 'middle', fill: THEME.muted });
+    if (t.sub) items.push({ type: 'text', x: lx, y: plot.y + plot.h + 9 + small * 2, text: t.sub, size: small, anchor: 'middle', fill: THEME.text, bold: true });
   }
   if (spec.y.zeroLine && yDomain[0] < 0 && yDomain[1] > 0) {
     const y = vToY(0);

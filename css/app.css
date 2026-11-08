@@ -546,3 +546,4 @@ textarea:focus { border-color: var(--teal); }
 .orbit-board.locked .orbit-surface svg { opacity: .92; }
 .orbit-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem; margin-top: .3rem; }
 .rp-orbit svg { background: #0f1b2d; }
+.answer-label { font-weight: 700; font-size: .92rem; margin: .6rem 0 .2rem; }

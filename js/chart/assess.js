@@ -93,8 +93,8 @@ export function tideSpec(ctx, o) {
   const spec = {
     ...baseSpec(ctx, cd, view),
     header: o.title ? { title: o.title, subtitle: o.subtitle ?? `${fmtRange(view[0], view[1], cd.tz)}${sampleTag(cd)}` } : null,
-    legend: o.noLegend ? [] : [{ kind: 'line', label: `${label} (${stepText} 간격 값을 이은 선)`, color, marker: step >= 60 ? 'circle' : null }, ...(o.legendExtra || [])],
-    y: { label: '조위 (cm)', domain: o.yDomain || null, tickStep: o.tickStep || null },
+    legend: o.noLegend ? [] : [{ kind: 'line', label: o.legendLabel || `${label} (${stepText} 간격 값을 이은 선)`, color, marker: step >= 60 ? 'circle' : null }, ...(o.legendExtra || [])],
+    y: { label: o.yLabel || '조위 (cm)', domain: o.yDomain || null, tickStep: o.tickStep || null, zeroLine: !!o.zeroLine, zeroLabel: o.zeroLabel },
     series: s ? [{ kind: 'line', points: s.points, maxGapMs: (s.intervalMs || HOUR) * 1.5, color, width: 1.8, dots: true, dotMinSpacing: o.dotMinSpacing ?? 5 }] : [],
     marks: o.marks || [],
     bands: o.bands || [],
@@ -164,20 +164,45 @@ export function inq1MonthSpec(ctx, ad, ans, { showMoon = false, focusDay = null,
       ...(showMoon && cd.moon ? [{ kind: 'moon', icon: 'full', label: '달의 위상(삭●·상현◑·망○·하현◐) 시각', color: COLORS.moon }] : []),
     ],
   });
-  spec.x = { ...spec.x, minTickSpacing: 30 };
+  spec.x = { ...spec.x, minTickSpacing: 30, centerDayLabels: true, label: `날짜 (${cd.tz.label}, 날짜 글자는 그날의 가운데)` };
   return spec;
 }
 
 // ───────────── 탐구 2 ─────────────
+/**
+ * 탐구 2에 그릴 값. 'same'(같은 축): 지역마다 기간 평균을 0으로 한 높이(예측 조위 − 기간 평균)를 세 지역 같은 세로축에 그린다.
+ *   관측소마다 높이의 기준(0 cm)이 달라 원래 숫자를 한 축에 놓으면 높낮이 비교처럼 보이므로, 평균을 빼서 오르내림만 남긴다.
+ * 'own'(개별 눈금): 원래 예측 조위를 지역마다 다른 세로축에 그린다.
+ */
+export function inq2Series(ad, mode = 'same') {
+  const view = ad.win.inq2;
+  return ad.stationList.map((s) => {
+    const src = ad.st[s.id].predicted;
+    if (mode !== 'same') return { s, series: src, mean: null };
+    const vals = src.points.filter((p) => p.t >= view[0] && p.t <= view[1] && p.v != null).map((p) => p.v);
+    const mean = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+    return { s, mean, series: { ...src, points: src.points.map((p) => ({ ...p, v: p.v == null ? null : Math.round((p.v - mean) * 100) / 100 })) } };
+  });
+}
+
 export function inq2Specs(ctx, ad, mode = 'same', { cursor = null } = {}) {
   const view = ad.win.inq2;
-  const list = ad.stationList.map((s) => ({ s, cd: ad.st[s.id] }));
-  const doms = yDomains(list.map(({ cd }) => ({ series: cd.predicted, t0: view[0], t1: view[1] })), mode);
-  const step = mode === 'same' ? sharedTickStep(doms, (ctx.height || 190) - 90) : null;
-  return list.map(({ s, cd }, i) => tideSpec({ ...ctx, hideXTitle: i < list.length - 1 }, {
-    cd, kind: 'predicted', view, yDomain: doms[i], tickStep: step,
+  const list = inq2Series(ad, mode);
+  let doms, step = null;
+  if (mode === 'same') {
+    const ext = list.map(({ series }) => extremaIn(series, view[0], view[1])).filter(Boolean);
+    const H = Math.max(10, ...ext.map((e) => Math.max(Math.abs(e.max.v), Math.abs(e.min.v)))) * 1.1;
+    step = niceStep(2 * H, 6);
+    const top = Math.ceil(H / step) * step;
+    doms = list.map(() => [-top, top]);
+  } else doms = yDomains(list.map(({ series }) => ({ series, t0: view[0], t1: view[1] })), 'own');
+  return list.map(({ s, series }, i) => tideSpec({ ...ctx, hideXTitle: i < list.length - 1 }, {
+    cd: ad.st[s.id], kind: 'predicted', series, view, yDomain: doms[i], tickStep: step,
     title: `${s.name} (${s.sea}) 예측 조위`,
-    subtitle: `${fmtRange(view[0], view[1], cd.tz)} · 세로 눈금: ${mode === 'same' ? '세 지역 같은 눈금 크기(각자 가운데)' : '지역마다 따로'}${sampleTag(cd)}`,
+    subtitle: `${fmtRange(view[0], view[1], ad.tz)} · 세로축: ${mode === 'same' ? '세 지역 같은 축(지역마다 이 기간의 평균 높이를 0으로)' : '지역마다 따로(원래 예측 조위)'}${sampleTag(ad.st[s.id])}`,
+    yLabel: mode === 'same' ? '평균과의 차이 (cm)' : '조위 (cm)',
+    legendLabel: mode === 'same' ? '예측 조위 − 이 기간의 평균 (1시간 간격 값을 이은 선)' : null,
+    zeroLine: mode === 'same', zeroLabel: '기간 평균',
     noLegend: i > 0, cursor,
   }));
 }
@@ -239,7 +264,7 @@ export function inq3DailySpec(ctx, ad, ans) {
     header: { title: '부산 일별 변동 폭 — 예측과 관측', subtitle: `하루 동안 최고값 − 최저값 · ${fmtRange(month[0], month[1], cd.tz)}${sampleTag(cd)}` },
     legend: [{ kind: 'bar', label: '예측 조위', color: COLORS.barPred }, { kind: 'bar', label: '관측 조위', color: COLORS.barObs }, ...(sel ? [{ kind: 'barHollow', label: '내가 고른 구간', color: '#1d2733' }] : [])],
     y: { label: '변동 폭 (cm)', includeZero: true, floorZero: true },
-    x: { ...baseSpec(ctx, cd, month).x, minTickSpacing: 30 },
+    x: { ...baseSpec(ctx, cd, month).x, minTickSpacing: 30, centerDayLabels: true, label: `날짜 (${cd.tz.label})` },
     series: [{ kind: 'bars', bars, color: COLORS.bar }],
     bands: sel ? [{ t0: sel[0], t1: sel[1], fill: COLORS.sel, opacity: 0.12, stroke: '#1d2733', strokeWidth: 1.2, dash: [4, 3] }] : [],
   };
@@ -254,7 +279,32 @@ export function periodTitle(ad, k, revealed) {
   if (!revealed) return `${PERIOD_NAMES[k]}: ${d}`;
   return k === 'a' ? `${PERIOD_NAMES[k]}: ${d}` : `${PERIOD_NAMES[k]}: ${d} — 확인한 기압·바람이 상대적으로 안정적인 기간`;
 }
-export const periodCd = (ad, k) => (k === 'a' ? ad.past : ad.st[ad.rep]);
+/** 기간이 들어 있는 자료(과거 비교 기간 자료 또는 대표 관측소 1년 자료) */
+export function cdForWindow(ad, w) {
+  const inPast = (cd) => cd?.observed?.points.length && w[0] >= cd.observed.points[0].t && w[0] <= cd.observed.points.at(-1).t;
+  return inPast(ad.past) ? ad.past : ad.st[ad.rep];
+}
+export const periodCd = (ad, k) => cdForWindow(ad, ad.win[k]);
+
+/** 기간(앞뒤 하루 포함) 동안 부산에 가장 가까웠던 태풍 중심(기상청 태풍경로, 거리만) */
+export function periodTyphoon(ad, k) {
+  const [t0, t1] = ad.win[k];
+  const st = ad.st[ad.rep].station;
+  const R = 6371, r = (x) => (x * Math.PI) / 180;
+  const dist = (p) => 2 * R * Math.asin(Math.sqrt(Math.sin(r(p.lat - st.lat) / 2) ** 2 + Math.cos(r(st.lat)) * Math.cos(r(p.lat)) * Math.sin(r(p.lon - st.lon) / 2) ** 2));
+  let best = null;
+  for (const tr of ad.typhoonTracks || []) for (const p of tr.points) {
+    if (p.t < t0 - DAY || p.t > t1 + DAY) continue;
+    const km = dist(p);
+    if (!best || km < best.km) best = { name: tr.name, km, t: p.t };
+  }
+  return best;
+}
+export function periodTyphoonText(ad, k) {
+  if (!ad.typhoonTracks?.length) return '태풍 경로 자료 미제공';
+  const b = periodTyphoon(ad, k);
+  return b ? `이 기간(앞뒤 하루 포함) 부산에서 가장 가까웠던 태풍 중심: ${b.name.replace(/^\d{4}년 /, '')}, 약 ${Math.round(b.km)} km (기상청 태풍경로)` : '이 기간(앞뒤 하루 포함)에 기록된 태풍이 없습니다(기상청 태풍경로).';
+}
 
 export function inq4TideSpecs(ctx, ad, { revealed = false, cursor = {} } = {}) {
   const ks = ['a', 'b'];

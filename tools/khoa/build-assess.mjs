@@ -37,7 +37,7 @@ const REP = 'DT_0005';
 const PAST = { start: '2022-09-01', end: '2022-09-30' };
 const DEFAULTS = {
   month: '2026-09',
-  inq4: { a: ['2022-09-04', '2022-09-09'], b: ['2026-09-19', '2026-09-24'] },
+  inq4: { a: ['2022-09-04', '2022-09-09'], b: ['2022-09-25', '2022-09-30'] },
 };
 const TIDE_TABLE_DATUM = { DT_0001: '평균해면 아래 464 cm', DT_0005: '평균해면 아래 65 cm', DT_0006: '평균해면 아래 19 cm' };
 
@@ -170,7 +170,18 @@ const w22 = weatherFor(busan, o.raw22, manifest22, dates22, pdir, 'past/DT_0005-
 // 태풍(실황 분석 위치, KST)
 const trackSrc = readFileSync(join(o.typhoonDir, 'typhoon_analysis_kst.csv'), 'utf8');
 writeFileSync(join(pdir, 'typhoon_track.csv'), trackSrc);
-const tyCheck = JSON.parse(readFileSync(join(o.typhoonCheck, 'meta.json'), 'utf8'));
+// 기간별 태풍 확인용 경로(기상청 태풍경로 CSV, 시각은 UTC로 해석 → KST로 바꿔 저장). 거리 확인에만 쓴다.
+const typhoonTracks = [];
+for (const dir of [join(ROOT, 'data', 'raw', 'kma', 'typhoon', '2022-09-check'), o.typhoonCheck]) {
+  const m = JSON.parse(readFileSync(join(dir, 'meta.json'), 'utf8'));
+  for (const t of m.typhoons) {
+    const pts = readFileSync(join(dir, t.file), 'utf8').trim().split('\n').slice(1).map((l) => l.split(',')).filter((r) => r.length > 4).map((r) => {
+      const k = new Date(Date.parse(`${r[2].replace(' ', 'T')}:00Z`) + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
+      return [k, Number(r[3].replace('N', '')), Number(r[4].replace('E', ''))];
+    });
+    typhoonTracks.push({ name: t.name, points: pts, source: `${dir.replace(ROOT + '/', '')}/${t.file}` });
+  }
+}
 
 // 달의 위상(계산값, KST)
 const KST = 9 * 3600e3;
@@ -253,11 +264,9 @@ const caseJson = {
       },
     },
   },
-  recentTyphoonCheck: {
-    period: '2026-09-19 ~ 2026-09-23',
-    text: '기상청 태풍 경로 자료로 확인한 결과, 이 기간 부산에서 약 900 km 안으로 들어온 태풍 중심은 없었습니다(가장 가까운 것: 2026년 제25호 두쥐안, 약 915 km).',
-    source: 'data/raw/kma/typhoon/2026-09-check/meta.json',
-    typhoons: tyCheck.typhoons,
+  typhoonTracks: {
+    note: '기상청 기상자료개방포털 태풍경로(CSV). 파일에 시간대 표기가 없어 UTC로 해석해 KST로 바꿈(제11호 힌남노 위치를 태풍정보 KST와 맞춰 확인). 기간 확인은 앞뒤 하루를 포함해 거리만 봄',
+    tracks: typhoonTracks,
   },
   moonPhases: { file: 'moon.csv', adapter: 'csv-moon', time: { column: 'time', offset: '+09:00' }, phaseColumn: 'phase', lunarColumn: 'lunar', meta: { provider: 'Meeus 계산식으로 계산한 값(공식 자료 아님)', title: '달의 위상 시각(계산값)', identifier: 'moon-calc-meeus' } },
   defaults: {

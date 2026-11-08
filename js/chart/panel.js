@@ -24,6 +24,7 @@ export class SharedCursor {
  * @param {{snap?:number, domain:[number,number], onChange:(r:[number,number]|null, done:boolean)=>void}} [o.brush]
  * @param {SharedCursor} [o.cursor]
  * @param {number} [o.step] 키보드 이동 간격(ms)
+ * @param {(t:number)=>[number,number]} [o.hoverBand] 마우스를 올린 시각이 속한 구간(예: 그날 하루)을 옅게 칠함
  */
 export function createPanel(o) {
   const el = o.host;
@@ -89,6 +90,11 @@ export function createPanel(o) {
     const L = layout;
     const parts = [];
     const t = o.cursor ? o.cursor.t : hoverT;
+    if (t != null && L.tToX && o.hoverBand) {
+      const [a, b] = o.hoverBand(t);
+      const xa = Math.max(L.plot.x, L.tToX(a)), xb = Math.min(L.plot.x + L.plot.w, L.tToX(b));
+      if (xb > xa) parts.push(`<rect x="${xa}" y="${L.plot.y}" width="${xb - xa}" height="${L.plot.h}" fill="#1f5fbf" fill-opacity="0.12" stroke="#1f5fbf" stroke-opacity="0.6" stroke-dasharray="4 3"/>`);
+    }
     if (t != null && L.tToX) {
       const x = L.tToX(t);
       if (x >= L.plot.x - 0.5 && x <= L.plot.x + L.plot.w + 0.5) {

@@ -1,0 +1,50 @@
+{
+ "format": "kma-typhoon-track-check",
+ "fetchedAt": "2026-11-08",
+ "source": "https://data.kma.go.kr/data/typhoonData/typTrack.do?pgmNo=704 (기상자료개방포털 태풍경로, CSV 내려받기)",
+ "purpose": "탐구 4 기간(2022년 9월) 동안 부산 가까이 지난 태풍이 있었는지 확인",
+ "typhoons": [
+  {
+   "file": "2022-11.csv",
+   "no": 11,
+   "name": "2022년 제11호 태풍 힌남노(HINNAMNOR)"
+  },
+  {
+   "file": "2022-12.csv",
+   "no": 12,
+   "name": "2022년 제12호 태풍 무이파(MUIFA)"
+  },
+  {
+   "file": "2022-13.csv",
+   "no": 13,
+   "name": "2022년 제13호 태풍 므르복(MERBOK)"
+  },
+  {
+   "file": "2022-14.csv",
+   "no": 14,
+   "name": "2022년 제14호 태풍 난마돌(NANMADOL)"
+  },
+  {
+   "file": "2022-15.csv",
+   "no": 15,
+   "name": "2022년 제15호 태풍 탈라스(TALAS)"
+  },
+  {
+   "file": "2022-16.csv",
+   "no": 16,
+   "name": "2022년 제16호 태풍 노루(NORU)"
+  },
+  {
+   "file": "2022-17.csv",
+   "no": 17,
+   "name": "2022년 제17호 태풍 꿀랍(KULAP)"
+  },
+  {
+   "file": "2022-18.csv",
+   "no": 18,
+   "name": "2022년 제18호 태풍 로키(ROKE)"
+  }
+ ],
+ "timeZone": "파일에 표기 없음. 제11호 힌남노의 같은 위치가 태풍정보(KST)보다 9시간 이른 시각으로 기록되어 있어 UTC로 해석(data/raw/kma/typhoon/2022-11/meta.json). 기간 확인은 앞뒤 하루를 포함해 거리만 봄",
+ "encoding": "원본 CP949를 UTF-8로 바꿔 저장"
+}

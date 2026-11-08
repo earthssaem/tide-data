@@ -35,7 +35,7 @@ export async function loadCase(entry, readText = defaultReadText, base = CASES_B
 
 /**
  * 수행평가 사례 자료: 관측소별 CaseData(예측·관측 조위, 대표 관측소는 기상) + 과거 비교 기간(관측·기상·태풍)
- * @returns {{config,id,dataVersion,isSample,sampleNotice,tz,timeBasis,months,rep,stationList,st,past,moon,defaults,description,recentTyphoonCheck}}
+ * @returns {{config,id,dataVersion,isSample,sampleNotice,tz,timeBasis,months,rep,stationList,st,past,moon,defaults,description,typhoonTracks}}
  */
 export async function buildAssessData(config, readFile) {
   if (config.formatVersion !== 3 || config.kind !== 'tide-assessment') throw new Error('이 앱에서 읽을 수 없는 사례 형식입니다(형식 3 수행평가 사례가 필요합니다).');
@@ -75,7 +75,8 @@ export async function buildAssessData(config, readFile) {
     moon: st[config.representative].moon,
     defaults: config.defaults,
     description: config.description || {},
-    recentTyphoonCheck: config.recentTyphoonCheck || null,
+    typhoonTracks: (config.typhoonTracks?.tracks || []).map((t) => ({ name: t.name, source: t.source, points: t.points.map(([k, lat, lon]) => ({ t: Date.parse(`${k.replace(' ', 'T')}:00Z`) - tz.offsetMinutes * 60000, lat, lon })) })),
+    typhoonTracksNote: config.typhoonTracks?.note || '',
   };
 }
 

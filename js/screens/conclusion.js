@@ -20,7 +20,7 @@ export function render(app, container) {
       const drew = q.id === 'q4' ? ['spring', 'neap'].filter((k) => store.state.answers.q4[k]).length : 0;
       const hidden = q.afterReveal && !store.state.reveals[q.afterReveal];
       ol.append(h('li', {}, h('p', { class: 'q-text small' }, `${CIRCLED[q.no]} ${hidden ? '(추가 자료 확인 뒤에 나타나는 문항)' : q.text}`),
-        ...(q.id === 'q4' ? [h('p', { class: drew ? 'review-answer' : 'muted small' }, drew ? `그림 ${drew}개` : '(그리지 않음)')]
+        ...(q.id === 'q4' ? [h('p', { class: drew ? 'review-answer' : 'muted small' }, drew ? `달의 위치 ${drew}칸 배치` : '(배치하지 않음)'), ...lines.map((l) => h('p', { class: 'review-answer' }, l))]
           : lines.length ? lines.map((l) => h('p', { class: 'review-answer' }, l)) : [h('p', { class: 'muted small' }, '(작성하지 않음)')])));
     }
     card.append(ol);

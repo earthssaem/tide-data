@@ -6,7 +6,7 @@
 
 import { drawingLayout, isEmptyDrawing } from '../chart/drawing.js';
 import { layoutFigure } from './model.js';
-import { orbitLayout, isEmptyOrbit } from '../chart/orbit.js';
+import { orbitLayout, freeOrbitLayout, isEmptyOrbit } from '../chart/orbit.js';
 
 const FONT_URL = 'fonts/NotoSansKR-Regular.ttf';
 const LIBS = ['vendor/pdf-lib.min.js', 'vendor/fontkit.umd.min.js'];
@@ -352,17 +352,25 @@ export async function generatePdf(model, { onProgress = () => {} } = {}) {
     qaHead(q);
     const gap = 12;
     const w = (CW - gap) / 2;
-    const Ls = q.items.map((it) => ('orbit' in it ? (isEmptyOrbit(it.orbit) ? null : orbitLayout(it.orbit, w, { showTray: false })) : (isEmptyDrawing(it.drawing) ? null : drawingLayout(it.drawing, w))));
+    const Ls = q.items.map((it) => ('orbit' in it ? (isEmptyOrbit(it.orbit) ? null : orbitLayout(it.orbit, w, { forReport: true })) : 'freeOrbit' in it ? (it.freeOrbit ? freeOrbitLayout(it.freeOrbit, w) : null) : (isEmptyDrawing(it.drawing) ? null : drawingLayout(it.drawing, w))));
     const hh = Math.max(60, ...Ls.map((L) => (L ? L.height : 60)));
     ensure(hh + 24);
     q.items.forEach((it, n) => {
       const x = M.left + n * (w + gap);
       drawText(it.title, x, y - 10, { size: 9, bold: true, color: C.teal });
       if (Ls[n]) drawLayout(Ls[n], x, y - 14);
-      else drawText('orbit' in it ? '(배치하지 않음)' : '(그림 없음)', x + 6, y - 32, { size: 9.5, color: C.muted });
+      else drawText('orbit' in it || 'freeOrbit' in it ? '(배치하지 않음)' : '(그림 없음)', x + 6, y - 32, { size: 9.5, color: C.muted });
       page.drawRectangle({ x, y: y - 14 - hh, width: w, height: hh, borderColor: hex(C.rule), borderWidth: 0.6 });
     });
     y -= hh + 22;
+    if (q.id === 'q4') {
+      ensure(30);
+      drawText('답', M.left, y - 10, { size: 8.6, bold: true, color: C.teal });
+      y -= 13;
+      if (!q.lines.length) paragraph('(작성하지 않음)', { size: 10, color: C.muted, indent: 10, after: 6 });
+      else for (const ln of q.lines) paragraph(ln, { size: 10.5, color: C.text, indent: 10, lead: 1.6, after: 1 });
+      y -= 4;
+    }
   }
 
   function sideBlock(q) {

@@ -183,7 +183,7 @@ export function stepStatus(step) {
   if (!def) return null;
   const s = app.store.state;
   const qs = def.questions.filter((q) => isEnabled(q, app.ad.setup));
-  const written = qs.filter((q) => (q.id === 'q4' ? ['spring', 'neap'].some((k) => (answerOf(s, q) || {})[k]) : answerLines(app.ad, s, q).length > 0)).length;
+  const written = qs.filter((q) => (q.id === 'q4' ? ['spring', 'neap'].some((k) => (answerOf(s, q) || {})[k]) || answerLines(app.ad, s, q).length > 0 : answerLines(app.ad, s, q).length > 0)).length;
   return { written, total: qs.length };
 }
 
@@ -225,9 +225,9 @@ export async function reveal(kind) {
   const ids = R.lockIds.filter((id) => isEnabled({ id }, app.ad.setup));
   const all = [...INQUIRIES.flatMap((d) => d.questions)];
   const qs = ids.map((id) => all.find((q) => q.id === id));
-  const empty = qs.filter((q) => (q.id === 'q4' ? !['spring', 'neap'].some((k) => s.answers.q4[k]) : !answerLines(app.ad, s, q).length));
+  const empty = qs.filter((q) => (q.id === 'q4' ? !['spring', 'neap'].every((k) => s.answers.q4[k]) || !answerLines(app.ad, s, q).length : !answerLines(app.ad, s, q).length));
   const names = qs.map((q) => CIRCLED[q.no]).join('·');
-  const body = `<p>[${escapeHtml(R.label)}]을 누르면 지금까지 작성한 ${escapeHtml(names)}의 답${kind === 'moon' ? '(고른 날짜와 그림)' : ''}이 그대로 보관되고, 이후에는 고칠 수 없습니다.</p>
+  const body = `<p>[${escapeHtml(R.label)}]을 누르면 지금까지 작성한 ${escapeHtml(names)}의 답${kind === 'moon' ? '(고른 날짜, 달의 위치, 이유)' : ''}이 그대로 보관되고, 이후에는 고칠 수 없습니다.</p>
     ${empty.length ? `<p class="warn">⚠ 아직 작성하지 않은 문항: ${escapeHtml(empty.map((q) => CIRCLED[q.no]).join(', '))}. 비어 있는 채로 진행하면 보고서에 ‘작성하지 않음’으로 남습니다(앱이 답을 채우지 않습니다).</p>` : ''}`;
   const ok = await confirmDialog({ title: R.label, body, html: true, okLabel: empty.length ? '비어 있어도 진행' : R.label, cancelLabel: '돌아가서 작성' });
   if (!ok) return false;

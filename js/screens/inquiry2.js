@@ -4,7 +4,7 @@ import { fmtNum, escapeHtml } from '../util/format.js';
 import { fmtDateTime, fmtRange } from '../util/time.js';
 import { INQUIRIES, PREDICTED_TEXT, DATUM_CAUTION, TIDE_TYPES } from '../content/questions.js';
 import { createPanel, SharedCursor, tipRow, staticLayoutHTML } from '../chart/panel.js';
-import { inq2Specs, stationsMapLayout } from '../chart/assess.js';
+import { inq2Specs, inq2Series, stationsMapLayout } from '../chart/assess.js';
 import { screenMeasure } from '../chart/svg.js';
 import { loadKoreaMap } from '../chart/map.js';
 import { nearestValid } from '../analysis/series.js';
@@ -36,7 +36,7 @@ export function render(app, container) {
     } }, label);
     return b;
   };
-  seg.append(mk('same', '같은 눈금 크기'), mk('own', '개별 눈금'));
+  seg.append(mk('same', '같은 축(평균 0)'), mk('own', '개별 눈금'));
   card.append(h('div', { class: 'card-head' },
     h('h2', {}, `세 지역의 예측 조위 · ${fmtRange(view[0], view[1], tz)}`),
     h('p', { class: 'data-line' }, `예측 조위: ${PREDICTED_TEXT}`),
@@ -52,8 +52,12 @@ export function render(app, container) {
     panels.push(createPanel({
       host, height: i === ad.stationList.length - 1 ? 210 : 190, ariaLabel: `${s.name} 예측 조위`, cursor,
       build: (ctx) => inq2Specs(ctx, ad, S().ui.inq2Scale)[i],
-      pick: (t) => { const p = nearestValid(cd.predicted.points, t, { t0: view[0], t1: view[1] }); return p ? { t: p.t, v: p.v } : null; },
-      describe: (tg) => `<div class="tip-title">${escapeHtml(s.name)} · ${escapeHtml(fmtDateTime(tg.t, tz))}</div>${tipRow('예측 조위', `${fmtNum(tg.v, 1)} cm`)}`,
+      pick: (t) => {
+        const d = inq2Series(ad, S().ui.inq2Scale)[i];
+        const p = nearestValid(d.series.points, t, { t0: view[0], t1: view[1] });
+        return p ? { t: p.t, v: p.v, raw: d.mean == null ? p.v : p.v + d.mean, dev: d.mean == null ? null : p.v } : null;
+      },
+      describe: (tg) => `<div class="tip-title">${escapeHtml(s.name)} · ${escapeHtml(fmtDateTime(tg.t, tz))}</div>${tipRow('예측 조위', `${fmtNum(tg.raw, 1)} cm`)}${tg.dev != null ? tipRow('기간 평균과의 차이', `${tg.dev >= 0 ? '+' : '−'}${fmtNum(Math.abs(tg.dev), 1)} cm`) : ''}`,
     }));
   });
 

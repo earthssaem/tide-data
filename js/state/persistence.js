@@ -32,7 +32,7 @@ export function emptyAnswers() {
     q1: { high: null, low: null, range: '' },
     q2: { high: '', low: '', period: '' },
     q3: { spring: null, neap: null },
-    q4: { spring: null, neap: null },
+    q4: { spring: null, neap: null, reason: '' },
     q5: ['', '', ''],
     q6: {},
     q7: { t0: null, t1: null, text: '' },
@@ -176,8 +176,13 @@ export function sanitizeDrawing(d) {
   return { w, h, strokes, texts };
 }
 
-/** 태양·지구·달 배치(문항 ④). 형식이 맞지 않으면 null */
+/** 태양·지구·달 배치(문항 ④): 달의 위치각만 저장(태양·지구 고정). 옮기지 않았으면 null */
 export function sanitizeOrbit(o) {
+  if (!isObj(o) || !isObj(o.moon) || num(o.moon.angle) == null || o.moon.placed !== true || 'x' in o.moon) return null;
+  return { moon: { angle: Math.round((((o.moon.angle % 360) + 360) % 360) * 10) / 10, placed: true } };
+}
+/** 이전 배치판(태양·지구·달을 모두 옮기던 형식) — 지우지 않고 보관 */
+function sanitizeFreeOrbit(o) {
   if (!isObj(o)) return null;
   const out = {};
   for (const k of ['sun', 'earth', 'moon']) {
@@ -202,7 +207,10 @@ export function sanitizeAnswers(a) {
   const q3 = isObj(x.q3) ? x.q3 : {};
   out.q3 = { spring: typeof q3.spring === 'string' && DAY_KEY.test(q3.spring) ? q3.spring : null, neap: typeof q3.neap === 'string' && DAY_KEY.test(q3.neap) ? q3.neap : null };
   const q4 = isObj(x.q4) ? x.q4 : {};
-  out.q4 = { spring: sanitizeOrbit(q4.spring), neap: sanitizeOrbit(q4.neap) };
+  out.q4 = { spring: sanitizeOrbit(q4.spring), neap: sanitizeOrbit(q4.neap), reason: shortText(q4.reason, 1000) };
+  const oo = isObj(q4.oldOrbits) ? q4.oldOrbits : {};
+  const oldO = { spring: sanitizeFreeOrbit(oo.spring) || sanitizeFreeOrbit(q4.spring), neap: sanitizeFreeOrbit(oo.neap) || sanitizeFreeOrbit(q4.neap) };
+  if (oldO.spring || oldO.neap) out.q4.oldOrbits = oldO;
   // 이전 그림판 그림(배치판으로 바뀌기 전 저장분)은 지우지 않고 따로 보관
   const old = isObj(q4.oldDrawings) ? q4.oldDrawings : {};
   const od = { spring: sanitizeDrawing(old.spring) || (isObj(q4.spring) && q4.spring.strokes ? sanitizeDrawing(q4.spring) : null), neap: sanitizeDrawing(old.neap) || (isObj(q4.neap) && q4.neap.strokes ? sanitizeDrawing(q4.neap) : null) };

@@ -371,8 +371,8 @@
    }
   }
  },
- "recentTyphoonCheck": {
-  "text": "예시: 이 기간 가까이 지난 가상 태풍 없음."
+ "typhoonTracks": {
+  "tracks": []
  },
  "moonPhases": {
   "provided": false

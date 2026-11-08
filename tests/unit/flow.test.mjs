@@ -51,7 +51,7 @@ test('배포 설정: 분석 연월·구간 적용, 메모는 배포 파일에 �
   const ad = applySetup(ad0, cfg);
   const f = (t) => new Date(t + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
   assert.deepEqual(ad.win.a.map(f), ['2022-09-04 00:00', '2022-09-09 00:00']);
-  assert.deepEqual(ad.win.b.map(f), ['2026-09-19 00:00', '2026-09-24 00:00']);
+  assert.deepEqual(ad.win.b.map(f), ['2022-09-25 00:00', '2022-09-30 00:00']);
   assert.deepEqual(ad.win.count.map(f), ['2026-09-11 00:00', '2026-09-12 00:00']);
   assert.equal(ad.win.month[1] - ad.win.month[0], 30 * 864e5);
   const dep = studentDeployment({ ...cfg, memo: '교사 메모' });
@@ -146,7 +146,12 @@ test('끈 문항은 보고서에서 빠지고 번호는 유지', async () => {
 test('탐구 4 그래프: 공개 전 제목에 날짜만, 같은 눈금 크기', async () => {
   const ad = applySetup(await load('khoa-assess-2025-26'), deployed());
   assert.equal(periodTitle(ad, 'a', false), '기간 A: 2022년 9월 4일 ~ 9월 8일');
-  assert.equal(periodTitle(ad, 'b', false), '기간 B: 2026년 9월 19일 ~ 9월 23일');
+  assert.equal(periodTitle(ad, 'b', false), '기간 B: 2022년 9월 25일 ~ 9월 29일');
+  const { periodTyphoon, periodCd } = await import('../../js/chart/assess.js');
+  assert.equal(periodCd(ad, 'b'), ad.past, '기간 B도 부산 2022년 9월 자료');
+  assert.match(periodTyphoon(ad, 'a').name, /힌남노/);
+  assert.ok(periodTyphoon(ad, 'a').km < 30);
+  assert.ok(periodTyphoon(ad, "b").km > 700, `기간 B 최근접 ${periodTyphoon(ad, 'b').km}`);
   assert.match(periodTitle(ad, 'b', true), /확인한 기압·바람이 상대적으로 안정적인 기간/);
   const [a, b] = inq4TideSpecs({ width: 600, height: 220, measure }, ad).map((s) => layoutChart(s).yDomain);
   assert.ok(Math.abs((a[1] - a[0]) - (b[1] - b[0])) < 1e-6);
@@ -185,17 +190,33 @@ test('10분 간격 예측(부산 2026-09): 정시 값은 1시간 예측과 같�
   assert.equal(inq1Series(other), other.st.DT_0005.predicted, '10분 자료가 없는 달은 1시간 자료');
 });
 
-test('문항 ④ 배치판: 위치 저장, 옮기지 않은 판은 빈 답, 이전 그림판 그림은 보관', () => {
+test('문항 ④ 배치판: 달의 위치각만 저장, 옮기지 않은 판은 빈 답, 이유 저장, 이전 형식은 보관', () => {
   const st = emptyState('x', 'v');
-  st.answers.q4 = {
-    spring: { sun: { x: 80, y: 120, placed: true }, earth: { x: 330, y: 120, placed: true }, moon: { x: 9999, y: 120, placed: true } },
-    neap: { sun: { x: 60, y: 245, placed: false }, earth: { x: 150, y: 262, placed: false }, moon: { x: 205, y: 236, placed: false } },
-  };
+  st.answers.q4 = { spring: { moon: { angle: 365, placed: true } }, neap: { moon: { angle: 45, placed: false } }, reason: '일직선' };
   let c = sanitizeState(JSON.parse(JSON.stringify(st)));
-  assert.equal(c.answers.q4.spring.moon.x, 560, '판 밖 좌표는 판 안으로');
+  assert.deepEqual(c.answers.q4.spring, { moon: { angle: 5, placed: true } });
   assert.equal(c.answers.q4.neap, null);
-  st.answers.q4 = { spring: { w: 640, h: 360, strokes: [{ c: '#1d2733', w: 3, p: [[1, 1], [50, 50]] }], texts: [] }, neap: null };
+  assert.equal(c.answers.q4.reason, '일직선');
+  st.answers.q4 = {
+    spring: { w: 640, h: 360, strokes: [{ c: '#1d2733', w: 3, p: [[1, 1], [50, 50]] }], texts: [] },
+    neap: { sun: { x: 80, y: 120, placed: true }, earth: { x: 330, y: 120, placed: true }, moon: { x: 430, y: 120, placed: true } },
+  };
   c = sanitizeState(JSON.parse(JSON.stringify(st)));
   assert.equal(c.answers.q4.spring, null);
-  assert.equal(c.answers.q4.oldDrawings.spring.strokes.length, 1, '이전 그림은 지우지 않고 보관');
+  assert.equal(c.answers.q4.neap, null);
+  assert.equal(c.answers.q4.oldDrawings.spring.strokes.length, 1, '이전 그림판 그림 보관');
+  assert.equal(c.answers.q4.oldOrbits.neap.moon.x, 430, '이전 배치판 배치 보관');
+});
+
+test('탐구 2 같은 축: 지역마다 기간 평균을 0으로, 세 그래프 세로 범위·눈금 동일', async () => {
+  const { inq2Specs, inq2Series } = await import('../../js/chart/assess.js');
+  const ad = applySetup(await load('khoa-assess-2025-26'), deployed());
+  const specs = inq2Specs({ width: 600, height: 190, measure }, ad, 'same');
+  const L = specs.map((sp) => layoutChart(sp));
+  assert.deepEqual(L[0].yDomain, L[1].yDomain);
+  assert.deepEqual(L[1].yDomain, L[2].yDomain);
+  assert.equal(L[0].yDomain[0], -L[0].yDomain[1]);
+  const d = inq2Series(ad, 'same')[1];
+  const raw = ad.st.DT_0005.predicted.points.find((p) => p.t === ad.win.inq2[0]).v;
+  assert.equal(Math.round((d.series.points.find((p) => p.t === ad.win.inq2[0]).v + d.mean) * 100) / 100, raw, '원래 값 = 차이 + 평균');
 });

@@ -152,22 +152,25 @@ try {
     assert.ok(await page.$('#inq1-daily svg polyline'));
     assert.ok(!(await visibleText(page)).includes('변동 폭 막대'));
   });
-  // ④ 태양·지구·달 끌어 놓기(대조), 키보드로 옮기기(소조)
+  // ④ 달만 공전 궤도 위에서 옮기기: 대조는 끌기(태양 반대편, 180° → 지구 왼쪽이 아니라 오른쪽 끝 0°), 소조는 키보드
   await page.$eval('#orbit-q4-spring', (e) => e.scrollIntoView({ block: 'center' }));
-  for (const [k, x, y] of [['sun', 80, 120], ['earth', 330, 120], ['moon', 430, 120]]) {
-    const hb = await page.locator(`#orbit-q4-spring [data-body=${k}]`).boundingBox();
+  {
+    const hb = await page.locator('#orbit-q4-spring [data-body=moon]').boundingBox();
     const sv = await page.locator('#orbit-q4-spring svg').boundingBox(); const sc = sv.width / 560;
-    await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await page.mouse.down(); await page.mouse.move(sv.x + x * sc, sv.y + y * sc, { steps: 6 }); await page.mouse.up();
+    await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await page.mouse.down();
+    await page.mouse.move(sv.x + 520 * sc, sv.y + 150 * sc, { steps: 8 }); await page.mouse.up(); // 지구(360,150)의 오른쪽 → 0°
   }
   await page.focus('#orbit-q4-neap [data-body=moon]');
-  for (let i = 0; i < 8; i++) await page.keyboard.press('ArrowUp');
+  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowLeft'); // 45° + 3×15° = 90°
+  await page.fill('#q4-reason', '대조일 때는 태양·지구·달이 일직선이 되어 인력이 더해지기 때문이다.');
   await page.waitForTimeout(300);
-  await check('탐구 1 ④: 천체를 끌어 놓은 위치 저장(마우스·키보드)', async () => {
+  await check('탐구 1 ④: 태양·지구 고정, 달은 궤도 위 위치각으로 저장(끌기·키보드), 이유 작성', async () => {
     const st = await stateOf(page);
-    assert.deepEqual(st.answers.q4.spring.sun, { x: 80, y: 120, placed: true });
-    assert.equal(st.answers.q4.spring.moon.x, 430);
-    assert.equal(st.answers.q4.neap.moon.placed, true);
-    assert.equal(st.answers.q4.neap.sun.placed, false);
+    assert.deepEqual(st.answers.q4.spring, { moon: { angle: 0, placed: true } });
+    assert.deepEqual(st.answers.q4.neap, { moon: { angle: 90, placed: true } });
+    assert.match(st.answers.q4.reason, /일직선/);
+    assert.equal(await page.$('#orbit-q4-spring [data-body=sun]'), null, '태양은 옮길 수 없음');
+    assert.equal(await page.$('#orbit-q4-spring [data-body=earth]'), null, '지구는 옮길 수 없음');
   });
   await page.click('#btn-reveal-moon'); await okDialog(page);
   await page.waitForSelector('#reveal-moon.done');
@@ -178,7 +181,9 @@ try {
     assert.equal(await page.$('#orbit-q4-spring [data-body]'), null, '고정 뒤에는 옮길 수 없음');
     const st = await stateOf(page);
     assert.equal(st.reveals.moon.answers.q3.spring, '2026-09-12');
-    assert.equal(st.reveals.moon.answers.q4.spring.earth.x, 330);
+    assert.equal(st.reveals.moon.answers.q4.spring.moon.angle, 0);
+    assert.match(st.reveals.moon.answers.q4.reason, /일직선/);
+    assert.equal(await page.$eval('#q4-reason', (e) => e.readOnly), true);
   });
 
   // ───── 3. 탐구 2 ─────
@@ -188,6 +193,12 @@ try {
     assert.equal(await page.$$eval('#inq2-charts .chart-view', (x) => x.length), 3);
     assert.match(await page.textContent('#datum-caution'), /높이의 기준\(0 cm\)이 달라/);
     assert.ok(await page.$('#inq2-map svg'));
+  });
+  await check('탐구 2: 같은 축(평균 0) — 세 그래프의 세로축 눈금이 똑같음', async () => {
+    const ticks = await page.$$eval('#inq2-charts .chart-view', (vs) => vs.map((v) => [...v.querySelectorAll('.chart-svg svg text')].map((t) => t.textContent).filter((x) => /^[−-]?\d+$/.test(x)).join(',')));
+    assert.equal(ticks.length, 3);
+    assert.ok(ticks[0].length > 0 && ticks[0] === ticks[1] && ticks[1] === ticks[2], ticks.join(' | '));
+    assert.match(await page.textContent('#inq2-charts'), /평균과의 차이/);
   });
   await page.click('#inq2-scale-own');
   await check('탐구 2: 세로 눈금 선택 저장', async () => assert.equal((await stateOf(page)).ui.inq2Scale, 'own'));
@@ -224,7 +235,7 @@ try {
     await noSpoiler(page, '탐구 4');
     const t = await visibleText(page);
     assert.match(t, /기간 A: 2022년 9월 4일 ~ 9월 8일/);
-    assert.match(t, /기간 B: 2026년 9월 19일 ~ 9월 23일/);
+    assert.match(t, /기간 B: 2022년 9월 25일 ~ 9월 29일/);
     assert.ok(!t.includes('안정적'));
     assert.ok(!t.includes('근거를 하나 이상'));
   });
@@ -239,7 +250,8 @@ try {
     assert.match(await page.textContent('#inq4-block-b h2'), /확인한 기압·바람이 상대적으로 안정적인 기간/);
     assert.match(await page.textContent('#inq4-typhoon'), /태풍 중심기압은 태풍 한가운데의 기압/);
     assert.match(await page.textContent('#ty-closest'), /2022-09-06 06:00 · 약 19 km/);
-    assert.match(await page.textContent('#ty-recent'), /915 km/);
+    assert.match(await page.textContent('#ty-recent'), /탈라스\(TALAS\), 약 803 km/);
+    assert.match(await page.textContent('#ty-a'), /힌남노\(HINNAMNOR\), 약 19 km/);
     assert.equal(await page.$eval('#ans-q9', (e) => e.readOnly), true);
   });
   await page.focus('#inq4-pressureSea-a');
@@ -328,6 +340,7 @@ try {
     assert.ok(body.includes('만조로 고른 지점: 2026-09-11 03:00'));
     assert.ok(body.includes('간조로 고른 지점: 2026-09-11 09:30'));
     assert.ok(body.includes('대조로 고른 날: 2026년 9월 12일'));
+    assert.ok(norm(body).includes(norm('조차가 크고 작은 이유: 대조일 때는 태양·지구·달이 일직선이 되어')));
     assert.ok(body.includes('조차: 112 cm'));
     assert.ok(body.includes('만조 2회 / 간조 2회 / 만조에서 다음 만조까지 약 12.4시간'));
     assert.ok(body.includes('인천 > 부산 > 묵호'));

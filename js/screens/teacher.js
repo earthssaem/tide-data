@@ -11,7 +11,7 @@ import {
   loadTeacherSetup, saveTeacherSetup, clearTeacherSetup, loadDeployedSetup, fmtLocal, parseLocal, monthRange,
 } from '../setup/setup.js';
 import { INQUIRIES, CONCLUSION, CIRCLED } from '../content/questions.js';
-import { inq1MainSpec, inq1MonthSpec, inq1Series, inq2Specs, inq4TideSpecs } from '../chart/assess.js';
+import { inq1MainSpec, inq1MonthSpec, inq1Series, inq2Specs, inq4TideSpecs, periodTyphoonText } from '../chart/assess.js';
 import { layoutChart } from '../chart/layout.js';
 import { layoutToSVG, screenMeasure } from '../chart/svg.js';
 import { $, h, confirmDialog, alertDialog, choiceDialog, downloadBlob, pickFile, toast } from '../util/dom.js';
@@ -249,17 +249,16 @@ function editor(app, T) {
 
   // 탐구 4
   const fs4 = h('fieldset', { class: 't-fieldset' }, h('legend', {}, '탐구 4 — 비교 기간(부산 관측 조위)'));
-  for (const [k, label, cd] of [['a', '기간 A', ad.past], ['b', '기간 B', ad.st[ad.rep]]]) {
-    if (!cd) continue;
-    const p0 = cd.observed.points[0].t, p1 = cd.observed.points.at(-1).t;
+  const opts4 = [...(ad.past ? dayOptions(ad.past.observed.points[0].t, ad.past.observed.points.at(-1).t - DAY) : []), ...dayOptions(ad.st[ad.rep].observed.points[0].t, ad.st[ad.rep].observed.points.at(-1).t - DAY)];
+  for (const [k, label] of [['a', '기간 A'], ['b', '기간 B']]) {
     const s0 = cfg.inq4[k].start.slice(0, 10);
     const len = Math.max(1, daysBetween(s0, cfg.inq4[k].end.slice(0, 10)));
     fs4.append(h('div', { class: 't-row' }, h('b', {}, `${label} 시작일 `),
-      sel(`t-inq4-${k}-start`, `${label} 시작일`, dayOptions(p0, p1 - DAY), s0, (v) => { cfg.inq4[k] = { start: `${v} 00:00`, end: `${addDaysStr(v, len)} 00:00` }; }),
+      sel(`t-inq4-${k}-start`, `${label} 시작일`, opts4, s0, (v) => { cfg.inq4[k] = { start: `${v} 00:00`, end: `${addDaysStr(v, len)} 00:00` }; }),
       h('b', {}, ' 길이 '), sel(`t-inq4-${k}-len`, `${label} 길이`, [3, 4, 5, 6, 7].map((n) => [String(n), `${n}일`]), String(len), (v) => { cfg.inq4[k].end = `${addDaysStr(s0, Number(v))} 00:00`; }),
-      h('span', { class: 'muted small' }, ` ${fmtRange(A.win[k][0], A.win[k][1], tz)}`)));
+      h('span', { class: 'muted small' }, ` ${fmtRange(A.win[k][0], A.win[k][1], tz)} · ${periodTyphoonText(A, k)}`)));
   }
-  fs4.append(h('p', { class: 'muted small' }, `학생에게는 [추가 자료 확인] 전까지 날짜와 관측 조위만 보이고, 확인 뒤 기간 B 제목에 ‘확인한 기압·바람이 상대적으로 안정적인 기간’이 붙습니다. ${ad.recentTyphoonCheck?.text || ''}`));
+  fs4.append(h('p', { class: 'muted small' }, `학생에게는 [추가 자료 확인] 전까지 날짜와 관측 조위만 보이고, 확인 뒤 기간 B 제목에 ‘확인한 기압·바람이 상대적으로 안정적인 기간’이 붙습니다. 기간 B는 기압·바람이 안정적인 기간으로 고르세요(시작일은 부산 2022년 9월 또는 2025-10~2026-09).`));
   fs4.append(chartBox('t-inq4-chart', 190, (ctx) => inq4TideSpecs(ctx, A, { revealed: false }), '탐구 4 미리보기'));
   card.append(fs4);
   if (!d0 || !d1) card.append(h('p', { class: 'notice notice-warn' }, '예측 조위 자료가 없습니다.'));
