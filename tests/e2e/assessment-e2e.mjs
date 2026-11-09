@@ -311,28 +311,15 @@ try {
     assert.equal(await phase(page2), 'ended');
   });
   await page2.screenshot({ path: join(OUT, 'asmt-ended.png') });
-  const [dl] = await Promise.all([page2.waitForEvent('download'), page2.click('.asmt-ended [data-act=download]')]);
-  const p = join(OUT, dl.suggestedFilename());
-  await dl.saveAs(p);
-  await check('기록 JSON 다운로드: 세션 ID·시작·종료·횟수·개별 이벤트 포함', async () => {
-    assert.match(dl.suggestedFilename(), /^화면이탈기록_3학년2반15번_김학생_asmt-.+\.json$/);
-    const j = JSON.parse(readFileSync(p, 'utf8'));
-    const s = j.sessions.find((x) => x.sessionId === sid);
-    assert.ok(s.startedAt && s.endedAt);
-    assert.equal(s.departureCount, nEnd);
-    assert.equal(s.departures.length, nEnd);
-    for (const d of s.departures) {
-      assert.ok(d.type && d.typeLabel && d.startedAt && Array.isArray(d.signals));
-      assert.ok('returnedAt' in d && 'durationMs' in d);
-    }
-    assert.ok(j.notice.some((x) => x.includes('무결성')));
-    assert.equal(j.student.name, '김학생');
+  await check('종료 화면: 이탈 기록 표시, 기록 받기(JSON) 버튼 없음(PDF 보고서에 포함)', async () => {
+    assert.equal(await page2.$('.asmt-ended [data-act=download]'), null);
+    assert.match(await page2.textContent('.asmt-ended'), new RegExp(`화면 이탈\\s*${nEnd}회`));
   });
   await page2.click('.asmt-ended [data-act=new]');
   await check('새 평가 시작 안내로 돌아감(버튼 클릭 전 전체화면 강제 진입 없음)', async () => {
     assert.equal(await phase(page2), 'idle');
     assert.equal(await isFs(page2), false);
-    assert.equal(await page2.$('.asmt-guide [data-act=download]'), null, '시작 안내에 지난 기록 받기 없음(교사 화면으로 옮김)');
+    assert.equal(await page2.$('.asmt-guide [data-act=download]'), null, '시작 안내에 기록 받기 없음');
     assert.ok(!(await overlayText(page2)).includes('지난 평가 기록'));
   });
 } catch (e) {

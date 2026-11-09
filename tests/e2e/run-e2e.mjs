@@ -291,6 +291,8 @@ try {
     assert.match(await page.textContent('#qt-q12'), /요인을 두 가지 이상 들고, 각 요인이 해수면 높이나 조차에 어떤 영향을 주는지/);
     assert.match(await page.textContent('#q-q13'), /문항 ⑪/);
     assert.match(await page.textContent('#qt-q13'), /다루지 않은 것 중/);
+    assert.equal(await page.$('#q-q12 .chip'), null, '⑩ 옆 분량 표시 없음');
+    assert.equal(await page.$('#q-q13 .chip'), null, '⑪ 옆 분량 표시 없음');
   });
   await page.waitForTimeout(800);
 
@@ -498,7 +500,8 @@ try {
   await check('교사용: 임시 후보에 교사 검토 필요 표시, 기본 설정 검증 통과', async () => {
     assert.ok(await tp.isVisible('#t-review-badge'));
     assert.match(await tp.textContent('#t-records-note'), /부정행위를 판정하거나 감점하지 마십시오/, '기록 해석 유의 사항은 교사 화면에');
-    assert.match(await tp.textContent('#t-records-dl'), /이 컴퓨터\(브라우저\)에 남은 화면 이탈 기록: \d+건/);
+    assert.equal(await tp.$('#t-records-dl'), null, '이탈 기록 받기 없음(PDF에 포함)');
+    assert.match(await tp.textContent('#t-records-note'), /PDF 보고서의 '화면 이탈 기록'/);
     assert.equal(await tp.$('#asmt-root .asmt-overlay:not([hidden])'), null);
     assert.equal(await tp.$$eval('#t-valid .t-v-error', (x) => x.length), 0);
     assert.match(await tp.textContent('#t-valid'), /모든 자료 KST 확인/);

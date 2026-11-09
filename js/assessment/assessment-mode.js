@@ -21,7 +21,7 @@
 import { ASSESSMENT_CONFIG as CFG } from './config.js';
 import {
   emptyLog, sanitizeLog, makeSessionId, newSession, recordDeparture, addSignal, closeIncident, endSession,
-  openIncident, departureCount, exportLog, localIso, fmtDurationKo, DEPARTURE_TYPES,
+  openIncident, departureCount, localIso, fmtDurationKo, DEPARTURE_TYPES,
 } from './session-log.js';
 
 // ───────── 저장소 ─────────
@@ -229,7 +229,6 @@ function showEnded(sessionId) {
       </dl>
       ${rows ? `<div class="asmt-table-wrap"><table class="asmt-table"><thead><tr><th>번호</th><th>유형(관찰된 신호)</th><th>이탈 시각</th><th>복귀 시각</th><th>지속 시간</th></tr></thead><tbody>${rows}</tbody></table></div>` : ''}
       <div class="asmt-actions">
-        <button type="button" class="asmt-btn asmt-btn-primary" data-act="download">화면 이탈 기록 받기(JSON)</button>
         <button type="button" class="asmt-btn" data-act="new">새 평가 시작 안내로</button>
       </div>
     </div>`;
@@ -237,7 +236,7 @@ function showEnded(sessionId) {
   pill.hidden = true;
   closeModal();
   blockContent(true);
-  overlay.querySelector('[data-act=download]')?.focus();
+  overlay.querySelector('[data-act=new]')?.focus();
 }
 
 // ───────── 진행 중 표시 ─────────
@@ -335,24 +334,6 @@ async function finishAssessment() {
   setPhase('ended', { sessionId: id });
   showEnded(id);
   emit('end');
-}
-
-function downloadLog() {
-  const log = readLog();
-  const work = readStudentWork();
-  const data = exportLog(log, { student: work?.student || null });
-  const st = work?.student;
-  const who = st ? `${st.grade}학년${st.klass}반${st.number}번_${st.name}` : '학생정보없음';
-  const sid = data.currentSessionId || 'none';
-  const name = `화면이탈기록_${who}_${sid}.json`.replace(/[\\/:*?"<>|\u0000-\u001f\s]/g, '_');
-  // 다운로드 자체가 저장 창을 띄워 포커스를 잃을 수 있으므로 앱 대화상자로 표시
-  armAppDialog('download');
-  const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
-  const a = document.createElement('a');
-  a.href = url; a.download = name; a.style.display = 'none';
-  root.append(a);
-  a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 4000);
 }
 
 // ───────── 이탈 감지 ─────────
@@ -496,7 +477,6 @@ function onRootClick(e) {
   else if (act === 'end') confirmEnd();
   else if (act === 'cancel-end') closeModal();
   else if (act === 'confirm-end') finishAssessment();
-  else if (act === 'download') downloadLog();
   else if (act === 'new') { setPhase('idle', { sessionId: null }); showGuide(); }
 }
 
