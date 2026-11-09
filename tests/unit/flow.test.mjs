@@ -119,14 +119,22 @@ test('보고서: 공개 전에는 기상·태풍·위상·⑪ 내용 없음, 공
   st.reveals.weather = { at: Date.now(), answers: { q9: st.answers.q9, q10: st.answers.q10 } };
   st.answers.q3.spring = '2026-09-01';
   st.answers.q10 = '바꾼 답';
-  st.answers.q11 = '해면기압이 크게 낮았다.';
+  const tA = ad.win.a[0] + 40 * 3600e3;
+  st.answers.q11 = { peak: { k: 'a', t: tA }, pressure: { k: 'a', t: tA + 3600e3 }, wind: null, pressureText: '해면기압이 크게 낮았다.', windText: '' };
   m = buildReport(ad, st);
   const q3 = answerLines(ad, st, ALL_QUESTIONS.find((q) => q.id === 'q3'));
   assert.match(q3[0], /9월 12일/);
   const s4 = m.sections.find((s) => s.key === 'inq4');
   const side = s4.items.find((x) => x.type === 'side');
   assert.equal(side.left, '바다에서 밀려옴');
-  assert.match(side.right, /해면기압/);
+  assert.match(side.right, /\(가\) 관측 조위가 가장 높았던 때: 기간 A · .* cm/);
+  assert.match(side.right, /\(나\) 해면기압이 가장 낮았던 때: 기간 A · .* hPa/);
+  assert.match(side.right, /저기압이 해수면을 높이는 까닭: 해면기압이 크게 낮았다\./);
+  assert.match(side.right, /\(다\) 풍속이 가장 강했던 때: \(기록하지 않음\)/);
+  assert.ok(m.missing.some((x) => x.qid === 'q11' && /\(다\) 시각 기록, \(다\) 설명/.test(x.label)), '⑨ 빠진 부분 안내');
+  const f6a = s4.items.find((x) => x.id === 'f6a');
+  const items6 = layoutFigure(f6a, { width: 480, measure }).flatMap((L) => L.items);
+  assert.ok(items6.some((it) => it.text === '최고(내가 고름)') && items6.some((it) => it.text === '최저(내가 고름)'));
   assert.ok(s4.items.some((x) => x.type === 'figure' && /확인한 기압·바람이 상대적으로 안정적인 기간/.test(x.caption)));
   assert.ok(m.sections[0].items.some((x) => x.type === 'table' && /달의 위상/.test(x.title)));
   // 그림은 실제로 그릴 수 있음(그래프 공유: 탐구 1 문항 ①②는 그림 하나)
@@ -250,4 +258,21 @@ test('탐구 3 쌓은 그래프: 조위·기압·풍속의 같은 시각이 같�
   const px = layoutFigure(f, { width: 487, measure, fontSize: 9 }).map((L) => L.tToX(t));
   assert.equal(px.length, 3);
   assert.ok(px.every((x) => Math.abs(x - px[0]) < 0.01), px.join(','));
+});
+
+test('문항 ⑨ 이전 형식(글 한 칸) 답은 지우지 않고 보관해 보고서에 표시', async () => {
+  const ad = applySetup(await load('khoa-assess-2025-26'), deployed());
+  const st = emptyState(ad.id, ad.dataVersion);
+  const raw = JSON.parse(JSON.stringify(st));
+  raw.answers.q11 = '해면기압이 크게 낮았다(이전 형식).';
+  const s2 = sanitizeState(raw);
+  assert.equal(s2.answers.q11.old, '해면기압이 크게 낮았다(이전 형식).');
+  assert.equal(s2.answers.q11.peak, null);
+  s2.reveals.weather = { at: Date.now(), answers: { q9: '', q10: '' } };
+  const q11 = ALL_QUESTIONS.find((q) => q.id === 'q11');
+  assert.deepEqual(answerLines(ad, s2, q11), ['(문항이 바뀌기 전에 쓴 답) 해면기압이 크게 낮았다(이전 형식).']);
+  // 이상한 기록 값은 버림
+  raw.answers.q11 = { peak: { k: 'c', t: 1 }, pressure: { k: 'a', t: 'x' }, wind: { k: 'b', t: 5 }, pressureText: 3 };
+  const s3 = sanitizeState(raw).answers.q11;
+  assert.equal(s3.peak, null); assert.equal(s3.pressure, null); assert.deepEqual(s3.wind, { k: 'b', t: 5 }); assert.equal(s3.pressureText, '');
 });

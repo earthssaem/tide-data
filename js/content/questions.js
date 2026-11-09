@@ -46,9 +46,22 @@ export const INQUIRIES = [
     questions: [
       { id: 'q9', no: 7, kind: 'text', text: '두 기간의 그래프는 어떻게 다른가요? 한 문장으로 쓰세요.', lockAfter: 'weather' },
       { id: 'q10', no: 8, kind: 'text', text: '그 차이가 생긴 원인을 추측해 한 문장으로 쓰세요.', lockAfter: 'weather' },
-      { id: 'q11', no: 9, kind: 'text', text: '기상·태풍 자료에서 근거를 하나 이상 들어 원인을 설명하세요.', hint: '1~2문장', afterReveal: 'weather', compareWith: 'q10' },
+      { id: 'q11', no: 9, kind: 'surge', text: '폭풍 해일 때 해수면을 높이는 두 요인(저기압, 강풍)이 이 자료에 나타나는지 확인하세요.', hint: '시각 기록 3개 · 설명 2개', tip: '그래프를 누르면 아래 표에 그 시각의 값이 나옵니다. 표 아래 버튼으로 기록하세요.', afterReveal: 'weather', compareWith: 'q10' },
     ],
   },
+];
+
+/**
+ * 문항 ⑨(q11)의 세부 문항 — 폭풍 해일의 해수면 상승 요인(저기압·강풍)을 자료에서 확인한다.
+ * rec: 그래프에서 고른 시각을 기록하는 칸(kind: 그 시각의 어떤 값을 함께 보여 줄지), text: 설명 칸
+ */
+export const Q11_PARTS = [
+  { key: 'peak', mark: '가', title: '해수면이 가장 높았던 때', rec: { kind: 'tide', button: '조위 최고로 기록', label: '관측 조위가 가장 높았던 때' },
+    text: '관측 조위가 가장 높았던 때를 그래프에서 골라 기록하세요.' },
+  { key: 'pressure', mark: '나', title: '저기압', rec: { kind: 'pressureSea', button: '기압 최저로 기록', label: '해면기압이 가장 낮았던 때' }, textKey: 'pressureText',
+    text: '해면기압이 가장 낮았던 때를 기록하고, 다른 기간의 기압과 비교하여 기압이 낮을 때 해수면이 높아지는 까닭을 쓰세요.' },
+  { key: 'wind', mark: '다', title: '강풍', rec: { kind: 'windSpeed', button: '풍속 최대로 기록', label: '풍속이 가장 강했던 때' }, textKey: 'windText',
+    text: '풍속이 가장 강했던 때를 기록하고, 다른 기간의 풍속과 비교하여 강한 바람이 해수면을 높이는 까닭을 쓰세요.' },
 ];
 
 export const CONCLUSION = {

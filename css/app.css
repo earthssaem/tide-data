@@ -547,3 +547,10 @@ textarea:focus { border-color: var(--teal); }
 .orbit-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .4rem; margin-top: .3rem; }
 .rp-orbit svg { background: #0f1b2d; }
 .answer-label { font-weight: 700; font-size: .92rem; margin: .6rem 0 .2rem; }
+
+/* 문항 ⑨: 세부 문항(가)(나)(다) */
+.subparts { list-style: none; margin: .4rem 0 0; padding: 0; display: grid; gap: .55rem; }
+.subpart { border: 1px solid var(--line); border-radius: 8px; padding: .5rem .65rem; background: #fff; }
+.subpart-title { margin: 0 0 .3rem; line-height: 1.5; }
+.rec-now { margin: 0 0 .35rem; padding: .3rem .5rem; background: #f4f6f8; border-radius: 6px; overflow-wrap: anywhere; }
+.rec-bar { margin-top: .4rem; }

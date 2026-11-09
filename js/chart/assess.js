@@ -271,7 +271,24 @@ export function periodTyphoonText(ad, k) {
   return b ? `이 기간(앞뒤 하루 포함) 부산에서 가장 가까웠던 태풍 중심: ${b.name.replace(/^\d{4}년 /, '')}, 약 ${Math.round(b.km)} km (기상청 태풍경로)` : '이 기간(앞뒤 하루 포함)에 기록된 태풍이 없습니다(기상청 태풍경로).';
 }
 
-export function inq4TideSpecs(ctx, ad, { revealed = false, cursor = {}, compact = false } = {}) {
+/** 문항 ⑨에서 기록한 시각의 값: kind = 'tide'|'pressureSea'|'windSpeed' */
+export function q11Value(ad, rec, kind) {
+  if (!rec) return null;
+  const cd = periodCd(ad, rec.k);
+  if (kind === 'tide') return valueAt(cd.observed, rec.t);
+  const p = cd.weather ? pointAt(cd.weather.points, rec.t) : null;
+  return p && p[kind] != null && !Number.isNaN(p[kind]) ? p[kind] : null;
+}
+
+/** 문항 ⑨에서 기록한 시각을 그 그래프에 표시(조위 최고 ▲, 기압 최저 ▼, 풍속 최대 ▲) */
+export function q11Marks(ad, q11, k, kind) {
+  const M = { tide: ['peak', '최고(내가 고름)', 'triangle', COLORS.pick, 'above'], pressureSea: ['pressure', '최저(내가 고름)', 'triangleDown', COLORS.pick2, 'below'], windSpeed: ['wind', '최대(내가 고름)', 'triangle', COLORS.pick, 'above'] }[kind];
+  const rec = M && q11?.[M[0]];
+  if (!rec || rec.k !== k) return [];
+  return [{ t: rec.t, v: q11Value(ad, rec, kind), label: M[1], shape: M[2], color: M[3], labelPos: M[4], vline: true }];
+}
+
+export function inq4TideSpecs(ctx, ad, { revealed = false, cursor = {}, compact = false, q11 = null } = {}) {
   const ks = ['a', 'b'];
   const doms = yDomains(ks.map((k) => ({ series: periodCd(ad, k).observed, t0: ad.win[k][0], t1: ad.win[k][1] })), 'same');
   const step = sharedTickStep(doms, (ctx.height || 230) - 90);
@@ -280,6 +297,7 @@ export function inq4TideSpecs(ctx, ad, { revealed = false, cursor = {}, compact 
     title: compact ? '관측 조위' : `부산 관측 조위 — ${periodTitle(ad, k, revealed)}`,
     subtitle: compact ? `${sampleTag(periodCd(ad, k)).replace(/^ · /, '')}` : `세로 눈금 간격은 두 기간이 같음(각자 가운데)${sampleTag(periodCd(ad, k))}`,
     color: k === 'a' ? COLORS.past : COLORS.recent, cursor: cursor[k] ?? null, dotMinSpacing: 7,
+    marks: revealed && q11 ? q11Marks(ad, q11, k, 'tide') : [],
   }));
 }
 
@@ -303,7 +321,7 @@ export function weatherDomain(ad, kind) {
   return [kind === 'windSpeed' ? 0 : lo - pad, hi + pad];
 }
 
-export function weatherSpec(ctx, ad, k, kind, { cursor = null, yDomain = null, title = true, compact = false } = {}) {
+export function weatherSpec(ctx, ad, k, kind, { cursor = null, yDomain = null, title = true, compact = false, q11 = null } = {}) {
   const cd = periodCd(ad, k);
   const view = ad.win[k];
   const K = WEATHER[kind];
@@ -314,6 +332,7 @@ export function weatherSpec(ctx, ad, k, kind, { cursor = null, yDomain = null, t
     y: { label: K.axis, domain: yDomain || weatherDomain(ad, kind) },
     cursor: cursor != null ? { t: cursor } : null,
     series: [], legend: [],
+    marks: q11 ? q11Marks(ad, q11, k, kind) : [],
   };
   if (!w || !w.fields?.[kind]) { spec.message = '기상 자료 미제공'; return spec; }
   if (kind === 'windDir') {

@@ -1,13 +1,14 @@
 // 탐구 3(내부 이름 inq4) — 특이한 변화 (부산 관측 조위: 기간 A·B)
 // 공개 전: 두 기간의 관측 조위만(실제 날짜 표시, 같은 눈금 크기). 기상·태풍 관련 표시 없음.
-// [추가 자료 확인] 후: 두 기간의 ASOS 해면기압·풍속·풍향(같은 시간 축), 시각 연결, 태풍 경로 지도.
+// [추가 자료 확인] 후: 두 기간의 조위·ASOS 해면기압·풍속(같은 시간 축, 가로축 맞춤), 시각 연결, 태풍 경로 지도.
+// 문항 ⑨: 폭풍 해일의 해수면 상승 요인(저기압·강풍) — 그래프에서 조위 최고·기압 최저·풍속 최대 시각을 기록하고 까닭을 쓴다.
 // 시각 연결(조위·기압·바람·태풍 시각을 함께 보기)은 자료의 시간대가 확인된 경우에만 켠다.
-import { h } from '../util/dom.js';
+import { h, toast } from '../util/dom.js';
 import { fmtNum, escapeHtml } from '../util/format.js';
 import { fmtDateTime } from '../util/time.js';
-import { INQUIRIES, OBSERVED_TEXT, CIRCLED } from '../content/questions.js';
+import { INQUIRIES, OBSERVED_TEXT, CIRCLED, Q11_PARTS, isEnabled } from '../content/questions.js';
 import { createPanel, SharedCursor, tipRow, staticLayoutHTML } from '../chart/panel.js';
-import { alignedPad, inq4TideSpecs, weatherSpec, periodTitle, periodCd, typhoonMapLayout, closestTyphoonPoint, fmtWx, valueAt, PERIOD_NAMES, periodTyphoonText } from '../chart/assess.js';
+import { alignedPad, inq4TideSpecs, weatherSpec, q11Value, periodTitle, periodCd, typhoonMapLayout, closestTyphoonPoint, fmtWx, valueAt, PERIOD_NAMES, periodTyphoonText } from '../chart/assess.js';
 import { screenMeasure } from '../chart/svg.js';
 import { loadKoreaMap } from '../chart/map.js';
 import { nearestValid, pointAt } from '../analysis/series.js';
@@ -26,6 +27,7 @@ export function render(app, container) {
   const timeOk = !!ad.timeBasis?.confirmed;
   const panels = [];
   const fixed = { a: null, b: null };
+  const canRecord = revealed && timeOk && isEnabled(Q11, ad.setup);
 
   container.append(inquiryHeader(def));
   const ws = h('div', { class: 'workspace' });
@@ -63,13 +65,13 @@ export function render(app, container) {
       const hostT = h('div', { class: 'chart-host', id: `inq4-tide-${k}` });
       block.append(hostT);
       const i = k === 'a' ? 0 : 1;
-      panels.push(createPanel({ host: hostT, height: 230, ariaLabel: `부산 관측 조위 ${PERIOD_NAMES[k]}`, cursor, build: (ctx) => inq4TideSpecs({ ...ctx, padLeft: alignedPad(ctx) }, ad, { revealed: true, compact: true })[i], pick: tidePick(k), describe: tideTip(k), onClick }));
+      panels.push(createPanel({ host: hostT, height: 230, ariaLabel: `부산 관측 조위 ${PERIOD_NAMES[k]}`, cursor, build: (ctx) => inq4TideSpecs({ ...ctx, padLeft: alignedPad(ctx) }, ad, { revealed: true, compact: true, q11: S().answers.q11 })[i], pick: tidePick(k), describe: tideTip(k), onClick }));
       for (const kind of WX) {
         const host = h('div', { class: 'chart-host', id: `inq4-${kind}-${k}` });
         block.append(host);
         panels.push(createPanel({
           host, height: 150, ariaLabel: `${kind} ${PERIOD_NAMES[k]}`, cursor,
-          build: (ctx) => weatherSpec({ ...ctx, padLeft: alignedPad(ctx) }, ad, k, kind, { compact: true }),
+          build: (ctx) => weatherSpec({ ...ctx, padLeft: alignedPad(ctx) }, ad, k, kind, { compact: true, q11: S().answers.q11 }),
           pick: (t) => { const p = cd.weather ? nearestValid(cd.weather.points, t, { key: kind, t0: ad.win[k][0], t1: ad.win[k][1] }) : null; return p ? { t: p.t, v: p[kind] } : null; },
           describe: (tg) => `<div class="tip-title">${escapeHtml(fmtDateTime(tg.t, tz))}</div>${tipRow(kind === 'pressureSea' ? '해면기압' : kind === 'windSpeed' ? '풍속' : '풍향', fmtWx(kind, tg.v))}`,
           onClick,
@@ -107,6 +109,26 @@ export function render(app, container) {
         h('tr', {}, h('th', {}, '관측 조위'), h('td', {}, valueAt(cd.observed, t) != null ? `${fmtNum(valueAt(cd.observed, t), 1)} cm` : '자료 없음')),
         h('tr', {}, h('th', {}, '해면기압'), h('td', {}, fmtWx('pressureSea', w?.pressureSea))),
         h('tr', {}, h('th', {}, '풍속'), h('td', {}, fmtWx('windSpeed', w?.windSpeed))))));
+    if (canRecord) {
+      box.append(h('div', { class: 'pick-bar rec-bar' }, h('span', { class: 'small' }, h('b', {}, `${CIRCLED[Q11.no]}에 기록 `)),
+        ...Q11_PARTS.map((P) => h('button', { type: 'button', class: 'btn btn-sm btn-secondary', id: `q11-rec-${P.key}-${k}`, onclick: () => record(P, k, t) }, P.rec.button))));
+    }
+  }
+
+  function record(P, k, t) {
+    store.update((s) => { s.answers.q11[P.key] = { k, t }; }, { topic: 'answer', immediate: true });
+    toast(`${P.rec.label}로 기록했습니다: ${PERIOD_NAMES[k]} · ${fmtDateTime(t, tz)}`);
+    panels.forEach((p) => p.render());
+    renderQ11Recs();
+  }
+
+  /** 기록한 시각과 그 시각의 값(글) */
+  function recText(P) {
+    const r = S().answers.q11?.[P.key];
+    if (!r) return null;
+    const v = q11Value(ad, r, P.rec.kind);
+    const val = P.rec.kind === 'tide' ? (v != null ? `관측 조위 ${fmtNum(v, 1)} cm` : '관측 조위 자료 없음') : `${P.rec.kind === 'pressureSea' ? '해면기압' : '풍속'} ${fmtWx(P.rec.kind, v)}`;
+    return `${PERIOD_NAMES[r.k]} · ${fmtDateTime(r.t, tz)} · ${val}`;
   }
 
   // ── 문항 ──
@@ -121,15 +143,45 @@ export function render(app, container) {
   const list2 = h('ol', { class: 'questions' });
   right.append(list2);
   const sh11 = questionShell(app, Q11);
+  const recBoxes = {};
   if (sh11) {
     if (!sh11.waiting) {
       const prev = answerOf(S(), Q10) || '';
       sh11.body.append(h('div', { class: 'compare-prev', id: 'q11-prev' },
         h('p', { class: 'compare-prev-title' }, `내가 ${CIRCLED[Q10.no]}에 쓴 추측(추가 자료 확인 전)`),
-        prev.trim() ? h('p', { class: 'compare-prev-text' }, prev) : h('p', { class: 'muted small' }, '(작성하지 않음)')),
-      textAnswer(app, Q11, { value: S().answers.q11, rows: 3, max: 800, placeholder: '기상·태풍 자료에서 근거를 하나 이상 들어 1~2문장으로 쓰세요.', onInput: (v) => store.update((s) => { s.answers.q11 = v; }, { topic: 'answer' }) }));
+        prev.trim() ? h('p', { class: 'compare-prev-text' }, prev) : h('p', { class: 'muted small' }, '(작성하지 않음)')));
+      if (!timeOk) sh11.body.append(h('p', { class: 'notice notice-warn small' }, '자료의 시간대가 확인되지 않아 그래프에서 시각을 기록할 수 없습니다. 설명만 쓰세요.'));
+      const parts = h('ol', { class: 'subparts', id: 'q11-parts' });
+      for (const P of Q11_PARTS) {
+        const li = h('li', { class: 'subpart', id: `q11-${P.key}` });
+        li.append(h('p', { class: 'subpart-title', id: `qt-q11-${P.key}` }, h('b', {}, `(${P.mark}) ${P.title}: `), P.text));
+        recBoxes[P.key] = h('p', { class: 'rec-now small', id: `q11-rec-${P.key}`, 'aria-live': 'polite' });
+        li.append(recBoxes[P.key]);
+        if (P.textKey) {
+          li.append(textAnswer(app, { id: `q11-${P.key}` }, {
+            id: `ans-q11-${P.key}`, value: S().answers.q11[P.textKey], rows: 2, max: 500,
+            placeholder: '다른 기간과 비교하여 1~2문장으로 쓰세요.',
+            onInput: (v) => store.update((s) => { s.answers.q11[P.textKey] = v; }, { topic: 'answer' }),
+          }));
+        }
+        parts.append(li);
+      }
+      sh11.body.append(parts);
+      const old = S().answers.q11?.old;
+      if (old) sh11.body.append(h('div', { class: 'compare-prev', id: 'q11-old' },
+        h('p', { class: 'compare-prev-title' }, `문항이 바뀌기 전에 쓴 ${CIRCLED[Q11.no]}의 답(보관)`), h('p', { class: 'compare-prev-text' }, old)));
+      renderQ11Recs();
     }
     list2.append(sh11.li);
+  }
+  function renderQ11Recs() {
+    for (const P of Q11_PARTS) {
+      const box = recBoxes[P.key];
+      if (!box) continue;
+      const t = recText(P);
+      box.textContent = '';
+      box.append(t ? h('span', {}, h('b', {}, '기록: '), t) : h('span', { class: 'muted' }, timeOk ? `아직 기록하지 않음 — 그래프를 누른 뒤 [${P.rec.button}]` : '시각 기록 없음'));
+    }
   }
   return { destroy() { panels.forEach((p) => p.destroy()); } };
 }

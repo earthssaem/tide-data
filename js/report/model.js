@@ -3,7 +3,7 @@
 // 학생이 그래프에서 고른 지점·날짜·구간은 그 문항의 그래프에 그대로 그려 넣는다(같은 그래프를 쓰는 문항은 그림 하나를 함께 씀).
 // 아직 공개하지 않은 자료(달의 위상, 기상·태풍)는 보고서에도 나오지 않는다. 교사용 메모는 넣지 않는다.
 
-import { INQUIRIES, CONCLUSION, REVEALS, CIRCLED, PREDICTED_TEXT, OBSERVED_TEXT, DATUM_CAUTION, isEnabled, qLabel } from '../content/questions.js';
+import { INQUIRIES, CONCLUSION, REVEALS, CIRCLED, Q11_PARTS, PREDICTED_TEXT, OBSERVED_TEXT, DATUM_CAUTION, isEnabled, qLabel } from '../content/questions.js';
 import { answerOf } from '../screens/common.js';
 import { howLabel } from '../state/attempts.js';
 import { fmtRange, fmtDateTime, fmtDateKo, DAY, HOUR } from '../util/time.js';
@@ -11,7 +11,7 @@ import { fmtNum } from '../util/format.js';
 import { layoutChart } from '../chart/layout.js';
 import {
   inq1MainSpec, inq1MonthSpec, inq2Specs, stationsMapLayout, inq4TideSpecs, weatherSpec,
-  typhoonMapLayout, closestTyphoonPoint, extremaIn, periodTitle, periodCd, PERIOD_NAMES, periodTyphoonText,
+  typhoonMapLayout, closestTyphoonPoint, extremaIn, q11Value, fmtWx, periodTitle, periodCd, PERIOD_NAMES, periodTyphoonText,
 } from '../chart/assess.js';
 
 const localTz = () => ({ offsetMinutes: -new Date().getTimezoneOffset(), label: '' });
@@ -56,6 +56,24 @@ export function answerLines(ad, state, q) {
         L.push(`고른 구간: ${fmtRange(a.t0, a.t1, tz)} (${Math.round((a.t1 - a.t0) / HOUR)}시간) · 변동 폭 예측 ${cm(p?.range)}, 관측 ${cm(o?.range)}`);
       }
       if (a.text?.trim()) L.push(a.text.trim());
+      return L;
+    }
+    case 'q11': {
+      const L = [];
+      const any = a && (Q11_PARTS.some((P) => a[P.key] || (P.textKey && String(a[P.textKey] || '').trim())));
+      if (any) {
+        for (const P of Q11_PARTS) {
+          const r = a[P.key];
+          let rec = '(기록하지 않음)';
+          if (r) {
+            const v = q11Value(ad, r, P.rec.kind);
+            rec = `${PERIOD_NAMES[r.k]} · ${fmtDateTime(r.t, tz)} · ${P.rec.kind === 'tide' ? `관측 조위 ${cm(v)}` : `${P.rec.kind === 'pressureSea' ? '해면기압' : '풍속'} ${fmtWx(P.rec.kind, v)}`}`;
+          }
+          L.push(`(${P.mark}) ${P.rec.label}: ${rec}`);
+          if (P.textKey) L.push(`(${P.mark}) ${P.title}이 해수면을 높이는 까닭: ${String(a[P.textKey] || '').trim() || '(작성하지 않음)'}`);
+        }
+      }
+      if (a && String(a.old || '').trim()) L.push(`(문항이 바뀌기 전에 쓴 답) ${a.old.trim()}`);
       return L;
     }
     default: return typeof a === 'string' && a.trim() ? [a.trim()] : [];
@@ -146,11 +164,13 @@ export function buildReport(ad, state, { attempts = null } = {}) {
   if (on(Q10)) s4.items.push(qa(Q10, 'inq4'));
   if (rv.weather) {
     s4.items.push({ type: 'note', text: `[추가 자료 확인] ${fmtDateTime(rv.weather.at, localTz())} — 아래는 그 뒤에 본 자료와 답입니다.` });
+    const q11Shown = on(Q11) ? state.answers.q11 : null;
+    const anyRec = q11Shown && Q11_PARTS.some((P) => q11Shown[P.key]);
     for (const k of ['a', 'b']) {
-      s4.items.push(fig(`f6${k}`, `그림 6${k === 'a' ? '가' : '나'}. ${periodTitle(ad, k, true)} — 관측 조위와 ${periodCd(ad, k).weather?.station?.name || '기상 관측 지점'} 해면기압·풍속(같은 시간 축, 가로축 맞춤)`, [
-        { height: 150, spec: (ctx) => inq4TideSpecs(ctx, ad, { revealed: true, compact: true })[k === 'a' ? 0 : 1] },
-        { height: 140, spec: (ctx) => weatherSpec(ctx, ad, k, 'pressureSea', { title: false }) },
-        { height: 125, spec: (ctx) => weatherSpec(ctx, ad, k, 'windSpeed', { title: false }) },
+      s4.items.push(fig(`f6${k}`, `그림 6${k === 'a' ? '가' : '나'}. ${periodTitle(ad, k, true)} — 관측 조위와 ${periodCd(ad, k).weather?.station?.name || '기상 관측 지점'} 해면기압·풍속(같은 시간 축, 가로축 맞춤)${anyRec ? ` — ${CIRCLED[Q11.no]}에서 고른 시각` : ''}`, [
+        { height: 150, spec: (ctx) => inq4TideSpecs(ctx, ad, { revealed: true, compact: true, q11: q11Shown })[k === 'a' ? 0 : 1] },
+        { height: 140, spec: (ctx) => weatherSpec(ctx, ad, k, 'pressureSea', { title: false, q11: q11Shown }) },
+        { height: 125, spec: (ctx) => weatherSpec(ctx, ad, k, 'windSpeed', { title: false, q11: q11Shown }) },
       ]));
     }
     if (ad.past?.typhoon) {
@@ -160,10 +180,15 @@ export function buildReport(ad, state, { attempts = null } = {}) {
     s4.items.push({ type: 'note', text: `${PERIOD_NAMES.b} 태풍: ${periodTyphoonText(ad, 'b')}` });
     if (on(Q11)) {
       const q = qa(Q11, 'inq4');
-      s4.items.push({ ...q, type: 'side', leftTitle: `${CIRCLED[Q10.no]} 추가 자료 확인 전의 추측`, left: (answerOf(state, Q10) || '').trim(), rightTitle: `${CIRCLED[Q11.no]} 기상·태풍 자료를 근거로 한 설명`, right: q.lines.join('\n') });
+      s4.items.push({ ...q, type: 'side', leftTitle: `${CIRCLED[Q10.no]} 추가 자료 확인 전의 추측`, left: (answerOf(state, Q10) || '').trim(), rightTitle: `${CIRCLED[Q11.no]} 폭풍 해일 요인(저기압·강풍) 확인`, right: q.lines.join('\n') });
+      const a11 = state.answers.q11 || {};
+      if (!q.empty) {
+        const miss = Q11_PARTS.flatMap((P) => [!a11[P.key] && ad.timeBasis?.confirmed ? `(${P.mark}) 시각 기록` : null, P.textKey && !String(a11[P.textKey] || '').trim() ? `(${P.mark}) 설명` : null]).filter(Boolean);
+        if (miss.length) missing.push({ step: 'inq4', qid: 'q11', label: `${qLabel(Q11)} ${miss.join(', ')}` });
+      }
     }
   } else {
-    s4.items.push({ type: 'note', text: '[추가 자료 확인]을 하지 않아 추가 자료와 문항 ⑪은 보고서에 없습니다.' });
+    s4.items.push({ type: 'note', text: `[추가 자료 확인]을 하지 않아 추가 자료와 문항 ${CIRCLED[Q11.no]}은 보고서에 없습니다.` });
     missing.push({ step: 'inq4', label: '[추가 자료 확인]을 아직 누르지 않음', reveal: true });
     if (on(Q11)) missing.push({ step: 'inq4', qid: 'q11', label: qLabel(Q11) });
   }

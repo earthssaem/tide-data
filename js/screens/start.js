@@ -19,7 +19,8 @@ const filled = (s) => {
   if (a.q4.spring || a.q4.neap) n++;
   if (a.q5.some(Boolean)) n++;
   if (Object.keys(a.q6).length) n++;
-  for (const k of ['q9', 'q10', 'q11', 'q12']) if (String(a[k] || '').trim()) n++;
+  for (const k of ['q9', 'q10', 'q12']) if (String(a[k] || '').trim()) n++;
+  if (a.q11 && (a.q11.peak || a.q11.pressure || a.q11.wind || a.q11.pressureText || a.q11.windText || a.q11.old)) n++;
   return n;
 };
 

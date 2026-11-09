@@ -36,7 +36,9 @@ export function emptyAnswers() {
     q5: ['', '', ''],
     q6: {},
     q7: { t0: null, t1: null, text: '' }, // 삭제된 탐구(예측과 실제)의 답 — 이미 쓴 내용은 지우지 않고 보관만
-    q8: '', q9: '', q10: '', q11: '', q12: '',
+    q8: '', q9: '', q10: '',
+    q11: { peak: null, pressure: null, wind: null, pressureText: '', windText: '' }, // ⑨ 폭풍 해일 요인(시각 기록 + 설명)
+    q12: '',
   };
 }
 
@@ -229,7 +231,13 @@ export function sanitizeAnswers(a) {
   const q7 = isObj(x.q7) ? x.q7 : {};
   const t0 = num(q7.t0), t1 = num(q7.t1);
   out.q7 = { t0: t0 != null && t1 != null && t1 > t0 ? t0 : null, t1: t0 != null && t1 != null && t1 > t0 ? t1 : null, text: shortText(q7.text, 2000) };
-  for (const k of ['q8', 'q9', 'q10', 'q11', 'q12']) out[k] = shortText(x[k], 4000);
+  for (const k of ['q8', 'q9', 'q10', 'q12']) out[k] = shortText(x[k], 4000);
+  const q11 = isObj(x.q11) ? x.q11 : {};
+  const rec = (r) => (isObj(r) && (r.k === 'a' || r.k === 'b') && num(r.t) != null ? { k: r.k, t: r.t } : null);
+  out.q11 = { peak: rec(q11.peak), pressure: rec(q11.pressure), wind: rec(q11.wind), pressureText: shortText(q11.pressureText, 1000), windText: shortText(q11.windText, 1000) };
+  // 이전 형식(글 한 칸)의 ⑨ 답은 지우지 않고 보관
+  const old11 = typeof x.q11 === 'string' ? x.q11 : q11.old;
+  if (String(old11 || '').trim()) out.q11.old = shortText(old11, 4000);
   return out;
 }
 
