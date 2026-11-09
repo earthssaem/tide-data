@@ -24,10 +24,10 @@ export function itemsToSVG(items) {
         out.push(`<polyline points="${it.pts.map((p) => n(p[0]) + ',' + n(p[1])).join(' ')}" fill="none" stroke="${it.stroke}" stroke-width="${it.width || 1}" stroke-linejoin="round"${dashAttr(it.dash)}/>`);
         break;
       case 'polygon':
-        out.push(`<polygon points="${it.pts.map((p) => n(p[0]) + ',' + n(p[1])).join(' ')}" fill="${it.fill || 'none'}" stroke="${it.stroke || 'none'}"${it.strokeWidth ? ` stroke-width="${it.strokeWidth}"` : ''}/>`);
+        out.push(`<polygon points="${it.pts.map((p) => n(p[0]) + ',' + n(p[1])).join(' ')}" fill="${it.fill || 'none'}" stroke="${it.stroke || 'none'}"${it.strokeWidth ? ` stroke-width="${it.strokeWidth}"` : ''}${it.dash ? ` stroke-dasharray="${it.dash.map(n).join(' ')}"` : ''}/>`);
         break;
       case 'circle':
-        out.push(`<circle cx="${n(it.cx)}" cy="${n(it.cy)}" r="${n(it.r)}" fill="${it.fill || 'none'}" stroke="${it.stroke || 'none'}"${it.strokeWidth ? ` stroke-width="${it.strokeWidth}"` : ''}/>`);
+        out.push(`<circle cx="${n(it.cx)}" cy="${n(it.cy)}" r="${n(it.r)}" fill="${it.fill || 'none'}" stroke="${it.stroke || 'none'}"${it.strokeWidth ? ` stroke-width="${it.strokeWidth}"` : ''}${it.dash ? ` stroke-dasharray="${it.dash.map(n).join(' ')}"` : ''}/>`);
         break;
       case 'text': {
         const anchor = it.anchor && it.anchor !== 'start' ? ` text-anchor="${it.anchor}"` : '';

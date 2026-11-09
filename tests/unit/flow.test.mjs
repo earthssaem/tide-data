@@ -361,3 +361,9 @@ test('학생이 고른 탐구 1·2 기간: 범위 안만 적용, 길이·24시�
   const m = buildReport(a, emptyState(base.id, base.dataVersion));
   assert.match(JSON.stringify(m.info), /한 달 2026-03 \(학생이 고른 기간\)/);
 });
+
+test('④ 배치판: 달은 궤도 위 네 자리(0°·90°·180°·270°)로 맞춤', async () => {
+  const { snapAngle, SLOTS } = await import('../../js/chart/orbit.js');
+  assert.deepEqual(SLOTS, [0, 90, 180, 270]);
+  assert.deepEqual([0, 32, 44, 46, 135.5, 181, 226, 314, 316, 359].map(snapAngle), [0, 0, 0, 90, 180, 180, 270, 270, 0, 0]);
+});

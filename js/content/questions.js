@@ -46,7 +46,7 @@ export const INQUIRIES = [
     questions: [
       { id: 'q9', no: 7, kind: 'text', text: '두 기간의 그래프는 어떻게 다른가요? 한 문장으로 쓰세요.', lockAfter: 'weather' },
       { id: 'q10', no: 8, kind: 'text', text: '그 차이가 생긴 원인을 추측해 한 문장으로 쓰세요.', lockAfter: 'weather' },
-      { id: 'q11', no: 9, kind: 'text', text: '추가 자료(기상·태풍)에서 근거를 찾아, 두 기간의 조위가 다르게 나타난 까닭을 서술하세요.', hint: '3~4문장', tip: '두 기간의 자료에서 무엇이 달랐는지(값과 시각)와, 그것이 해수면 높이를 어떻게 바꾸었는지를 함께 쓰세요.', afterReveal: 'weather', compareWith: 'q10' },
+      { id: 'q11', no: 9, kind: 'text', text: '추가 자료(기상·태풍)에서 근거를 찾아, 두 기간의 조위가 다르게 나타난 까닭을 서술하세요.', tip: '두 기간의 자료에서 무엇이 달랐는지(값과 시각)와, 그것이 해수면 높이를 어떻게 바꾸었는지를 함께 쓰세요.', afterReveal: 'weather', compareWith: 'q10' },
     ],
   },
 ];

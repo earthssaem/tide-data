@@ -257,7 +257,7 @@ export async function generatePdf(model, { onProgress = () => {} } = {}) {
         case 'circle': {
           const o = { x: X(it.cx), y: Y(it.cy), size: it.r };
           if (it.fill && it.fill !== 'none') o.color = hex(it.fill);
-          if (it.stroke && it.stroke !== 'none') { o.borderColor = hex(it.stroke); o.borderWidth = it.strokeWidth || 1; }
+          if (it.stroke && it.stroke !== 'none') { o.borderColor = hex(it.stroke); o.borderWidth = it.strokeWidth || 1; if (it.dash) o.borderDashArray = it.dash; }
           page.drawCircle(o);
           break;
         }

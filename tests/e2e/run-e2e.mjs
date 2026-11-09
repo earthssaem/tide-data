@@ -154,22 +154,23 @@ try {
     assert.ok(await page.$('#inq1-daily svg polyline'));
     assert.ok(!(await visibleText(page)).includes('변동 폭 막대'));
   });
-  // ④ 달 1·달 2를 공전 궤도 위에서 옮기기: 대조는 끌기(0°, 180°), 소조는 키보드(달 1만 35°→80°)
+  // ④ 달 1·달 2를 공전 궤도 위 네 자리(90° 간격)로 옮기기: 대조는 끌기(약 32° 지점에 놓아도 0°로, 180°), 소조는 키보드(달 1만 → 90°)
   await page.$eval('#orbit-q4-spring', (e) => e.scrollIntoView({ block: 'center' }));
-  for (const [i, x, y] of [[0, 520, 150], [1, 200, 150]]) {
+  for (const [i, x, y] of [[0, 440, 100], [1, 200, 150]]) {
     const hb = await page.locator(`#orbit-q4-spring [data-i="${i}"]`).boundingBox();
     const sv = await page.locator('#orbit-q4-spring svg').boundingBox(); const sc = sv.width / 560;
     await page.mouse.move(hb.x + hb.width / 2, hb.y + hb.height / 2); await page.mouse.down();
     await page.mouse.move(sv.x + x * sc, sv.y + y * sc, { steps: 8 }); await page.mouse.up(); // 지구(360,150)의 오른쪽 0°, 왼쪽 180°
   }
   await page.focus('#orbit-q4-neap [data-i="0"]');
-  for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowLeft'); // 35° + 3×15° = 80°
+  await page.keyboard.press('ArrowLeft'); // 처음 35° → 가장 가까운 다음 자리 90°
   await page.fill('#q4-reason', '대조일 때는 태양·지구·달이 일직선이 되어 인력이 더해지기 때문이다.');
   await page.waitForTimeout(300);
-  await check('탐구 1 ④: 태양·지구 고정, 달 1·달 2는 궤도 위 위치각으로 저장(끌기·키보드), 이유 작성', async () => {
+  await check('탐구 1 ④: 태양·지구 고정, 달 1·달 2는 궤도 위 네 자리(90° 간격)에만 놓임(끌기·키보드), 이유 작성', async () => {
     const st = await stateOf(page);
     assert.deepEqual(st.answers.q4.spring, { moons: [{ angle: 0, placed: true }, { angle: 180, placed: true }] });
-    assert.deepEqual(st.answers.q4.neap, { moons: [{ angle: 80, placed: true }, { angle: 125, placed: false }] });
+    assert.deepEqual(st.answers.q4.neap, { moons: [{ angle: 90, placed: true }, { angle: 125, placed: false }] });
+    assert.equal(await page.$$eval('#orbit-q4-spring svg circle[stroke-dasharray]', (x) => x.length) >= 4, true, '놓을 수 있는 네 자리 표시');
     assert.match(st.answers.q4.reason, /일직선/);
     assert.equal(await page.$('#orbit-q4-spring [data-body=sun]'), null, '태양은 옮길 수 없음');
     assert.equal(await page.$('#orbit-q4-spring [data-body=earth]'), null, '지구는 옮길 수 없음');
@@ -398,21 +399,33 @@ try {
     assert.ok(txt.includes('(작성하지 않음)'));
   });
   execFileSync('pdftoppm', ['-r', '50', '-png', pdfPath, join(OUT, 'pdfpage')]);
-  // 학생이 탐구 1·2 기간 고르기
+  // 학생이 탐구 1·2 기간 고르기: 달 목록·‹ ›(달), 시작일 목록·‹ ›(하루)
   await go(page, 'inq2');
-  await page.fill('#inq2-start', '2026-03-02');
+  await page.selectOption('#inq2-month', '2026-03');
   await page.waitForTimeout(400);
-  await check('기간 고르기(탐구 2): 시작 날짜를 바꾸면 그래프 기간이 바뀌고 저장, 처음 기간으로 되돌리기', async () => {
-    assert.equal((await stateOf(page)).period.inq2, '2026-03-02');
-    assert.match(await page.textContent('#inq2-charts h2'), /2026-03-02 00:00 ~ 03-05 00:00/);
-    assert.equal(await page.getAttribute('#inq2-start', 'min'), '2025-10-01');
-    assert.equal(await page.getAttribute('#inq2-start', 'max'), '2026-09-28');
+  await check('기간 고르기(탐구 2): 달을 고르면 같은 날짜로 그달에, ‹ ›로 하루씩, 달을 넘어 이동', async () => {
+    assert.equal((await stateOf(page)).period.inq2, '2026-03-10');
+    assert.match(await page.textContent('#inq2-charts h2'), /2026-03-10 00:00 ~ 03-13 00:00/);
+    await page.click('#inq2-day-next'); await page.waitForTimeout(300);
+    assert.equal((await stateOf(page)).period.inq2, '2026-03-11');
+    await page.selectOption('#inq2-start', '2026-03-31'); await page.waitForTimeout(300);
+    await page.click('#inq2-day-next'); await page.waitForTimeout(300);
+    assert.equal((await stateOf(page)).period.inq2, '2026-04-01');
+    assert.equal(await page.inputValue('#inq2-month'), '2026-04');
+    await page.click('#inq2-month-prev'); await page.waitForTimeout(300);
+    assert.equal((await stateOf(page)).period.inq2, '2026-03-01');
+    await page.selectOption('#inq2-month', '2026-09'); await page.waitForTimeout(300);
+    const opts = await page.$$eval('#inq2-start option', (o) => o.map((x) => x.value));
+    assert.equal(opts.at(-1), '2026-09-28', '자료 끝을 넘는 시작일은 없음');
+    await page.selectOption('#inq2-start', '2026-09-28'); await page.waitForTimeout(300);
+    assert.equal(await page.isDisabled('#inq2-day-next'), true);
+    assert.equal(await page.isDisabled('#inq2-month-next'), true);
     await page.click('#inq2-period-reset'); await page.waitForTimeout(300);
     assert.equal((await stateOf(page)).period.inq2, null);
     assert.match(await page.textContent('#inq2-charts h2'), /2026-09-10 00:00/);
   });
   await go(page, 'inq1');
-  await page.selectOption('#inq1-month', '2026-08');
+  await page.click('#inq1-month-prev');
   await page.waitForSelector('dialog[open]');
   await check('기간 고르기(탐구 1): 고른 지점·날이 새 기간 밖이면 확인 창, 취소하면 그대로', async () => {
     assert.match(await page.textContent('dialog[open]'), /①에서 고른 만조·간조 지점과 ③에서 고른 대조·소조 날짜/);
@@ -425,7 +438,7 @@ try {
   await page.selectOption('#inq1-month', '2026-08');
   await page.waitForSelector('dialog[open]');
   await okDialog(page); await page.waitForTimeout(400);
-  await check('기간 고르기(탐구 1): 달을 바꾸면 3일·한 달·24시간이 그달로, 밖의 기록은 지움, 보고서에 학생이 고른 기간', async () => {
+  await check('기간 고르기(탐구 1): 달을 바꾸면 3일·한 달·24시간이 그달로, 밖의 기록은 지움, ‹ ›로 하루씩(달 끝에서 다음 달로), 보고서에 학생이 고른 기간', async () => {
     const st = await stateOf(page);
     assert.equal(st.period.month, '2026-08');
     assert.equal(st.answers.q1.high, null); assert.equal(st.answers.q3.spring, null);
@@ -433,8 +446,14 @@ try {
     assert.match(await page.textContent('#inq1-main .data-line'), /10분 간격/, '다른 달도 10분 간격 자료');
     assert.equal(await page.$('#inq1-hourly-note'), null);
     assert.match(await page.textContent('#inq1-daily h2'), /2026-08/);
-    assert.equal(await page.getAttribute('#inq1-start', 'max'), '2026-08-29');
-    await page.fill('#inq1-start', '2026-08-20'); await page.waitForTimeout(400);
+    const opts = await page.$$eval('#inq1-start option', (o) => o.map((x) => x.value));
+    assert.equal(opts[0], '2026-08-01'); assert.equal(opts.at(-1), '2026-08-29', '3일이 그달 안에 들어가는 시작일만');
+    await page.selectOption('#inq1-start', '2026-08-29'); await page.waitForTimeout(300);
+    await page.click('#inq1-day-next'); await page.waitForTimeout(400);
+    assert.deepEqual({ ...(await stateOf(page)).period, inq2: undefined }, { month: '2026-09', inq1: '2026-09-01', inq2: undefined });
+    await page.click('#inq1-day-prev'); await page.waitForTimeout(400);
+    assert.equal((await stateOf(page)).period.inq1, '2026-08-29');
+    await page.selectOption('#inq1-start', '2026-08-20'); await page.waitForTimeout(400);
     assert.equal((await stateOf(page)).period.inq1, '2026-08-20');
     assert.match(await page.textContent('#inq1-main h2'), /2026-08-20 00:00 ~ 08-23 00:00/);
     await go(page, 'report');

@@ -12,6 +12,10 @@ export const ORBIT_R = 100;
 // 처음 위치: 대조·소조 어느 쪽과도 겹치지 않고, 서로 마주 보지도 않는 각도(정답 모양을 암시하지 않음). 옮기기 전에는 '배치하지 않음'
 export const START_ANGLES = [35, 125];
 export const MOON_COUNT = 2;
+// 달은 궤도 위 네 자리(90° 간격: 0°·90°·180°·270°)에만 놓인다(학생이 옮길 때 가장 가까운 자리로 맞춤)
+export const SLOT_STEP = 90;
+export const SLOTS = [0, 90, 180, 270];
+export const snapAngle = (a) => ((Math.round(a / SLOT_STEP) * SLOT_STEP) % 360 + 360) % 360;
 const rad = (d) => (d * Math.PI) / 180;
 
 export function moonXY(angle) {
@@ -44,7 +48,9 @@ export function orbitLayout(o, width = ORBIT_W, { forReport = false } = {}) {
   const pts = [];
   for (let d = 0; d <= 360; d += 6) { const p = moonXY(d); pts.push([S(p.x), S(p.y)]); }
   items.push({ type: 'polyline', pts, stroke: '#7d8ea6', width: S(1.2), dash: [S(5), S(4)] });
-  items.push({ type: 'text', x: S(EARTH.x), y: S(EARTH.y - ORBIT_R - 10), text: '달의 공전 궤도', size: S(10), anchor: 'middle', fill: '#8fa0b5' });
+  items.push({ type: 'text', x: S(EARTH.x + ORBIT_R * 0.72 + 6), y: S(EARTH.y - ORBIT_R * 0.72 - 6), text: '달의 공전 궤도', size: S(10), anchor: 'start', fill: '#8fa0b5' });
+  // 달을 놓을 수 있는 네 자리
+  for (const d of SLOTS) { const p = moonXY(d); items.push({ type: 'circle', cx: S(p.x), cy: S(p.y), r: S(MOON_R + 3), fill: 'none', stroke: '#56677f', strokeWidth: 1, dash: [S(2), S(2)] }); }
   // 태양·지구(고정)
   items.push({ type: 'circle', cx: S(SUN.x), cy: S(SUN.y), r: S(SUN.r), fill: '#f6b93b', stroke: '#c77d00', strokeWidth: 1.4 });
   items.push({ type: 'text', x: S(SUN.x), y: S(SUN.y + 4), text: SUN.label, size: S(12), anchor: 'middle', fill: '#5c3a00', bold: true });

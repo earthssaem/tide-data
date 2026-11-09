@@ -1,8 +1,8 @@
 // 태양·지구·달 배치판(문항 ④): 태양·지구는 고정, 달 1·달 2를 공전 궤도 위에서 끌어 옮긴다(있을 수 있는 위치를 모두).
-// 키보드: 달을 Tab으로 고른 뒤 ←/→(또는 ↑/↓)로 궤도를 따라 15°씩(Shift는 5°) 옮긴다.
+// 달은 궤도 위 네 자리(90° 간격)에만 놓인다. 키보드: 달을 Tab으로 고른 뒤 ←/→(또는 ↑/↓)로 다음 자리로 옮긴다.
 import { h } from '../util/dom.js';
 import { SCREEN_FONT, itemsToSVG } from '../chart/svg.js';
-import { orbitLayout, emptyOrbit, normalizeOrbit, isEmptyOrbit, moonXY, angleAt, MOON_R, ORBIT_W, ORBIT_H } from '../chart/orbit.js';
+import { orbitLayout, emptyOrbit, normalizeOrbit, isEmptyOrbit, moonXY, angleAt, snapAngle, SLOT_STEP, MOON_R, ORBIT_W, ORBIT_H } from '../chart/orbit.js';
 
 /**
  * @param {{value:object|null, onChange:(v)=>void, locked?:boolean, label:string, id:string}} o
@@ -15,7 +15,7 @@ export function createOrbitBoard({ value, onChange, locked = false, label = '배
   wrap.append(host);
   if (!locked) {
     wrap.append(h('div', { class: 'orbit-bar' },
-      h('span', { class: 'small muted' }, '달 1·달 2를 공전 궤도를 따라 옮기세요. 있을 수 있는 위치가 한 곳뿐이면 달 하나만 옮겨도 됩니다(키보드: Tab으로 달 고르기 → 화살표).'),
+      h('span', { class: 'small muted' }, '달 1·달 2를 궤도 위 점선 자리(네 곳) 중 하나로 옮기세요. 있을 수 있는 위치가 한 곳뿐이면 달 하나만 옮겨도 됩니다(키보드: Tab으로 달 고르기 → 화살표).'),
       h('button', { type: 'button', class: 'btn btn-ghost btn-xs', id: `${id}-reset`, onclick: () => { v = emptyOrbit(); commit(); } }, '처음 위치로')));
   }
   wrap.append(status);
@@ -51,7 +51,7 @@ export function createOrbitBoard({ value, onChange, locked = false, label = '배
     host.addEventListener('pointermove', (e) => {
       if (!drag) return;
       const p = pt(e);
-      v.moons[drag.i] = { angle: angleAt(p.x, p.y), placed: true };
+      v.moons[drag.i] = { angle: snapAngle(angleAt(p.x, p.y)), placed: true };
       render();
     });
     const end = () => { if (drag) { const i = drag.i; drag = null; commit(); host.querySelector(`[data-i="${i}"]`)?.focus?.(); } };
@@ -64,8 +64,8 @@ export function createOrbitBoard({ value, onChange, locked = false, label = '배
       const dir = { ArrowRight: -1, ArrowDown: -1, ArrowLeft: 1, ArrowUp: 1 }[e.key];
       if (!dir) return;
       e.preventDefault();
-      const step = e.shiftKey ? 5 : 15;
-      v.moons[i] = { angle: (((v.moons[i].angle + dir * step) % 360) + 360) % 360, placed: true };
+      const cur = v.moons[i].placed ? snapAngle(v.moons[i].angle) : snapAngle(v.moons[i].angle + dir * SLOT_STEP / 2);
+      v.moons[i] = { angle: v.moons[i].placed ? snapAngle(cur + dir * SLOT_STEP) : cur, placed: true };
       commit();
       host.querySelector(`[data-i="${i}"]`)?.focus();
     });
