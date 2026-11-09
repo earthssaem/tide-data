@@ -10,7 +10,7 @@ import {
   emptyState, loadLocal, clearLocal, makeBackupText, backupFilename, parseBackup, sanitizeState, setStorageMode, legacyList,
 } from './state/persistence.js';
 import { STEPS, INQUIRIES, CONCLUSION, REVEALS, CIRCLED, isEnabled } from './content/questions.js';
-import { applySetup, loadDeployedSetup, loadTeacherSetup, parseSetup, isOutdatedSetup } from './setup/setup.js';
+import { applySetup, applyStudentPeriod, loadDeployedSetup, loadTeacherSetup, parseSetup, isOutdatedSetup } from './setup/setup.js';
 import { loadKoreaMap } from './chart/map.js';
 import { checkSession, renderLogin, teacherFetch } from './teacher-auth.js';
 import { $, h, confirmDialog, alertDialog, downloadBlob, pickFile, toast } from './util/dom.js';
@@ -115,7 +115,8 @@ async function boot() {
     if (app.mode === 'student' && ad0.isSample) throw new Error('학생용 평가 설정에 기능 확인용 예시 데이터 사례가 지정되어 있습니다. 선생님께 알려 주세요(예시 데이터는 교사용 기능 시험에서만 씁니다).');
     const useCfg = cfg && cfg.caseId === caseId ? cfg : null;
     if (app.mode === 'preview' && !useCfg) app.setupSource = '설정 없음(사례 파일의 기본값)';
-    app.ad = applySetup(ad0, useCfg);
+    app.baseAd = applySetup(ad0, useCfg); // 교사 설정(학생이 고른 탐구 1·2 기간은 화면을 그릴 때 적용)
+    app.ad = app.baseAd;
     loadKoreaMap();
 
     const saved = loadLocal();
@@ -269,6 +270,7 @@ export function navigate(step, { replace = false, fromHash = false } = {}) {
   if (!app.store.state.started && step !== 'start') step = 'start';
   app.store.flush();
   if (app.current?.destroy) app.current.destroy();
+  app.ad = applyStudentPeriod(app.baseAd, app.store.state.period);
   app.currentStep = step;
   if (app.store.state.started) app.store.update((s) => { s.step = step; }, { topic: 'step', immediate: true });
   const screen = $('#screen');

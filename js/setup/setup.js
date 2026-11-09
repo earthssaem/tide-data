@@ -106,6 +106,53 @@ export function applySetup(ad, cfg) {
   };
 }
 
+// ───────────────────────── 학생이 고른 기간(탐구 1·2) ─────────────────────────
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+const p2 = (n) => String(n).padStart(2, '0');
+const dayStr = (t, tz) => { const p = parts(t, tz); return `${p.year}-${p2(p.month)}-${p2(p.day)}`; };
+const dayStart = (k, tz) => parseLocal(`${k} 00:00`, tz);
+
+/** 학생이 기간을 고를 수 있는 범위: 자료가 있는 달 전체, 탐구 1·2 길이(교사 설정) */
+export function periodBounds(base) {
+  const tz = base.tz;
+  const all = [monthRange(base.months[0], tz)[0], monthRange(base.months[base.months.length - 1], tz)[1]];
+  const L1 = base.win.inq1[1] - base.win.inq1[0], L2 = base.win.inq2[1] - base.win.inq2[0];
+  return { months: base.months, all, L1, L2, days1: Math.round(L1 / DAY), days2: Math.round(L2 / DAY),
+    inq1Min: (m) => dayStr(monthRange(m, tz)[0], tz), inq1Max: (m) => dayStr(monthRange(m, tz)[1] - L1, tz),
+    inq2Min: dayStr(all[0], tz), inq2Max: dayStr(all[1] - L2, tz) };
+}
+
+/**
+ * 학생이 고른 탐구 1·2 기간을 적용한다. 교사 설정(base)은 처음 보이는 기간(기본값)이고, 길이는 교사 설정 그대로.
+ * period = { month:'YYYY-MM'|null, inq1:'YYYY-MM-DD'|null(3일 시작), inq2:'YYYY-MM-DD'|null } — 범위를 벗어나면 무시.
+ * 탐구 1의 24시간(문항 ②)은 교사 설정과 같은 위치(3일 중 몇째 날)로 옮긴다.
+ */
+export function applyStudentPeriod(base, period) {
+  if (!period || (!period.month && !period.inq1 && !period.inq2)) return base;
+  const tz = base.tz;
+  const B = periodBounds(base);
+  let monthKeyStr = base.setup.month, month = base.win.month;
+  if (typeof period.month === 'string' && base.months.includes(period.month)) { monthKeyStr = period.month; month = monthRange(period.month, tz); }
+  let inq1 = null;
+  if (typeof period.inq1 === 'string' && DAY_RE.test(period.inq1)) {
+    const a = dayStart(period.inq1, tz);
+    if (Number.isFinite(a) && a >= month[0] && a + B.L1 <= month[1]) inq1 = [a, a + B.L1];
+  }
+  if (!inq1) {
+    // 달만 바꾼 경우: 교사 설정의 '그달 며칠째'를 새 달에 그대로(달 끝을 넘지 않게)
+    const rel = base.win.inq1[0] - base.win.month[0];
+    const a = Math.max(month[0], Math.min(month[1] - B.L1, month[0] + rel));
+    inq1 = [a, a + B.L1];
+  }
+  const off = Math.max(0, Math.min(B.L1 - DAY, base.win.count[0] - base.win.inq1[0]));
+  let inq2 = base.win.inq2;
+  if (typeof period.inq2 === 'string' && DAY_RE.test(period.inq2)) {
+    const a = dayStart(period.inq2, tz);
+    if (Number.isFinite(a) && a >= B.all[0] && a + B.L2 <= B.all[1]) inq2 = [a, a + B.L2];
+  }
+  return { ...base, setup: { ...base.setup, month: monthKeyStr }, win: { ...base.win, month, inq1, count: [inq1[0] + off, inq1[0] + off + DAY], inq2 }, studentPeriod: { ...period } };
+}
+
 // ───────────────────────── 설정 검증 ─────────────────────────
 function coverage(cd, kind, t0, t1, key = 'v') {
   const s = kind === 'weather' ? cd.weather : cd[kind];

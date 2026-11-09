@@ -55,6 +55,7 @@ export function emptyState(caseId, dataVersion) {
     // 자료 공개: 공개한 순간의 답을 따로 보관(이후 해당 답은 고정)
     reveals: { moon: null, weather: null },
     ui: { inq2Scale: 'same' },
+    period: { month: null, inq1: null, inq2: null }, // 학생이 고른 탐구 1·2 기간(없으면 교사 설정)
     createdAt: now,
     updatedAt: now,
     lastPdfAt: null,
@@ -269,6 +270,9 @@ export function sanitizeState(obj) {
   s.reveals = { moon: sanitizeReveal(rv.moon, 'moon'), weather: sanitizeReveal(rv.weather, 'weather') };
   const ui = isObj(obj.ui) ? obj.ui : {};
   s.ui = { inq2Scale: ui.inq2Scale === 'own' ? 'own' : 'same' };
+  const pd = isObj(obj.period) ? obj.period : {};
+  const okS = (v, re) => (typeof v === 'string' && re.test(v) ? v : null);
+  s.period = { month: okS(pd.month, /^\d{4}-\d{2}$/), inq1: okS(pd.inq1, /^\d{4}-\d{2}-\d{2}$/), inq2: okS(pd.inq2, /^\d{4}-\d{2}-\d{2}$/) };
   s.createdAt = num(obj.createdAt) ?? s.createdAt;
   s.updatedAt = num(obj.updatedAt) ?? s.updatedAt;
   s.lastPdfAt = num(obj.lastPdfAt);

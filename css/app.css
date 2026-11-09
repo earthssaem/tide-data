@@ -558,3 +558,8 @@ textarea:focus { border-color: var(--teal); }
 .think-explain ul { margin: .35rem 0; padding-left: 1.1rem; }
 .think-explain li { margin: .2rem 0; }
 .think-note { margin: .4rem 0 0; }
+
+/* 탐구 1·2 기간 고르기 */
+.period-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .9rem; padding: .55rem .8rem; margin-bottom: .7rem; background: #f4f6f8; border: 1px solid var(--line); border-radius: 10px; }
+.period-field { display: inline-flex; align-items: center; gap: .35rem; font-size: .9rem; }
+.period-field select, .period-field input { font: inherit; padding: .25rem .4rem; border: 1px solid var(--line); border-radius: 6px; background: #fff; }

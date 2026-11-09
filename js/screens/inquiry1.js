@@ -8,6 +8,7 @@ import { inq1MainSpec, inq1MonthSpec, inq1Series } from '../chart/assess.js';
 import { nearestValid } from '../analysis/series.js';
 import { inquiryHeader, questionShell, answerOf, numberInput, textAnswer } from './common.js';
 import { createOrbitBoard } from './orbit-board.js';
+import { periodBar } from './period.js';
 
 const dayText = (k) => { if (!k) return '—'; const [y, m, d] = k.split('-').map(Number); const w = '일월화수목금토'[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]; return `${y}년 ${m}월 ${d}일(${w})`; };
 
@@ -26,6 +27,8 @@ export function render(app, container) {
   const right = h('aside', { class: 'qpanel', 'aria-label': '문항과 답' });
   ws.append(left, right);
   container.append(ws);
+
+  left.append(periodBar(app, 'inq1'));
 
   // ── 그래프 1: 3일 예측 조위 ──
   let current = null; // 그래프에서 누른 점

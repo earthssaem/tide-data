@@ -265,6 +265,7 @@ function editor(app, T) {
 
   // 분석 연월
   const fs1 = h('fieldset', { class: 't-fieldset' }, h('legend', {}, '기본 분석 연월 (탐구 1의 3일·한 달 그래프)'));
+  fs1.append(h('p', { class: 'notice notice-info small', id: 't-period-note' }, '탐구 1(달·3일 시작 날짜)과 탐구 2(시작 날짜)의 기간은 학생이 화면에서 바꿀 수 있습니다. 여기서 정한 값은 학생에게 처음 보이는 기간이고, 길이(3일 등)와 문항 ②의 24시간 위치(3일 중 몇째 날)는 여기 설정을 따릅니다. 학생이 고른 기간은 보고서에 표시됩니다.'));
   fs1.append(h('div', { class: 't-row' }, sel('t-month', '분석 연월', ad.months.map((m) => [m, m]), cfg.month, (v) => {
     cfg.month = v;
     const [m0] = monthRange(v, tz);

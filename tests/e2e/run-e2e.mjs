@@ -389,6 +389,46 @@ try {
     assert.ok(txt.includes('(작성하지 않음)'));
   });
   execFileSync('pdftoppm', ['-r', '50', '-png', pdfPath, join(OUT, 'pdfpage')]);
+  // 학생이 탐구 1·2 기간 고르기
+  await go(page, 'inq2');
+  await page.fill('#inq2-start', '2026-03-02');
+  await page.waitForTimeout(400);
+  await check('기간 고르기(탐구 2): 시작 날짜를 바꾸면 그래프 기간이 바뀌고 저장, 처음 기간으로 되돌리기', async () => {
+    assert.equal((await stateOf(page)).period.inq2, '2026-03-02');
+    assert.match(await page.textContent('#inq2-charts h2'), /2026-03-02 00:00 ~ 03-05 00:00/);
+    assert.equal(await page.getAttribute('#inq2-start', 'min'), '2025-10-01');
+    assert.equal(await page.getAttribute('#inq2-start', 'max'), '2026-09-28');
+    await page.click('#inq2-period-reset'); await page.waitForTimeout(300);
+    assert.equal((await stateOf(page)).period.inq2, null);
+    assert.match(await page.textContent('#inq2-charts h2'), /2026-09-10 00:00/);
+  });
+  await go(page, 'inq1');
+  await page.selectOption('#inq1-month', '2026-08');
+  await page.waitForSelector('dialog[open]');
+  await check('기간 고르기(탐구 1): 고른 지점·날이 새 기간 밖이면 확인 창, 취소하면 그대로', async () => {
+    assert.match(await page.textContent('dialog[open]'), /①에서 고른 만조·간조 지점과 ③에서 고른 대조·소조 날짜/);
+    await page.click('dialog[open] button[value=cancel]'); await page.waitForTimeout(300);
+    const st = await stateOf(page);
+    assert.equal(st.period.month, null);
+    assert.ok(st.answers.q1.high && st.answers.q3.spring);
+    assert.equal(await page.inputValue('#inq1-month'), '2026-09');
+  });
+  await page.selectOption('#inq1-month', '2026-08');
+  await page.waitForSelector('dialog[open]');
+  await okDialog(page); await page.waitForTimeout(400);
+  await check('기간 고르기(탐구 1): 달을 바꾸면 3일·한 달·24시간이 그달로, 밖의 기록은 지움, 보고서에 학생이 고른 기간', async () => {
+    const st = await stateOf(page);
+    assert.equal(st.period.month, '2026-08');
+    assert.equal(st.answers.q1.high, null); assert.equal(st.answers.q3.spring, null);
+    assert.match(await page.textContent('#inq1-main h2'), /2026-08-10 00:00 ~ 08-13 00:00/);
+    assert.match(await page.textContent('#inq1-daily h2'), /2026-08/);
+    assert.equal(await page.getAttribute('#inq1-start', 'max'), '2026-08-29');
+    await page.fill('#inq1-start', '2026-08-20'); await page.waitForTimeout(400);
+    assert.equal((await stateOf(page)).period.inq1, '2026-08-20');
+    assert.match(await page.textContent('#inq1-main h2'), /2026-08-20 00:00 ~ 08-23 00:00/);
+    await go(page, 'report');
+    assert.match(await page.textContent('.report-paper'), /3일 2026-08-20 00:00 ~ 08-23 00:00 \(KST\) · 한 달 2026-08 \(학생이 고른 기간\)/);
+  });
   // 재응시 공정성: 같은 학생이 새로 시작하면 이미 공개한 단계의 답은 처음 공개할 때 답으로 고정
   const beforeRetake = await stateOf(page);
   await go(page, 'start');

@@ -466,6 +466,8 @@ function onClickCapture(e) {
   if (!(t instanceof Element)) return;
   if (t.matches('input[type=file]')) armAppDialog('file-picker');
   else if (t.matches('a[download]') && !root.contains(t)) armAppDialog('download');
+  // 날짜·목록 선택(태블릿에서는 시스템 선택 창이 떠 포커스를 잃을 수 있음)
+  else if (t.matches('input[type=date], select') && !root.contains(t)) armAppDialog('picker');
 }
 
 function onRootClick(e) {

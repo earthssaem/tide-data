@@ -237,8 +237,8 @@ export function infoRows(ad, state) {
   return [
     ['학생', studentLine(state.student)],
     ['관측소', ad.stationList.map((s) => `${s.name}(${s.id}, ${s.sea})`).join(', ') + ' · 대표 관측소 부산'],
-    ['탐구 1 (부산 예측)', `3일 ${fmtRange(W.inq1[0], W.inq1[1], tz)} · 한 달 ${ad.setup.month}`],
-    ['탐구 2 (세 지역 예측)', fmtRange(W.inq2[0], W.inq2[1], tz)],
+    ['탐구 1 (부산 예측)', `3일 ${fmtRange(W.inq1[0], W.inq1[1], tz)} · 한 달 ${ad.setup.month}${ad.studentPeriod?.month || ad.studentPeriod?.inq1 ? ' (학생이 고른 기간)' : ''}`],
+    ['탐구 2 (세 지역 예측)', `${fmtRange(W.inq2[0], W.inq2[1], tz)}${ad.studentPeriod?.inq2 ? ' (학생이 고른 기간)' : ''}`],
     ['탐구 3 (부산 관측)', `${PERIOD_NAMES.a} ${fmtRange(W.a[0], W.a[1], tz)} / ${PERIOD_NAMES.b} ${fmtRange(W.b[0], W.b[1], tz)}`],
     ['시간대', `${tz.name || tz.label}${ad.timeBasis?.confirmed ? ' — 공식 자료와 대조해 확인' : ' — 확인되지 않음'}`],
     ['추가 자료 확인', rv.weather ? fmtDateTime(rv.weather.at, localTz()) : '하지 않음'],

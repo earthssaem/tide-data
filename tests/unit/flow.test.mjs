@@ -328,3 +328,33 @@ test('보고서 화면 이탈 기록: 진행 중 세션 자세히, 같은 시간
   assert.equal(buildReport(ad, st, { departures: null }).sections.find((s) => s.key === 'departures'), undefined);
   assert.match(JSON.stringify(buildReport(ad, st, { departures: { current: null, others: [], at: now } }).sections.find((s) => s.key === 'departures')), /진행 중인 평가가 없을 때/);
 });
+
+test('학생이 고른 탐구 1·2 기간: 범위 안만 적용, 길이·24시간 위치는 교사 설정, 저장 형식 정리', async () => {
+  const { applyStudentPeriod, periodBounds } = await import('../../js/setup/setup.js');
+  const base = applySetup(await load('khoa-assess-2025-26'), deployed());
+  const iso = (t) => new Date(t + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' ');
+  assert.equal(applyStudentPeriod(base, { month: null, inq1: null, inq2: null }), base);
+  const a = applyStudentPeriod(base, { month: '2026-03', inq1: null, inq2: '2025-12-24' });
+  assert.equal(a.setup.month, '2026-03');
+  assert.equal(iso(a.win.month[0]), '2026-03-01 00:00');
+  assert.equal(iso(a.win.inq1[0]), '2026-03-10 00:00', '달만 바꾸면 교사 설정의 그달 며칠째 그대로');
+  assert.equal(a.win.inq1[1] - a.win.inq1[0], base.win.inq1[1] - base.win.inq1[0]);
+  assert.equal(a.win.count[0] - a.win.inq1[0], base.win.count[0] - base.win.inq1[0], '24시간은 3일 중 같은 날');
+  assert.equal(iso(a.win.inq2[0]), '2025-12-24 00:00');
+  assert.deepEqual(a.win.a, base.win.a, '탐구 3 기간은 그대로');
+  const b = applyStudentPeriod(base, { month: '2026-02', inq1: '2026-02-27', inq2: '2026-09-29' });
+  assert.equal(iso(b.win.inq1[0]), '2026-02-10 00:00', '달 밖으로 넘치는 3일은 무시');
+  assert.deepEqual(b.win.inq2, base.win.inq2, '자료 밖으로 넘치는 기간은 무시');
+  assert.deepEqual(applyStudentPeriod(base, { month: '2030-01', inq1: 'x', inq2: null }).win.month, base.win.month);
+  const B = periodBounds(base);
+  assert.equal(B.inq1Max('2026-02'), '2026-02-26');
+  assert.equal(B.inq2Min, '2025-10-01'); assert.equal(B.inq2Max, '2026-09-28');
+  const raw = JSON.parse(JSON.stringify(emptyState(base.id, base.dataVersion)));
+  raw.period = { month: '2026-03', inq1: '2026-03-05', inq2: 'bad' };
+  assert.deepEqual(sanitizeState(raw).period, { month: '2026-03', inq1: '2026-03-05', inq2: null });
+  delete raw.period;
+  assert.deepEqual(sanitizeState(raw).period, { month: null, inq1: null, inq2: null }, '이전 저장분은 교사 설정 기간');
+  // 보고서에 학생이 고른 기간 표시
+  const m = buildReport(a, emptyState(base.id, base.dataVersion));
+  assert.match(JSON.stringify(m.info), /한 달 2026-03 \(학생이 고른 기간\)/);
+});

@@ -9,6 +9,7 @@ import { screenMeasure } from '../chart/svg.js';
 import { loadKoreaMap } from '../chart/map.js';
 import { nearestValid } from '../analysis/series.js';
 import { inquiryHeader, questionShell } from './common.js';
+import { periodBar } from './period.js';
 
 export function render(app, container) {
   const { ad, store } = app;
@@ -26,6 +27,7 @@ export function render(app, container) {
   ws.append(left, right);
   container.append(ws);
 
+  left.append(periodBar(app, 'inq2'));
   const card = h('div', { class: 'card chart-card', id: 'inq2-charts' });
   const seg = h('div', { class: 'seg', role: 'radiogroup', 'aria-label': '세로 눈금' });
   const mk = (val, label) => {
