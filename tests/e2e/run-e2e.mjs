@@ -211,10 +211,23 @@ try {
     assert.match(await page.textContent('#inq2-charts'), /지역별 확대\(지역마다 눈금이 다름/);
   });
   await page.click('#inq2-scale-same');
-  await check('탐구 2: 잠깐 생각하기 — 평가 제외 표시, 설명은 처음에 접힘, 버튼으로 펼침·접기', async () => {
+  await check('탐구 2: 잠깐 생각하기 — 평가 제외 표시, ⑤⑥을 다 쓰기 전에는 [설명 보기]를 열 수 없음', async () => {
     assert.match(await page.textContent('#think2'), /💭 잠깐 생각하기 · 평가에 포함되지 않아요/);
     assert.match(await page.textContent('#think2'), /같은 달과 태양의 영향을 받는데, 지역마다 조차가 다른 이유는 무엇일까요\?/);
     assert.match(await page.textContent('#think2'), /힌트: 바다의 깊이와 해안의 모양을 떠올려 보세요\./);
+    assert.equal(await page.isVisible('#think2-explain'), false);
+    assert.equal(await page.isDisabled('#think2-toggle'), true);
+    assert.match(await page.textContent('#think2-gate'), /⑤·⑥을 모두 쓰면 설명을 볼 수 있어요/);
+  });
+  await page.fill('#think2-input', '서해는 바다가 얕고 만이 안쪽으로 좁아져서');
+  await page.selectOption('#q5-0', 'DT_0001'); await page.selectOption('#q5-1', 'DT_0005'); await page.selectOption('#q5-2', 'DT_0006');
+  await page.check('#q6-DT_0001-0'); await page.fill('#q6-DT_0001-reason', '하루에 두 번 비슷한 높이');
+  await page.check('#q6-DT_0006-3'); await page.fill('#q6-DT_0006-reason', '변화가 작아 판단이 어려움');
+  await check('탐구 2: ⑥의 한 지역이라도 비어 있으면 여전히 잠김', async () => assert.equal(await page.isDisabled('#think2-toggle'), true));
+  await page.check('#q6-DT_0005-0'); await page.fill('#q6-DT_0005-reason', '하루 두 번 반복');
+  await check('탐구 2: ⑤⑥을 다 쓰면 [설명 보기]로 펼침·접기, 설명은 처음에 접힘', async () => {
+    assert.equal(await page.isDisabled('#think2-toggle'), false);
+    assert.equal((await page.textContent('#think2-gate')).trim(), '');
     assert.equal(await page.isVisible('#think2-explain'), false);
     await page.click('#think2-toggle');
     assert.equal(await page.isVisible('#think2-explain'), true);
@@ -226,10 +239,6 @@ try {
     await page.click('#think2-toggle');
     assert.equal(await page.isVisible('#think2-explain'), false);
   });
-  await page.fill('#think2-input', '서해는 바다가 얕고 만이 안쪽으로 좁아져서');
-  await page.selectOption('#q5-0', 'DT_0001'); await page.selectOption('#q5-1', 'DT_0005'); await page.selectOption('#q5-2', 'DT_0006');
-  await page.check('#q6-DT_0001-0'); await page.fill('#q6-DT_0001-reason', '하루에 두 번 비슷한 높이');
-  await page.check('#q6-DT_0006-3'); await page.fill('#q6-DT_0006-reason', '변화가 작아 판단이 어려움');
 
   // ───── 4. 탐구 3(특이한 변화) ─────
   await go(page, 'inq4');

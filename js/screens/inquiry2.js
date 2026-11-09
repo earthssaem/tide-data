@@ -9,6 +9,7 @@ import { screenMeasure } from '../chart/svg.js';
 import { loadKoreaMap } from '../chart/map.js';
 import { nearestValid } from '../analysis/series.js';
 import { inquiryHeader, questionShell } from './common.js';
+import { isEnabled } from '../content/questions.js';
 import { periodBar } from './period.js';
 
 export function render(app, container) {
@@ -113,6 +114,7 @@ export function render(app, container) {
     }
     list.append(sh6.li);
   }
+  let unsub = null;
   right.append(thinkCard());
 
   /** 잠깐 생각하기(선택·평가 제외): 한 줄 입력 + [설명 보기](처음엔 접힘) */
@@ -125,15 +127,33 @@ export function render(app, container) {
       h('p', {}, T.explain.lead),
       h('ul', {}, ...T.explain.regions.map(([k, v]) => h('li', {}, h('b', {}, `${k}: `), v))),
       h('p', { class: 'think-note' }, h('b', {}, T.explain.note)));
-    const btn = h('button', { type: 'button', class: 'btn btn-sm btn-secondary', id: 'think2-toggle', 'aria-expanded': 'false', 'aria-controls': 'think2-explain' }, '설명 보기');
+    const btn = h('button', { type: 'button', class: 'btn btn-sm btn-secondary', id: 'think2-toggle', 'aria-expanded': 'false', 'aria-controls': 'think2-explain', 'aria-describedby': 'think2-gate' }, '설명 보기');
+    const gate = h('span', { class: 'small muted', id: 'think2-gate' });
+    // ⑤⑥을 모두 쓴 뒤에만 설명을 열 수 있다(설명에 ⑤의 답이 드러나므로)
+    const done56 = () => {
+      const a = S().answers;
+      const on5 = isEnabled(Q5, ad.setup), on6 = isEnabled(Q6, ad.setup);
+      const ok5 = !on5 || a.q5.every(Boolean);
+      const ok6 = !on6 || ad.stationList.every((st) => a.q6[st.id]?.type && String(a.q6[st.id]?.reason || '').trim());
+      return ok5 && ok6;
+    };
+    const refresh = () => {
+      const ok = done56();
+      btn.disabled = !ok;
+      gate.textContent = ok ? '' : `${[isEnabled(Q5, ad.setup) && '⑤', isEnabled(Q6, ad.setup) && '⑥'].filter(Boolean).join('·')}을 모두 쓰면 설명을 볼 수 있어요.`;
+      if (!ok && !exp.hidden) { exp.hidden = true; btn.setAttribute('aria-expanded', 'false'); btn.textContent = '설명 보기'; }
+    };
+    unsub = store.subscribe((topic) => { if (topic === 'answer') refresh(); });
     btn.addEventListener('click', () => {
+      if (!done56()) return;
       const open = exp.hidden;
       exp.hidden = !open;
       btn.setAttribute('aria-expanded', open ? 'true' : 'false');
       btn.textContent = open ? '설명 접기' : '설명 보기';
     });
-    card.append(h('h3', { id: 'think2-title' }, T.title), h('p', { class: 'think-q', id: 'think2-q' }, T.question), h('p', { class: 'small muted' }, `힌트: ${T.hint}`), inp, h('div', { class: 'think-actions' }, btn), exp);
+    card.append(h('h3', { id: 'think2-title' }, T.title), h('p', { class: 'think-q', id: 'think2-q' }, T.question), h('p', { class: 'small muted' }, `힌트: ${T.hint}`), inp, h('div', { class: 'think-actions' }, btn, ' ', gate), exp);
+    refresh();
     return card;
   }
-  return { destroy() { panels.forEach((p) => p.destroy()); } };
+  return { destroy() { panels.forEach((p) => p.destroy()); unsub?.(); } };
 }
