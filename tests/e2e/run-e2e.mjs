@@ -123,7 +123,8 @@ try {
     await noSpoiler(page, '탐구 1');
     const t = await visibleText(page);
     assert.ok(!/하현|상현/.test(t), '공개 전 달의 위상 없음');
-    assert.match(t, /해당 지역의 조석 특성과 달·태양의 주기적인 영향을 바탕으로 계산한 해수면 높이입니다/);
+    assert.match(t, /과거 관측 자료를 분석해 미리 계산한 해수면 높이입니다/);
+    assert.ok(!t.includes('달·태양'), '예측 조위 설명에 대조·소조 원인(달·태양)을 쓰지 않음');
   });
   // 키보드로 지점 고르기: 첫 → 는 구간 첫 자료(09-10 00:00)
   const kbPick = async (sel, n) => { await page.focus(`${sel} .chart-view`); for (let i = 0; i < n; i++) await page.keyboard.press('ArrowRight'); await page.keyboard.press('Enter'); await page.waitForTimeout(150); };
@@ -191,19 +192,35 @@ try {
   await go(page, 'inq2');
   await check('탐구 2: 세 지역 같은 시간 축, 기준면 주의, 원인 정보 없음', async () => {
     await noSpoiler(page, '탐구 2');
-    assert.equal(await page.$$eval('#inq2-charts .chart-view', (x) => x.length), 3);
+    assert.equal(await page.$$eval('#inq2-charts > .chart-view', (x) => x.length), 3);
     assert.match(await page.textContent('#datum-caution'), /높이의 기준\(0 cm\)이 달라/);
     assert.ok(await page.$('#inq2-map svg'));
   });
   await check('탐구 2: 같은 축(평균 0) — 세 그래프의 세로축 눈금이 똑같음', async () => {
-    const ticks = await page.$$eval('#inq2-charts .chart-view', (vs) => vs.map((v) => [...v.querySelectorAll('.chart-svg svg text')].map((t) => t.textContent).filter((x) => /^[−-]?\d+$/.test(x)).join(',')));
+    const ticks = await page.$$eval('#inq2-charts > .chart-view', (vs) => vs.map((v) => [...v.querySelectorAll('.chart-svg svg text')].map((t) => t.textContent).filter((x) => /^[−-]?\d+$/.test(x)).join(',')));
     assert.equal(ticks.length, 3);
     assert.ok(ticks[0].length > 0 && ticks[0] === ticks[1] && ticks[1] === ticks[2], ticks.join(' | '));
     assert.match(await page.textContent('#inq2-charts'), /평균과의 차이/);
   });
+  await check('탐구 2: 확대해서 보기 — 기본 묵호, 세로축만 늘림(눈금이 같은 축과 다름)', async () => {
+    assert.match(await page.textContent('#inq2-zoom-chart'), /묵호 확대 — 세로축만 늘린 그래프/);
+    assert.equal(await page.getAttribute('#inq2-zoom-DT_0006', 'aria-checked'), 'true');
+    const tk = (sel) => page.$$eval(`${sel} .chart-svg svg text`, (ts) => ts.map((t) => t.textContent).filter((x) => /^[−-]?\d+$/.test(x)).join(','));
+    assert.notEqual(await tk('#inq2-zoom-chart'), await tk('#inq2-DT_0006'));
+  });
+  await page.click('#inq2-zoom-DT_0005');
+  await check('탐구 2: 확대 지역 바꾸기 저장', async () => {
+    assert.equal((await stateOf(page)).ui.inq2Zoom, 'DT_0005');
+    assert.match(await page.textContent('#inq2-zoom-chart'), /부산 확대/);
+  });
+  await page.click('#inq2-zoom-DT_0006');
   await page.click('#inq2-scale-own');
-  await check('탐구 2: 세로 눈금 선택 저장', async () => assert.equal((await stateOf(page)).ui.inq2Scale, 'own'));
+  await check('탐구 2: 세로 눈금 선택 저장, 개별 눈금에서는 확대 그래프 숨김', async () => {
+    assert.equal((await stateOf(page)).ui.inq2Scale, 'own');
+    assert.equal(await page.isVisible('#inq2-zoom'), false);
+  });
   await page.click('#inq2-scale-same');
+  await check('탐구 2: 같은 축으로 돌아오면 확대 그래프 다시 보임', async () => assert.equal(await page.isVisible('#inq2-zoom-chart svg'), true));
   await page.selectOption('#q5-0', 'DT_0001'); await page.selectOption('#q5-1', 'DT_0005'); await page.selectOption('#q5-2', 'DT_0006');
   await page.check('#q6-DT_0001-0'); await page.fill('#q6-DT_0001-reason', '하루에 두 번 비슷한 높이');
   await page.check('#q6-DT_0006-3'); await page.fill('#q6-DT_0006-reason', '변화가 작아 판단이 어려움');
@@ -230,10 +247,11 @@ try {
     for (const k of ['a', 'b']) for (const w of ['tide', 'pressureSea', 'windSpeed']) assert.ok(await page.$(`#inq4-${w}-${k} svg`), `${w}-${k}`);
     assert.equal(await page.$('#inq4-windDir-a'), null, '풍향은 보여 주지 않음(자료 줄임)');
     assert.ok(await page.$('#inq4-typhoon .track-map svg'));
-    assert.match(await page.textContent('#inq4-block-b h2'), /확인한 기압·바람이 상대적으로 안정적인 기간/);
+    assert.match(await page.textContent('#inq4-block-b h2'), /^기간 B: 2022년 9월 25일 ~ 9월 29일$/, '공개 뒤에도 기간 제목은 날짜만(해석 문구 없음)');
+    assert.ok(!(await page.textContent('main')).includes('안정적'));
     assert.match(await page.textContent('#wx-site'), /약 1 km 떨어진 기상청 기상관측소.*0\.4 hPa/);
     assert.match(await page.textContent('#ty-caution'), /중심기압\)과는 다릅니다/);
-    assert.match(await page.textContent('#ty-closest'), /2022-09-06 06:00 · 약 19 km/);
+    assert.equal(await page.$('#ty-closest'), null, '최근접 시각은 알려 주지 않음(지도의 시각으로 학생이 해석)');
     assert.match(await page.textContent('#ty-recent'), /탈라스\(TALAS\), 약 803 km/);
     assert.equal(await page.$eval('#ans-q9', (e) => e.readOnly), true);
   });
@@ -368,7 +386,7 @@ try {
     assert.match(txt, /⑨ 폭풍 해일 요인\(저기압·강풍\) 확인/);
     assert.ok(txt.includes('최고(내가 고름)') && txt.includes('최저(내가 고름)'), '⑨ 기록 시각이 그림 6에 표시');
     assert.match(txt, /문항 ⑩/);
-    assert.match(txt, /확인한 기압·바람이 상대적으로 안정적인 기간/);
+    assert.ok(!txt.includes('안정적인 기간') && !txt.includes('최근접'), '보고서에도 기간 해석 문구·최근접 시각 없음');
     assert.ok(txt.includes('태풍 경로와 관측소 위치'));
     assert.ok(txt.includes('(작성하지 않음)'));
   });

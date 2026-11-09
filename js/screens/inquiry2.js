@@ -4,7 +4,7 @@ import { fmtNum, escapeHtml } from '../util/format.js';
 import { fmtDateTime, fmtRange } from '../util/time.js';
 import { INQUIRIES, PREDICTED_TEXT, DATUM_CAUTION, TIDE_TYPES } from '../content/questions.js';
 import { createPanel, SharedCursor, tipRow, staticLayoutHTML } from '../chart/panel.js';
-import { inq2Specs, inq2Series, stationsMapLayout, alignedPad } from '../chart/assess.js';
+import { inq2Specs, inq2Series, inq2ZoomSpec, inq2ZoomId, stationsMapLayout, alignedPad } from '../chart/assess.js';
 import { screenMeasure } from '../chart/svg.js';
 import { loadKoreaMap } from '../chart/map.js';
 import { nearestValid } from '../analysis/series.js';
@@ -32,6 +32,7 @@ export function render(app, container) {
     const b = h('button', { type: 'button', role: 'radio', class: `seg-btn${S().ui.inq2Scale === val ? ' on' : ''}`, 'aria-checked': S().ui.inq2Scale === val ? 'true' : 'false', id: `inq2-scale-${val}`, onclick: () => {
       store.update((s) => { s.ui.inq2Scale = val; }, { topic: 'ui' });
       seg.querySelectorAll('button').forEach((x) => { const on = x.id === `inq2-scale-${val}`; x.classList.toggle('on', on); x.setAttribute('aria-checked', on ? 'true' : 'false'); });
+      zoomBox.hidden = val !== 'same';
       panels.forEach((p) => p.render());
     } }, label);
     return b;
@@ -60,6 +61,32 @@ export function render(app, container) {
       describe: (tg) => `<div class="tip-title">${escapeHtml(s.name)} · ${escapeHtml(fmtDateTime(tg.t, tz))}</div>${tipRow('예측 조위', `${fmtNum(tg.raw, 1)} cm`)}${tg.dev != null ? tipRow('기간 평균과의 차이', `${tg.dev >= 0 ? '+' : '−'}${fmtNum(Math.abs(tg.dev), 1)} cm`) : ''}`,
     }));
   });
+
+  // 확대 그래프(같은 축에서 오르내림이 작은 지역의 반복 모양을 자세히 보기)
+  const zoomBox = h('div', { class: 'zoom-box', id: 'inq2-zoom' });
+  zoomBox.hidden = S().ui.inq2Scale !== 'same';
+  const zseg = h('div', { class: 'seg', role: 'radiogroup', 'aria-label': '확대해서 볼 지역' });
+  const zbtn = (id, name) => h('button', { type: 'button', role: 'radio', class: 'seg-btn', id: `inq2-zoom-${id}`, onclick: () => {
+    store.update((s) => { s.ui.inq2Zoom = id; }, { topic: 'ui' });
+    syncZoom(); zoomPanel.render();
+  } }, name);
+  ad.stationList.forEach((s) => zseg.append(zbtn(s.id, s.name)));
+  const syncZoom = () => { const cur = inq2ZoomId(ad, S().ui); zseg.querySelectorAll('button').forEach((b) => { const on = b.id === `inq2-zoom-${cur}`; b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); }); };
+  syncZoom();
+  const zoomHost = h('div', { class: 'chart-host', id: 'inq2-zoom-chart' });
+  zoomBox.append(h('div', { class: 'tool-inline' }, h('b', { class: 'small' }, '확대해서 보기 '), zseg), zoomHost);
+  card.append(zoomBox);
+  const zoomPanel = createPanel({
+    host: zoomHost, height: 230, ariaLabel: '예측 조위 확대 그래프', cursor,
+    build: (ctx) => inq2ZoomSpec({ ...ctx, padLeft: alignedPad(ctx) }, ad, inq2ZoomId(ad, S().ui)),
+    pick: (t) => {
+      const d = inq2Series(ad, 'same').find((x) => x.s.id === inq2ZoomId(ad, S().ui));
+      const p = d && nearestValid(d.series.points, t, { t0: view[0], t1: view[1] });
+      return p ? { t: p.t, v: p.v, raw: p.v + d.mean, dev: p.v, name: d.s.name } : null;
+    },
+    describe: (tg) => `<div class="tip-title">${escapeHtml(tg.name)} · ${escapeHtml(fmtDateTime(tg.t, tz))}</div>${tipRow('예측 조위', `${fmtNum(tg.raw, 1)} cm`)}${tipRow('기간 평균과의 차이', `${tg.dev >= 0 ? '+' : '−'}${fmtNum(Math.abs(tg.dev), 1)} cm`)}`,
+  });
+  panels.push(zoomPanel);
 
   // 지도
   const mapCard = h('div', { class: 'card map-card', id: 'inq2-map' });

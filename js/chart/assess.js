@@ -211,6 +211,28 @@ export function inq2Specs(ctx, ad, mode = 'same', { cursor = null } = {}) {
   }));
 }
 
+/**
+ * 탐구 2 확대 그래프: 한 지역만 세로축을 늘려 반복 모양을 자세히 본다(같은 축 그래프에서 오르내림이 작아 모양이 안 보일 때).
+ * 값은 같은 축 그래프와 같이 '예측 조위 − 기간 평균'이고, 세로 눈금만 그 지역에 맞춘다.
+ */
+export function inq2ZoomSpec(ctx, ad, id, { cursor = null } = {}) {
+  const view = ad.win.inq2;
+  const list = inq2Series(ad, 'same');
+  const d = list.find((x) => x.s.id === id) || list[list.length - 1];
+  const e = extremaIn(d.series, view[0], view[1]);
+  const H = e ? Math.max(1, Math.abs(e.max.v), Math.abs(e.min.v)) * 1.15 : 10;
+  const step = niceStep(2 * H, 6);
+  const top = Math.ceil(H / step) * step;
+  return tideSpec(ctx, {
+    cd: ad.st[d.s.id], kind: 'predicted', series: d.series, view, yDomain: [-top, top], tickStep: step,
+    title: `${d.s.name} 확대 — 세로축만 늘린 그래프`,
+    subtitle: `세로 눈금이 위의 같은 축 그래프와 다릅니다. 조차 비교는 위 그래프로, 반복 모양은 이 그래프로 보세요.${sampleTag(ad.st[d.s.id])}`,
+    yLabel: '평균과의 차이 (cm)', legendLabel: '예측 조위 − 이 기간의 평균 (1시간 간격 값을 이은 선)',
+    zeroLine: true, zeroLabel: '기간 평균', color: COLORS.pick2, cursor,
+  });
+}
+export const inq2ZoomId = (ad, ui) => (ad.stationList.some((s) => s.id === ui?.inq2Zoom) ? ui.inq2Zoom : ad.stationList[ad.stationList.length - 1].id);
+
 /** 관측소 위치 지도 */
 export function stationsMapLayout({ stations, width, measure, fontSize = 11, title = '관측소 위치' }) {
   const map = koreaMapSync();
@@ -241,8 +263,8 @@ export function periodTitle(ad, k, revealed) {
   const [t0, t1] = ad.win[k];
   const a = parts(t0, ad.tz), b = parts(t1 - 1, ad.tz);
   const d = `${a.year}년 ${a.month}월 ${a.day}일 ~ ${b.year !== a.year ? `${b.year}년 ` : ''}${b.month}월 ${b.day}일`;
-  if (!revealed) return `${PERIOD_NAMES[k]}: ${d}`;
-  return k === 'a' ? `${PERIOD_NAMES[k]}: ${d}` : `${PERIOD_NAMES[k]}: ${d} — 확인한 기압·바람이 상대적으로 안정적인 기간`;
+  // 공개 뒤에도 날짜만 쓴다(기간의 성격은 학생이 자료로 해석)
+  return `${PERIOD_NAMES[k]}: ${d}`;
 }
 /** 기간이 들어 있는 자료(과거 비교 기간 자료 또는 대표 관측소 1년 자료) */
 export function cdForWindow(ad, w) {

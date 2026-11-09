@@ -135,7 +135,10 @@ test('보고서: 공개 전에는 기상·태풍·위상·⑪ 내용 없음, 공
   const f6a = s4.items.find((x) => x.id === 'f6a');
   const items6 = layoutFigure(f6a, { width: 480, measure }).flatMap((L) => L.items);
   assert.ok(items6.some((it) => it.text === '최고(내가 고름)') && items6.some((it) => it.text === '최저(내가 고름)'));
-  assert.ok(s4.items.some((x) => x.type === 'figure' && /확인한 기압·바람이 상대적으로 안정적인 기간/.test(x.caption)));
+  assert.ok(!allText(m).includes('안정적') && !allText(m).includes('최근접'), '공개 뒤에도 기간 해석 문구·최근접 시각 없음');
+  const f3 = m.sections.find((s) => s.key === 'inq2').items.find((x) => x.id === 'f3');
+  assert.match(f3.caption, /묵호 확대\(세로축만 늘림\)/);
+  assert.equal(f3.panels.filter((p) => p.spec).length, 4, '세 지역 + 확대 그래프');
   assert.ok(m.sections[0].items.some((x) => x.type === 'table' && /달의 위상/.test(x.title)));
   // 그림은 실제로 그릴 수 있음(그래프 공유: 탐구 1 문항 ①②는 그림 하나)
   const figs = m.sections[0].items.filter((x) => x.type === 'figure');
@@ -163,7 +166,7 @@ test('탐구 4 그래프: 공개 전 제목에 날짜만, 같은 눈금 크기',
   assert.match(periodTyphoon(ad, 'a').name, /힌남노/);
   assert.ok(periodTyphoon(ad, 'a').km < 30);
   assert.ok(periodTyphoon(ad, "b").km > 700, `기간 B 최근접 ${periodTyphoon(ad, 'b').km}`);
-  assert.match(periodTitle(ad, 'b', true), /확인한 기압·바람이 상대적으로 안정적인 기간/);
+  assert.equal(periodTitle(ad, 'b', true), periodTitle(ad, 'b', false), '공개 뒤에도 기간 제목은 날짜만');
   const [a, b] = inq4TideSpecs({ width: 600, height: 220, measure }, ad).map((s) => layoutChart(s).yDomain);
   assert.ok(Math.abs((a[1] - a[0]) - (b[1] - b[0])) < 1e-6);
   // 한 달 일별 변동 폭: 30일, 결측 없음
@@ -275,4 +278,19 @@ test('문항 ⑨ 이전 형식(글 한 칸) 답은 지우지 않고 보관해 �
   raw.answers.q11 = { peak: { k: 'c', t: 1 }, pressure: { k: 'a', t: 'x' }, wind: { k: 'b', t: 5 }, pressureText: 3 };
   const s3 = sanitizeState(raw).answers.q11;
   assert.equal(s3.peak, null); assert.equal(s3.pressure, null); assert.deepEqual(s3.wind, { k: 'b', t: 5 }); assert.equal(s3.pressureText, '');
+});
+
+test('탐구 2 확대 그래프: 고른 지역만 세로축을 늘림(값은 같은 축과 같음), 기본은 마지막 지역', async () => {
+  const { inq2ZoomSpec, inq2ZoomId, inq2Specs } = await import('../../js/chart/assess.js');
+  const ad = applySetup(await load('khoa-assess-2025-26'), deployed());
+  assert.equal(inq2ZoomId(ad, {}), 'DT_0006');
+  assert.equal(inq2ZoomId(ad, { inq2Zoom: 'DT_0001' }), 'DT_0001');
+  assert.equal(inq2ZoomId(ad, { inq2Zoom: 'zzz' }), 'DT_0006');
+  const ctx = { width: 600, height: 230, measure, fontSize: 12 };
+  const z = inq2ZoomSpec(ctx, ad, 'DT_0006');
+  const same = inq2Specs(ctx, ad, 'same')[2];
+  assert.ok(z.y.domain[1] < same.y.domain[1] / 4, `확대 ${z.y.domain} vs 같은 축 ${same.y.domain}`);
+  assert.deepEqual(z.series[0].points.slice(0, 50), same.series[0].points.slice(0, 50));
+  assert.match(z.header.title, /묵호 확대/);
+  assert.ok(layoutChart(z).items.length > 10);
 });

@@ -8,7 +8,7 @@ import { studentLine } from '../report/model.js';
 import { legacyList } from '../state/persistence.js';
 
 const localTz = () => ({ offsetMinutes: -new Date().getTimezoneOffset() });
-export const START_LEAD = '우리나라 바다의 해수면 높이 자료에서 규칙을 찾고, 예측과 실제를 비교하며 해수면에 영향을 주는 요인을 탐구해 봅시다.';
+export const START_LEAD = '우리나라 바다의 해수면 높이 자료에서 규칙을 찾고, 지역별 차이와 특이한 변화를 살펴보며 해수면 높이에 영향을 주는 요인을 탐구해 봅시다.';
 
 const filled = (s) => {
   const a = s.answers;

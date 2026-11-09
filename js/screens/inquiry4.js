@@ -8,7 +8,7 @@ import { fmtNum, escapeHtml } from '../util/format.js';
 import { fmtDateTime } from '../util/time.js';
 import { INQUIRIES, OBSERVED_TEXT, CIRCLED, Q11_PARTS, isEnabled } from '../content/questions.js';
 import { createPanel, SharedCursor, tipRow, staticLayoutHTML } from '../chart/panel.js';
-import { alignedPad, inq4TideSpecs, weatherSpec, q11Value, periodTitle, periodCd, typhoonMapLayout, closestTyphoonPoint, fmtWx, valueAt, PERIOD_NAMES, periodTyphoonText } from '../chart/assess.js';
+import { alignedPad, inq4TideSpecs, weatherSpec, q11Value, periodTitle, periodCd, typhoonMapLayout, fmtWx, valueAt, PERIOD_NAMES, periodTyphoonText } from '../chart/assess.js';
 import { screenMeasure } from '../chart/svg.js';
 import { loadKoreaMap } from '../chart/map.js';
 import { nearestValid, pointAt } from '../analysis/series.js';
@@ -70,7 +70,7 @@ export function render(app, container) {
         const host = h('div', { class: 'chart-host', id: `inq4-${kind}-${k}` });
         block.append(host);
         panels.push(createPanel({
-          host, height: 150, ariaLabel: `${kind} ${PERIOD_NAMES[k]}`, cursor,
+          host, height: 150, ariaLabel: `${kind === 'pressureSea' ? '해면기압' : '풍속'} ${PERIOD_NAMES[k]}`, cursor,
           build: (ctx) => weatherSpec({ ...ctx, padLeft: alignedPad(ctx) }, ad, k, kind, { compact: true, q11: S().answers.q11 }),
           pick: (t) => { const p = cd.weather ? nearestValid(cd.weather.points, t, { key: kind, t0: ad.win[k][0], t1: ad.win[k][1] }) : null; return p ? { t: p.t, v: p[kind] } : null; },
           describe: (tg) => `<div class="tip-title">${escapeHtml(fmtDateTime(tg.t, tz))}</div>${tipRow(kind === 'pressureSea' ? '해면기압' : kind === 'windSpeed' ? '풍속' : '풍향', fmtWx(kind, tg.v))}`,
@@ -81,11 +81,9 @@ export function render(app, container) {
     }
     // 태풍
     const tyCard = h('div', { class: 'card map-card', id: 'inq4-typhoon' });
-    const closest = closestTyphoonPoint(ad);
     tyCard.append(h('h2', { class: 'h-sm' }, `태풍 정보 — ${PERIOD_NAMES.a}`));
     if (ad.past?.typhoon) {
       tyCard.append(h('p', { class: 'small' }, `${ad.past.typhoon.name}의 이동 경로입니다(점 옆 숫자는 시각).`));
-      if (closest && timeOk) tyCard.append(h('p', { class: 'small', id: 'ty-closest' }, `부산에 가장 가까웠던 때: ${fmtDateTime(closest.t, tz)} · 약 ${Math.round(closest.km)} km`));
       const mapHost = h('div', { class: 'track-map' });
       tyCard.append(mapHost);
       const drawMap = () => { const w = Math.min(560, Math.max(280, mapHost.clientWidth || 420)); const L = typhoonMapLayout(ad, { width: w, measure: screenMeasure, fontSize: 11 }); if (L) mapHost.innerHTML = staticLayoutHTML(L, '태풍 경로 지도'); };

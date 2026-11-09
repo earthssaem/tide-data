@@ -309,7 +309,7 @@ function editor(app, T) {
       h('b', {}, ' 길이 '), sel(`t-inq4-${k}-len`, `${label} 길이`, [3, 4, 5, 6, 7].map((n) => [String(n), `${n}일`]), String(len), (v) => { cfg.inq4[k].end = `${addDaysStr(s0, Number(v))} 00:00`; }),
       h('span', { class: 'muted small' }, ` ${fmtRange(A.win[k][0], A.win[k][1], tz)} · ${periodTyphoonText(A, k)}`)));
   }
-  fs4.append(h('p', { class: 'muted small' }, `학생에게는 [추가 자료 확인] 전까지 날짜와 관측 조위만 보이고, 확인 뒤 기간 B 제목에 ‘확인한 기압·바람이 상대적으로 안정적인 기간’이 붙습니다. 기간 B는 기압·바람이 안정적인 기간으로 고르세요(시작일은 부산 2022년 9월 또는 2025-10~2026-09).`));
+  fs4.append(h('p', { class: 'muted small' }, `학생에게는 [추가 자료 확인] 전까지 날짜와 관측 조위만 보이고, 확인 뒤에 두 기간의 기압·풍속·태풍 자료가 나타납니다. 기간 제목에는 날짜만 표시하고 기간의 성격(태풍 기간·안정 기간 등)은 알려 주지 않으므로, 기간 B는 기압·바람이 안정적인 기간으로 고르세요(시작일은 부산 2022년 9월 또는 2025-10~2026-09).`));
   if (ad.weatherSite?.text) fs4.append(h('p', { class: 'small muted', id: 't-wx-site' }, `기상 자료 지점: ${ad.weatherSite.text}`));
   fs4.append(chartBox('t-inq4-chart', 190, (ctx) => inq4TideSpecs(ctx, A, { revealed: false }), '탐구 3 미리보기'));
   card.append(fs4);

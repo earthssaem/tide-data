@@ -10,8 +10,8 @@ import { fmtRange, fmtDateTime, fmtDateKo, DAY, HOUR } from '../util/time.js';
 import { fmtNum } from '../util/format.js';
 import { layoutChart } from '../chart/layout.js';
 import {
-  inq1MainSpec, inq1MonthSpec, inq2Specs, stationsMapLayout, inq4TideSpecs, weatherSpec,
-  typhoonMapLayout, closestTyphoonPoint, extremaIn, q11Value, fmtWx, periodTitle, periodCd, PERIOD_NAMES, periodTyphoonText,
+  inq1MainSpec, inq1MonthSpec, inq2Specs, inq2ZoomSpec, inq2ZoomId, stationsMapLayout, inq4TideSpecs, weatherSpec,
+  typhoonMapLayout, extremaIn, q11Value, fmtWx, periodTitle, periodCd, PERIOD_NAMES, periodTyphoonText,
 } from '../chart/assess.js';
 
 const localTz = () => ({ offsetMinutes: -new Date().getTimezoneOffset(), label: '' });
@@ -149,8 +149,9 @@ export function buildReport(ad, state, { attempts = null } = {}) {
   const s2 = { key: 'inq2', title: `탐구 2. ${INQUIRIES[1].title}`, sub: `인천·부산·묵호 예측 조위 · ${fmtRange(ad.win.inq2[0], ad.win.inq2[1], tz)} · ${DATUM_CAUTION}`, items: [] };
   if (on(Q5) || on(Q6)) {
     const mode = state.ui?.inq2Scale === 'own' ? 'own' : 'same';
-    s2.items.push(fig('f3', `그림 3. 세 지역의 예측 조위(같은 시간 축, 세로축: ${mode === 'same' ? '세 지역 같은 축(지역마다 기간 평균을 0으로)' : '지역마다 따로'})와 관측소 위치`, [
+    s2.items.push(fig('f3', `그림 3. 세 지역의 예측 조위(같은 시간 축, 세로축: ${mode === 'same' ? '세 지역 같은 축(지역마다 기간 평균을 0으로)' : '지역마다 따로'})${mode === 'same' ? `, ${ad.stationList.find((s) => s.id === inq2ZoomId(ad, state.ui))?.name} 확대(세로축만 늘림)` : ''}와 관측소 위치`, [
       ...ad.stationList.map((s, i) => ({ height: i === ad.stationList.length - 1 ? 165 : 150, spec: (ctx) => inq2Specs(ctx, ad, mode)[i] })),
+      ...(mode === 'same' ? [{ height: 170, spec: (ctx) => inq2ZoomSpec(ctx, ad, inq2ZoomId(ad, state.ui)) }] : []),
       { map: (w, measure, fs) => stationsMapLayout({ stations: ad.stationList, width: w, measure, fontSize: fs, title: '관측소 위치' }), maxWidth: 240 },
     ]));
     if (on(Q5)) s2.items.push(qa(Q5, 'inq2'));
@@ -174,8 +175,7 @@ export function buildReport(ad, state, { attempts = null } = {}) {
       ]));
     }
     if (ad.past?.typhoon) {
-      const c = closestTyphoonPoint(ad);
-      s4.items.push(fig('f7', `그림 7. ${ad.past.typhoon.meta?.title || ad.past.typhoon.name} — 기상청 실황 분석 위치(${PERIOD_NAMES.a})${c && ad.timeBasis?.confirmed ? ` · 부산 최근접 분석 위치 ${fmtDateTime(c.t, tz)}, 약 ${Math.round(c.km)} km` : ''}`, [{ map: (w, measure, fs) => typhoonMapLayout(ad, { width: w, measure, fontSize: fs }), maxWidth: 360 }]));
+      s4.items.push(fig('f7', `그림 7. ${ad.past.typhoon.meta?.title || ad.past.typhoon.name} — 기상청 실황 분석 위치(${PERIOD_NAMES.a}, 점 옆 숫자는 시각)`, [{ map: (w, measure, fs) => typhoonMapLayout(ad, { width: w, measure, fontSize: fs }), maxWidth: 360 }]));
     }
     s4.items.push({ type: 'note', text: `${PERIOD_NAMES.b} 태풍: ${periodTyphoonText(ad, 'b')}` });
     if (on(Q11)) {
@@ -267,10 +267,9 @@ export function sourceRows(ad, state) {
 export function limitationNotes(ad, state) {
   const rv = state.reveals || {};
   const out = [
-    '일별 변동 폭 = 그날(00:00~24:00) 1시간 간격 값의 최고값 − 최저값. 이웃한 만조·간조 한 쌍의 조차와는 다른 값이다.',
-    '1시간 간격 자료를 직선으로 이었다. 실제 만조·간조 시각과 높이는 1시간 간격 값과 조금 다를 수 있다.',
+    `일정한 간격(${ad.st[ad.rep].predicted10 ? '탐구 1의 3일 그래프는 10분, 나머지는 ' : ''}1시간)의 자료를 직선으로 이었다. 실제 만조·간조 시각과 높이는 자료 값과 조금 다를 수 있다.`,
     '만조·간조, 대조·소조, 조석 형태는 학생이 자료를 보고 판단한 것이며, 앱이 정답을 정하지 않았다.',
-    '관측 조위의 높이 기준면이 확인되지 않아 관측소끼리, 예측과 관측끼리 높이를 겹치거나 빼지 않았다(변동 폭만 비교).',
+    '관측소마다 높이의 기준(0 cm)이 달라 관측소끼리 조위 숫자로 해수면 높낮이를 비교하지 않았다(탐구 2는 지역마다 기간 평균을 0으로 맞춰 오르내림만 비교).',
     '결측·오류값은 0으로 바꾸지 않고 빈 값으로 두었다.',
   ];
   if (rv.weather) out.push('기상 자료는 조위관측소에서 약 1 km 떨어진 기상청 ASOS 지점의 값이다(2022년 9월은 조위관측소 기상 자료가 제공되지 않음). 기압은 조위관측소 자체 기압과 거의 같았으나 바람은 장소에 따라 다를 수 있다. 해면기압만 사용했다(현지기압과 섞지 않음). 태풍 중심기압은 관측소 기압으로 쓰지 않았다.');

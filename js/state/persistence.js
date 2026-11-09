@@ -55,7 +55,7 @@ export function emptyState(caseId, dataVersion) {
     answers: emptyAnswers(),
     // 자료 공개: 공개한 순간의 답을 따로 보관(이후 해당 답은 고정)
     reveals: { moon: null, weather: null },
-    ui: { inq2Scale: 'same' },
+    ui: { inq2Scale: 'same', inq2Zoom: null }, // inq2Zoom: 탐구 2 확대 그래프 지역(없으면 마지막 지역)
     createdAt: now,
     updatedAt: now,
     lastPdfAt: null,
@@ -265,7 +265,7 @@ export function sanitizeState(obj) {
   const rv = isObj(obj.reveals) ? obj.reveals : {};
   s.reveals = { moon: sanitizeReveal(rv.moon, 'moon'), weather: sanitizeReveal(rv.weather, 'weather') };
   const ui = isObj(obj.ui) ? obj.ui : {};
-  s.ui = { inq2Scale: ui.inq2Scale === 'own' ? 'own' : 'same' };
+  s.ui = { inq2Scale: ui.inq2Scale === 'own' ? 'own' : 'same', inq2Zoom: typeof ui.inq2Zoom === 'string' && STATION_ID.test(ui.inq2Zoom) ? ui.inq2Zoom : null };
   s.createdAt = num(obj.createdAt) ?? s.createdAt;
   s.updatedAt = num(obj.updatedAt) ?? s.updatedAt;
   s.lastPdfAt = num(obj.lastPdfAt);
