@@ -32853,6 +32853,5031 @@
    "attempts": 1,
    "at": "2026-11-08T16:27:19.653Z"
   },
+  "forecast10|DT_0005|2025-10-01": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-01",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251001/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:35:53.858Z"
+  },
+  "forecast10|DT_0005|2025-10-02": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-02",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251002/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:35:54.426Z"
+  },
+  "forecast10|DT_0005|2025-10-03": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-03",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251003/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:35:55.049Z"
+  },
+  "forecast10|DT_0005|2025-10-04": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-04",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251004/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:35:55.637Z"
+  },
+  "forecast10|DT_0005|2025-10-05": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-05",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251005/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:35:56.212Z"
+  },
+  "forecast10|DT_0005|2025-10-06": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-06",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251006/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:35:56.776Z"
+  },
+  "forecast10|DT_0005|2025-10-07": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-07",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251007/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:35:57.341Z"
+  },
+  "forecast10|DT_0005|2025-10-08": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-08",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251008/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:35:57.916Z"
+  },
+  "forecast10|DT_0005|2025-10-09": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-09",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251009/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:35:58.486Z"
+  },
+  "forecast10|DT_0005|2025-10-10": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-10",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251010/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:35:59.057Z"
+  },
+  "forecast10|DT_0005|2025-10-11": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-11",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251011/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:35:59.627Z"
+  },
+  "forecast10|DT_0005|2025-10-12": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-12",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251012/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:00.203Z"
+  },
+  "forecast10|DT_0005|2025-10-13": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-13",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251013/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:00.768Z"
+  },
+  "forecast10|DT_0005|2025-10-14": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-14",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251014/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:01.343Z"
+  },
+  "forecast10|DT_0005|2025-10-15": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-15",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251015/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:01.924Z"
+  },
+  "forecast10|DT_0005|2025-10-16": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-16",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251016/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:02.490Z"
+  },
+  "forecast10|DT_0005|2025-10-17": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-17",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251017/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:03.097Z"
+  },
+  "forecast10|DT_0005|2025-10-18": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-18",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251018/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:03.673Z"
+  },
+  "forecast10|DT_0005|2025-10-19": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-19",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251019/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:04.242Z"
+  },
+  "forecast10|DT_0005|2025-10-20": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-20",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251020/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:04.826Z"
+  },
+  "forecast10|DT_0005|2025-10-21": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-21",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251021/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:05.400Z"
+  },
+  "forecast10|DT_0005|2025-10-22": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-22",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251022/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:05.964Z"
+  },
+  "forecast10|DT_0005|2025-10-23": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-23",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251023/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:06.544Z"
+  },
+  "forecast10|DT_0005|2025-10-24": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-24",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251024/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:07.118Z"
+  },
+  "forecast10|DT_0005|2025-10-25": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-25",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251025/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:07.681Z"
+  },
+  "forecast10|DT_0005|2025-10-26": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-26",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251026/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:08.243Z"
+  },
+  "forecast10|DT_0005|2025-10-27": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-27",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251027/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:08.825Z"
+  },
+  "forecast10|DT_0005|2025-10-28": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-28",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251028/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:09.446Z"
+  },
+  "forecast10|DT_0005|2025-10-29": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-29",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251029/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:10.011Z"
+  },
+  "forecast10|DT_0005|2025-10-30": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-30",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251030/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:10.581Z"
+  },
+  "forecast10|DT_0005|2025-10-31": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-10-31",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251031/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:11.140Z"
+  },
+  "forecast10|DT_0005|2025-11-01": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-01",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251101/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:11.700Z"
+  },
+  "forecast10|DT_0005|2025-11-02": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-02",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251102/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:12.280Z"
+  },
+  "forecast10|DT_0005|2025-11-03": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-03",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251103/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:12.847Z"
+  },
+  "forecast10|DT_0005|2025-11-04": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-04",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251104/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:13.408Z"
+  },
+  "forecast10|DT_0005|2025-11-05": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-05",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251105/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:13.983Z"
+  },
+  "forecast10|DT_0005|2025-11-06": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-06",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251106/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:14.557Z"
+  },
+  "forecast10|DT_0005|2025-11-07": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-07",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251107/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:15.122Z"
+  },
+  "forecast10|DT_0005|2025-11-08": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-08",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251108/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:15.682Z"
+  },
+  "forecast10|DT_0005|2025-11-09": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-09",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251109/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:16.244Z"
+  },
+  "forecast10|DT_0005|2025-11-10": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-10",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251110/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:16.815Z"
+  },
+  "forecast10|DT_0005|2025-11-11": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-11",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251111/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:17.376Z"
+  },
+  "forecast10|DT_0005|2025-11-12": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-12",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251112/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:17.938Z"
+  },
+  "forecast10|DT_0005|2025-11-13": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-13",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251113/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:18.514Z"
+  },
+  "forecast10|DT_0005|2025-11-14": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-14",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251114/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:19.082Z"
+  },
+  "forecast10|DT_0005|2025-11-15": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-15",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251115/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:19.642Z"
+  },
+  "forecast10|DT_0005|2025-11-16": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-16",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251116/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:20.219Z"
+  },
+  "forecast10|DT_0005|2025-11-17": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-17",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251117/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:20.798Z"
+  },
+  "forecast10|DT_0005|2025-11-18": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-18",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251118/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:21.379Z"
+  },
+  "forecast10|DT_0005|2025-11-19": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-19",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251119/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:21.939Z"
+  },
+  "forecast10|DT_0005|2025-11-20": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-20",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251120/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:22.514Z"
+  },
+  "forecast10|DT_0005|2025-11-21": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-21",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251121/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:23.085Z"
+  },
+  "forecast10|DT_0005|2025-11-22": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-22",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251122/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:23.658Z"
+  },
+  "forecast10|DT_0005|2025-11-23": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-23",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251123/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:24.229Z"
+  },
+  "forecast10|DT_0005|2025-11-24": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-24",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251124/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:24.800Z"
+  },
+  "forecast10|DT_0005|2025-11-25": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-25",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251125/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:25.387Z"
+  },
+  "forecast10|DT_0005|2025-11-26": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-26",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251126/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:25.960Z"
+  },
+  "forecast10|DT_0005|2025-11-27": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-27",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251127/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:26.522Z"
+  },
+  "forecast10|DT_0005|2025-11-28": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-28",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251128/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:27.091Z"
+  },
+  "forecast10|DT_0005|2025-11-29": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-29",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251129/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:27.654Z"
+  },
+  "forecast10|DT_0005|2025-11-30": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-11-30",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251130/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:28.235Z"
+  },
+  "forecast10|DT_0005|2025-12-01": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-01",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251201/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:28.802Z"
+  },
+  "forecast10|DT_0005|2025-12-02": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-02",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251202/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:29.377Z"
+  },
+  "forecast10|DT_0005|2025-12-03": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-03",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251203/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:29.948Z"
+  },
+  "forecast10|DT_0005|2025-12-04": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-04",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251204/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:30.524Z"
+  },
+  "forecast10|DT_0005|2025-12-05": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-05",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251205/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:31.099Z"
+  },
+  "forecast10|DT_0005|2025-12-06": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-06",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251206/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:31.659Z"
+  },
+  "forecast10|DT_0005|2025-12-07": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-07",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251207/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:32.234Z"
+  },
+  "forecast10|DT_0005|2025-12-08": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-08",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251208/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:32.805Z"
+  },
+  "forecast10|DT_0005|2025-12-09": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-09",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251209/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:33.366Z"
+  },
+  "forecast10|DT_0005|2025-12-10": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-10",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251210/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:33.937Z"
+  },
+  "forecast10|DT_0005|2025-12-11": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-11",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251211/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:34.513Z"
+  },
+  "forecast10|DT_0005|2025-12-12": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-12",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251212/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:35.075Z"
+  },
+  "forecast10|DT_0005|2025-12-13": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-13",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251213/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:35.650Z"
+  },
+  "forecast10|DT_0005|2025-12-14": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-14",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251214/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:36.212Z"
+  },
+  "forecast10|DT_0005|2025-12-15": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-15",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251215/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:36.786Z"
+  },
+  "forecast10|DT_0005|2025-12-16": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-16",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251216/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:37.350Z"
+  },
+  "forecast10|DT_0005|2025-12-17": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-17",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251217/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:37.918Z"
+  },
+  "forecast10|DT_0005|2025-12-18": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-18",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251218/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:38.502Z"
+  },
+  "forecast10|DT_0005|2025-12-19": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-19",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251219/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:39.084Z"
+  },
+  "forecast10|DT_0005|2025-12-20": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-20",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251220/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:39.664Z"
+  },
+  "forecast10|DT_0005|2025-12-21": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-21",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251221/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:40.227Z"
+  },
+  "forecast10|DT_0005|2025-12-22": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-22",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251222/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:40.854Z"
+  },
+  "forecast10|DT_0005|2025-12-23": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-23",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251223/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:41.422Z"
+  },
+  "forecast10|DT_0005|2025-12-24": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-24",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251224/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:41.982Z"
+  },
+  "forecast10|DT_0005|2025-12-25": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-25",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251225/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:42.765Z"
+  },
+  "forecast10|DT_0005|2025-12-26": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-26",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251226/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:43.329Z"
+  },
+  "forecast10|DT_0005|2025-12-27": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-27",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251227/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:43.893Z"
+  },
+  "forecast10|DT_0005|2025-12-28": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-28",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251228/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:44.455Z"
+  },
+  "forecast10|DT_0005|2025-12-29": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-29",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251229/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:45.029Z"
+  },
+  "forecast10|DT_0005|2025-12-30": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-30",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251230/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:45.590Z"
+  },
+  "forecast10|DT_0005|2025-12-31": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2025-12-31",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20251231/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:46.164Z"
+  },
+  "forecast10|DT_0005|2026-01-01": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-01",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260101/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:46.750Z"
+  },
+  "forecast10|DT_0005|2026-01-02": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-02",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260102/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:47.325Z"
+  },
+  "forecast10|DT_0005|2026-01-03": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-03",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260103/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:47.889Z"
+  },
+  "forecast10|DT_0005|2026-01-04": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-04",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260104/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:48.462Z"
+  },
+  "forecast10|DT_0005|2026-01-05": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-05",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260105/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:49.030Z"
+  },
+  "forecast10|DT_0005|2026-01-06": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-06",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260106/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:49.611Z"
+  },
+  "forecast10|DT_0005|2026-01-07": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-07",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260107/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:50.174Z"
+  },
+  "forecast10|DT_0005|2026-01-08": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-08",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260108/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:50.735Z"
+  },
+  "forecast10|DT_0005|2026-01-09": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-09",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260109/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:51.307Z"
+  },
+  "forecast10|DT_0005|2026-01-10": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-10",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260110/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:51.871Z"
+  },
+  "forecast10|DT_0005|2026-01-11": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-11",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260111/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:52.443Z"
+  },
+  "forecast10|DT_0005|2026-01-12": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-12",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260112/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:53.061Z"
+  },
+  "forecast10|DT_0005|2026-01-13": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-13",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260113/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:53.636Z"
+  },
+  "forecast10|DT_0005|2026-01-14": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-14",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260114/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:54.210Z"
+  },
+  "forecast10|DT_0005|2026-01-15": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-15",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260115/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:54.808Z"
+  },
+  "forecast10|DT_0005|2026-01-16": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-16",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260116/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:55.369Z"
+  },
+  "forecast10|DT_0005|2026-01-17": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-17",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260117/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:55.945Z"
+  },
+  "forecast10|DT_0005|2026-01-18": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-18",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260118/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:56.518Z"
+  },
+  "forecast10|DT_0005|2026-01-19": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-19",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260119/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:57.088Z"
+  },
+  "forecast10|DT_0005|2026-01-20": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-20",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260120/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:57.650Z"
+  },
+  "forecast10|DT_0005|2026-01-21": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-21",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260121/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:58.231Z"
+  },
+  "forecast10|DT_0005|2026-01-22": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-22",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260122/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:58.806Z"
+  },
+  "forecast10|DT_0005|2026-01-23": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-23",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260123/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:59.380Z"
+  },
+  "forecast10|DT_0005|2026-01-24": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-24",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260124/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:36:59.953Z"
+  },
+  "forecast10|DT_0005|2026-01-25": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-25",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260125/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:00.528Z"
+  },
+  "forecast10|DT_0005|2026-01-26": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-26",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260126/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:01.090Z"
+  },
+  "forecast10|DT_0005|2026-01-27": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-27",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260127/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:01.657Z"
+  },
+  "forecast10|DT_0005|2026-01-28": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-28",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260128/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:02.245Z"
+  },
+  "forecast10|DT_0005|2026-01-29": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-29",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260129/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:02.815Z"
+  },
+  "forecast10|DT_0005|2026-01-30": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-30",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260130/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:03.396Z"
+  },
+  "forecast10|DT_0005|2026-01-31": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-01-31",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260131/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:03.975Z"
+  },
+  "forecast10|DT_0005|2026-02-01": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-01",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260201/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:04.552Z"
+  },
+  "forecast10|DT_0005|2026-02-02": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-02",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260202/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:05.115Z"
+  },
+  "forecast10|DT_0005|2026-02-03": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-03",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260203/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:05.690Z"
+  },
+  "forecast10|DT_0005|2026-02-04": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-04",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260204/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:06.263Z"
+  },
+  "forecast10|DT_0005|2026-02-05": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-05",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260205/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:06.825Z"
+  },
+  "forecast10|DT_0005|2026-02-06": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-06",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260206/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:07.388Z"
+  },
+  "forecast10|DT_0005|2026-02-07": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-07",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260207/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:07.951Z"
+  },
+  "forecast10|DT_0005|2026-02-08": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-08",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260208/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:08.528Z"
+  },
+  "forecast10|DT_0005|2026-02-09": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-09",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260209/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:09.090Z"
+  },
+  "forecast10|DT_0005|2026-02-10": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-10",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260210/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:09.662Z"
+  },
+  "forecast10|DT_0005|2026-02-11": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-11",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260211/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:10.263Z"
+  },
+  "forecast10|DT_0005|2026-02-12": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-12",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260212/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:10.837Z"
+  },
+  "forecast10|DT_0005|2026-02-13": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-13",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260213/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:11.398Z"
+  },
+  "forecast10|DT_0005|2026-02-14": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-14",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260214/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:11.973Z"
+  },
+  "forecast10|DT_0005|2026-02-15": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-15",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260215/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:12.549Z"
+  },
+  "forecast10|DT_0005|2026-02-16": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-16",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260216/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:13.120Z"
+  },
+  "forecast10|DT_0005|2026-02-17": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-17",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260217/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:13.696Z"
+  },
+  "forecast10|DT_0005|2026-02-18": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-18",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260218/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:14.259Z"
+  },
+  "forecast10|DT_0005|2026-02-19": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-19",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260219/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:14.835Z"
+  },
+  "forecast10|DT_0005|2026-02-20": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-20",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260220/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:15.415Z"
+  },
+  "forecast10|DT_0005|2026-02-21": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-21",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260221/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:15.978Z"
+  },
+  "forecast10|DT_0005|2026-02-22": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-22",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260222/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:16.549Z"
+  },
+  "forecast10|DT_0005|2026-02-23": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-23",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260223/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:17.126Z"
+  },
+  "forecast10|DT_0005|2026-02-24": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-24",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260224/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:17.688Z"
+  },
+  "forecast10|DT_0005|2026-02-25": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-25",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260225/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:18.270Z"
+  },
+  "forecast10|DT_0005|2026-02-26": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-26",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260226/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:18.833Z"
+  },
+  "forecast10|DT_0005|2026-02-27": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-27",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260227/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:19.397Z"
+  },
+  "forecast10|DT_0005|2026-02-28": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-02-28",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260228/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:19.962Z"
+  },
+  "forecast10|DT_0005|2026-03-01": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-01",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260301/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:20.525Z"
+  },
+  "forecast10|DT_0005|2026-03-02": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-02",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260302/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:21.094Z"
+  },
+  "forecast10|DT_0005|2026-03-03": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-03",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260303/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:21.678Z"
+  },
+  "forecast10|DT_0005|2026-03-04": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-04",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260304/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:22.254Z"
+  },
+  "forecast10|DT_0005|2026-03-05": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-05",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260305/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:22.817Z"
+  },
+  "forecast10|DT_0005|2026-03-06": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-06",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260306/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:23.377Z"
+  },
+  "forecast10|DT_0005|2026-03-07": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-07",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260307/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:23.952Z"
+  },
+  "forecast10|DT_0005|2026-03-08": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-08",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260308/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:24.524Z"
+  },
+  "forecast10|DT_0005|2026-03-09": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-09",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260309/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:25.086Z"
+  },
+  "forecast10|DT_0005|2026-03-10": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-10",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260310/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:25.649Z"
+  },
+  "forecast10|DT_0005|2026-03-11": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-11",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260311/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:26.228Z"
+  },
+  "forecast10|DT_0005|2026-03-12": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-12",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260312/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:26.788Z"
+  },
+  "forecast10|DT_0005|2026-03-13": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-13",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260313/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:27.364Z"
+  },
+  "forecast10|DT_0005|2026-03-14": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-14",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260314/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:27.928Z"
+  },
+  "forecast10|DT_0005|2026-03-15": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-15",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260315/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:28.500Z"
+  },
+  "forecast10|DT_0005|2026-03-16": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-16",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260316/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:29.074Z"
+  },
+  "forecast10|DT_0005|2026-03-17": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-17",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260317/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:29.644Z"
+  },
+  "forecast10|DT_0005|2026-03-18": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-18",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260318/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:30.221Z"
+  },
+  "forecast10|DT_0005|2026-03-19": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-19",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260319/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:30.784Z"
+  },
+  "forecast10|DT_0005|2026-03-20": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-20",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260320/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:31.345Z"
+  },
+  "forecast10|DT_0005|2026-03-21": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-21",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260321/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:31.909Z"
+  },
+  "forecast10|DT_0005|2026-03-22": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-22",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260322/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:32.469Z"
+  },
+  "forecast10|DT_0005|2026-03-23": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-23",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260323/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:33.047Z"
+  },
+  "forecast10|DT_0005|2026-03-24": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-24",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260324/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:33.609Z"
+  },
+  "forecast10|DT_0005|2026-03-25": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-25",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260325/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:34.167Z"
+  },
+  "forecast10|DT_0005|2026-03-26": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-26",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260326/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:34.738Z"
+  },
+  "forecast10|DT_0005|2026-03-27": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-27",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260327/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:35.310Z"
+  },
+  "forecast10|DT_0005|2026-03-28": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-28",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260328/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:35.886Z"
+  },
+  "forecast10|DT_0005|2026-03-29": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-29",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260329/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:36.459Z"
+  },
+  "forecast10|DT_0005|2026-03-30": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-30",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260330/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:37.026Z"
+  },
+  "forecast10|DT_0005|2026-03-31": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-03-31",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260331/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:37.602Z"
+  },
+  "forecast10|DT_0005|2026-04-01": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-01",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260401/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:38.175Z"
+  },
+  "forecast10|DT_0005|2026-04-02": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-02",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260402/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:38.751Z"
+  },
+  "forecast10|DT_0005|2026-04-03": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-03",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260403/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:39.323Z"
+  },
+  "forecast10|DT_0005|2026-04-04": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-04",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260404/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:39.885Z"
+  },
+  "forecast10|DT_0005|2026-04-05": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-05",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260405/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:40.449Z"
+  },
+  "forecast10|DT_0005|2026-04-06": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-06",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260406/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:41.024Z"
+  },
+  "forecast10|DT_0005|2026-04-07": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-07",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260407/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:41.597Z"
+  },
+  "forecast10|DT_0005|2026-04-08": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-08",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260408/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:42.162Z"
+  },
+  "forecast10|DT_0005|2026-04-09": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-09",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260409/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:42.724Z"
+  },
+  "forecast10|DT_0005|2026-04-10": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-10",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260410/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:43.294Z"
+  },
+  "forecast10|DT_0005|2026-04-11": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-11",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260411/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:43.869Z"
+  },
+  "forecast10|DT_0005|2026-04-12": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-12",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260412/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:44.432Z"
+  },
+  "forecast10|DT_0005|2026-04-13": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-13",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260413/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:45.011Z"
+  },
+  "forecast10|DT_0005|2026-04-14": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-14",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260414/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:45.583Z"
+  },
+  "forecast10|DT_0005|2026-04-15": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-15",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260415/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:46.155Z"
+  },
+  "forecast10|DT_0005|2026-04-16": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-16",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260416/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:46.719Z"
+  },
+  "forecast10|DT_0005|2026-04-17": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-17",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260417/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:47.294Z"
+  },
+  "forecast10|DT_0005|2026-04-18": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-18",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260418/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:47.867Z"
+  },
+  "forecast10|DT_0005|2026-04-19": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-19",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260419/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:48.442Z"
+  },
+  "forecast10|DT_0005|2026-04-20": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-20",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260420/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:49.013Z"
+  },
+  "forecast10|DT_0005|2026-04-21": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-21",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260421/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:49.584Z"
+  },
+  "forecast10|DT_0005|2026-04-22": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-22",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260422/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:50.148Z"
+  },
+  "forecast10|DT_0005|2026-04-23": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-23",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260423/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:50.724Z"
+  },
+  "forecast10|DT_0005|2026-04-24": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-24",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260424/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:51.287Z"
+  },
+  "forecast10|DT_0005|2026-04-25": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-25",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260425/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:51.858Z"
+  },
+  "forecast10|DT_0005|2026-04-26": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-26",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260426/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:52.428Z"
+  },
+  "forecast10|DT_0005|2026-04-27": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-27",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260427/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:52.990Z"
+  },
+  "forecast10|DT_0005|2026-04-28": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-28",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260428/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:53.568Z"
+  },
+  "forecast10|DT_0005|2026-04-29": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-29",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260429/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:54.140Z"
+  },
+  "forecast10|DT_0005|2026-04-30": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-04-30",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260430/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:54.703Z"
+  },
+  "forecast10|DT_0005|2026-05-01": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-01",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260501/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:55.265Z"
+  },
+  "forecast10|DT_0005|2026-05-02": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-02",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260502/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:55.840Z"
+  },
+  "forecast10|DT_0005|2026-05-03": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-03",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260503/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:56.419Z"
+  },
+  "forecast10|DT_0005|2026-05-04": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-04",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260504/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:56.996Z"
+  },
+  "forecast10|DT_0005|2026-05-05": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-05",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260505/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:57.575Z"
+  },
+  "forecast10|DT_0005|2026-05-06": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-06",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260506/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:58.148Z"
+  },
+  "forecast10|DT_0005|2026-05-07": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-07",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260507/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:58.723Z"
+  },
+  "forecast10|DT_0005|2026-05-08": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-08",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260508/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:59.297Z"
+  },
+  "forecast10|DT_0005|2026-05-09": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-09",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260509/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:37:59.872Z"
+  },
+  "forecast10|DT_0005|2026-05-10": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-10",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260510/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:00.436Z"
+  },
+  "forecast10|DT_0005|2026-05-11": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-11",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260511/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:01.004Z"
+  },
+  "forecast10|DT_0005|2026-05-12": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-12",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260512/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:01.565Z"
+  },
+  "forecast10|DT_0005|2026-05-13": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-13",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260513/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:02.132Z"
+  },
+  "forecast10|DT_0005|2026-05-14": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-14",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260514/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:02.709Z"
+  },
+  "forecast10|DT_0005|2026-05-15": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-15",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260515/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:03.287Z"
+  },
+  "forecast10|DT_0005|2026-05-16": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-16",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260516/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:03.867Z"
+  },
+  "forecast10|DT_0005|2026-05-17": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-17",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260517/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:04.433Z"
+  },
+  "forecast10|DT_0005|2026-05-18": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-18",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260518/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:05.007Z"
+  },
+  "forecast10|DT_0005|2026-05-19": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-19",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260519/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:05.572Z"
+  },
+  "forecast10|DT_0005|2026-05-20": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-20",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260520/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:06.146Z"
+  },
+  "forecast10|DT_0005|2026-05-21": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-21",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260521/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:06.713Z"
+  },
+  "forecast10|DT_0005|2026-05-22": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-22",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260522/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:07.285Z"
+  },
+  "forecast10|DT_0005|2026-05-23": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-23",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260523/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:07.860Z"
+  },
+  "forecast10|DT_0005|2026-05-24": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-24",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260524/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:08.432Z"
+  },
+  "forecast10|DT_0005|2026-05-25": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-25",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260525/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:08.999Z"
+  },
+  "forecast10|DT_0005|2026-05-26": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-26",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260526/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:09.573Z"
+  },
+  "forecast10|DT_0005|2026-05-27": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-27",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260527/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:10.149Z"
+  },
+  "forecast10|DT_0005|2026-05-28": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-28",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260528/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:10.722Z"
+  },
+  "forecast10|DT_0005|2026-05-29": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-29",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260529/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:11.287Z"
+  },
+  "forecast10|DT_0005|2026-05-30": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-30",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260530/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:11.869Z"
+  },
+  "forecast10|DT_0005|2026-05-31": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-05-31",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260531/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:12.437Z"
+  },
+  "forecast10|DT_0005|2026-06-01": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-01",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260601/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:13.000Z"
+  },
+  "forecast10|DT_0005|2026-06-02": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-02",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260602/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:13.562Z"
+  },
+  "forecast10|DT_0005|2026-06-03": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-03",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260603/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:14.138Z"
+  },
+  "forecast10|DT_0005|2026-06-04": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-04",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260604/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:14.700Z"
+  },
+  "forecast10|DT_0005|2026-06-05": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-05",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260605/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:15.281Z"
+  },
+  "forecast10|DT_0005|2026-06-06": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-06",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260606/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:15.854Z"
+  },
+  "forecast10|DT_0005|2026-06-07": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-07",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260607/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:16.426Z"
+  },
+  "forecast10|DT_0005|2026-06-08": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-08",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260608/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:16.998Z"
+  },
+  "forecast10|DT_0005|2026-06-09": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-09",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260609/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:17.572Z"
+  },
+  "forecast10|DT_0005|2026-06-10": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-10",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260610/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:18.147Z"
+  },
+  "forecast10|DT_0005|2026-06-11": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-11",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260611/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:18.710Z"
+  },
+  "forecast10|DT_0005|2026-06-12": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-12",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260612/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:19.287Z"
+  },
+  "forecast10|DT_0005|2026-06-13": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-13",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260613/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:19.868Z"
+  },
+  "forecast10|DT_0005|2026-06-14": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-14",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260614/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:20.442Z"
+  },
+  "forecast10|DT_0005|2026-06-15": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-15",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260615/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:21.017Z"
+  },
+  "forecast10|DT_0005|2026-06-16": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-16",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260616/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:21.595Z"
+  },
+  "forecast10|DT_0005|2026-06-17": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-17",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260617/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:22.167Z"
+  },
+  "forecast10|DT_0005|2026-06-18": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-18",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260618/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:22.763Z"
+  },
+  "forecast10|DT_0005|2026-06-19": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-19",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260619/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:23.335Z"
+  },
+  "forecast10|DT_0005|2026-06-20": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-20",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260620/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:23.902Z"
+  },
+  "forecast10|DT_0005|2026-06-21": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-21",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260621/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:24.463Z"
+  },
+  "forecast10|DT_0005|2026-06-22": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-22",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260622/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:25.036Z"
+  },
+  "forecast10|DT_0005|2026-06-23": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-23",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260623/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:25.598Z"
+  },
+  "forecast10|DT_0005|2026-06-24": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-24",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260624/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:26.174Z"
+  },
+  "forecast10|DT_0005|2026-06-25": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-25",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260625/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:26.747Z"
+  },
+  "forecast10|DT_0005|2026-06-26": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-26",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260626/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:27.328Z"
+  },
+  "forecast10|DT_0005|2026-06-27": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-27",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260627/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:27.906Z"
+  },
+  "forecast10|DT_0005|2026-06-28": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-28",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260628/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:28.473Z"
+  },
+  "forecast10|DT_0005|2026-06-29": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-29",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260629/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:29.043Z"
+  },
+  "forecast10|DT_0005|2026-06-30": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-06-30",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260630/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:29.617Z"
+  },
+  "forecast10|DT_0005|2026-07-01": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-01",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260701/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:30.191Z"
+  },
+  "forecast10|DT_0005|2026-07-02": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-02",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260702/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:30.764Z"
+  },
+  "forecast10|DT_0005|2026-07-03": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-03",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260703/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:31.341Z"
+  },
+  "forecast10|DT_0005|2026-07-04": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-04",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260704/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:31.914Z"
+  },
+  "forecast10|DT_0005|2026-07-05": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-05",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260705/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:32.487Z"
+  },
+  "forecast10|DT_0005|2026-07-06": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-06",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260706/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:33.056Z"
+  },
+  "forecast10|DT_0005|2026-07-07": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-07",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260707/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:33.632Z"
+  },
+  "forecast10|DT_0005|2026-07-08": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-08",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260708/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:34.210Z"
+  },
+  "forecast10|DT_0005|2026-07-09": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-09",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260709/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:34.771Z"
+  },
+  "forecast10|DT_0005|2026-07-10": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-10",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260710/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:35.348Z"
+  },
+  "forecast10|DT_0005|2026-07-11": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-11",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260711/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:35.917Z"
+  },
+  "forecast10|DT_0005|2026-07-12": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-12",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260712/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:36.489Z"
+  },
+  "forecast10|DT_0005|2026-07-13": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-13",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260713/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:37.062Z"
+  },
+  "forecast10|DT_0005|2026-07-14": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-14",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260714/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:37.633Z"
+  },
+  "forecast10|DT_0005|2026-07-15": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-15",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260715/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:38.206Z"
+  },
+  "forecast10|DT_0005|2026-07-16": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-16",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260716/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:38.776Z"
+  },
+  "forecast10|DT_0005|2026-07-17": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-17",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260717/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:39.341Z"
+  },
+  "forecast10|DT_0005|2026-07-18": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-18",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260718/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:39.902Z"
+  },
+  "forecast10|DT_0005|2026-07-19": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-19",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260719/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:40.489Z"
+  },
+  "forecast10|DT_0005|2026-07-20": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-20",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260720/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:41.075Z"
+  },
+  "forecast10|DT_0005|2026-07-21": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-21",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260721/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:41.648Z"
+  },
+  "forecast10|DT_0005|2026-07-22": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-22",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260722/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:42.210Z"
+  },
+  "forecast10|DT_0005|2026-07-23": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-23",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260723/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:42.781Z"
+  },
+  "forecast10|DT_0005|2026-07-24": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-24",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260724/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:43.358Z"
+  },
+  "forecast10|DT_0005|2026-07-25": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-25",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260725/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:43.961Z"
+  },
+  "forecast10|DT_0005|2026-07-26": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-26",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260726/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:44.524Z"
+  },
+  "forecast10|DT_0005|2026-07-27": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-27",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260727/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:45.084Z"
+  },
+  "forecast10|DT_0005|2026-07-28": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-28",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260728/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:45.661Z"
+  },
+  "forecast10|DT_0005|2026-07-29": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-29",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260729/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:46.237Z"
+  },
+  "forecast10|DT_0005|2026-07-30": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-30",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260730/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:46.800Z"
+  },
+  "forecast10|DT_0005|2026-07-31": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-07-31",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260731/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:47.362Z"
+  },
+  "forecast10|DT_0005|2026-08-01": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-01",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260801/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:47.928Z"
+  },
+  "forecast10|DT_0005|2026-08-02": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-02",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260802/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:48.502Z"
+  },
+  "forecast10|DT_0005|2026-08-03": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-03",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260803/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:49.073Z"
+  },
+  "forecast10|DT_0005|2026-08-04": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-04",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260804/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:49.647Z"
+  },
+  "forecast10|DT_0005|2026-08-05": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-05",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260805/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:50.214Z"
+  },
+  "forecast10|DT_0005|2026-08-06": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-06",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260806/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:50.790Z"
+  },
+  "forecast10|DT_0005|2026-08-07": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-07",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260807/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:51.372Z"
+  },
+  "forecast10|DT_0005|2026-08-08": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-08",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260808/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:51.945Z"
+  },
+  "forecast10|DT_0005|2026-08-09": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-09",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260809/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:52.509Z"
+  },
+  "forecast10|DT_0005|2026-08-10": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-10",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260810/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:53.082Z"
+  },
+  "forecast10|DT_0005|2026-08-11": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-11",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260811/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:53.663Z"
+  },
+  "forecast10|DT_0005|2026-08-12": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-12",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260812/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:54.242Z"
+  },
+  "forecast10|DT_0005|2026-08-13": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-13",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260813/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:54.817Z"
+  },
+  "forecast10|DT_0005|2026-08-14": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-14",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260814/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:55.397Z"
+  },
+  "forecast10|DT_0005|2026-08-15": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-15",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260815/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:55.967Z"
+  },
+  "forecast10|DT_0005|2026-08-16": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-16",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260816/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:56.529Z"
+  },
+  "forecast10|DT_0005|2026-08-17": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-17",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260817/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:57.105Z"
+  },
+  "forecast10|DT_0005|2026-08-18": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-18",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260818/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:57.672Z"
+  },
+  "forecast10|DT_0005|2026-08-19": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-19",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260819/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:58.251Z"
+  },
+  "forecast10|DT_0005|2026-08-20": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-20",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260820/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:58.817Z"
+  },
+  "forecast10|DT_0005|2026-08-21": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-21",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260821/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:59.394Z"
+  },
+  "forecast10|DT_0005|2026-08-22": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-22",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260822/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:38:59.969Z"
+  },
+  "forecast10|DT_0005|2026-08-23": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-23",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260823/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:39:00.541Z"
+  },
+  "forecast10|DT_0005|2026-08-24": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-24",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260824/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:39:01.117Z"
+  },
+  "forecast10|DT_0005|2026-08-25": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-25",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260825/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:39:01.695Z"
+  },
+  "forecast10|DT_0005|2026-08-26": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-26",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260826/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:39:02.285Z"
+  },
+  "forecast10|DT_0005|2026-08-27": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-27",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260827/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:39:02.869Z"
+  },
+  "forecast10|DT_0005|2026-08-28": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-28",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260828/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:39:03.454Z"
+  },
+  "forecast10|DT_0005|2026-08-29": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-29",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260829/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:39:04.033Z"
+  },
+  "forecast10|DT_0005|2026-08-30": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-30",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260830/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:39:04.607Z"
+  },
+  "forecast10|DT_0005|2026-08-31": {
+   "dataset": "forecast10",
+   "station": "DT_0005",
+   "date": "2026-08-31",
+   "status": "ok",
+   "pages": 1,
+   "items": 144,
+   "totalCount": 144,
+   "files": [
+    "forecast10/DT_0005/20260831/page-1.json"
+   ],
+   "lastError": null,
+   "attempts": 1,
+   "at": "2026-11-09T03:39:05.185Z"
+  },
   "forecast10|DT_0005|2026-09-01": {
    "dataset": "forecast10",
    "station": "DT_0005",
@@ -82579,7 +87604,7 @@
    "at": "2026-11-08T16:22:23.630Z"
   }
  },
- "updatedAt": "2026-11-08T22:21:57.232Z",
+ "updatedAt": "2026-11-09T03:39:05.187Z",
  "sources": [
   {
    "dir": "DT_0001-tide",

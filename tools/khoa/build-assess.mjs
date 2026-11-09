@@ -308,7 +308,7 @@ const caseJson = {
     provider: '국립해양조사원(KHOA)·기상청(KMA), 공공데이터포털 오픈API 및 기상자료개방포털',
     period: `${plan.period.start} ~ ${plan.period.end} (부산 과거 비교: ${PAST.start} ~ ${PAST.end})`,
     interval: '1시간',
-    predictedText: '해당 지역의 조석 특성과 달·태양의 주기적인 영향을 바탕으로 계산한 해수면 높이입니다.',
+    predictedText: '국립해양조사원이 그 관측소의 과거 관측 자료를 분석해 미리 계산한 해수면 높이입니다(조석 예보).',
     datumNote: '관측 조위의 높이 기준면은 자료 문서에 없어 확인되지 않았습니다. 관측소마다 기준면이 달라 조위 숫자로 지역끼리 해수면 높낮이를 비교할 수 없습니다.',
     identifier: `${o.caseId} (변환 ${builtAt.slice(0, 10)})`,
   },

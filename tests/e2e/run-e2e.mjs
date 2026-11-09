@@ -430,6 +430,8 @@ try {
     assert.equal(st.period.month, '2026-08');
     assert.equal(st.answers.q1.high, null); assert.equal(st.answers.q3.spring, null);
     assert.match(await page.textContent('#inq1-main h2'), /2026-08-10 00:00 ~ 08-13 00:00/);
+    assert.match(await page.textContent('#inq1-main .data-line'), /10분 간격/, '다른 달도 10분 간격 자료');
+    assert.equal(await page.$('#inq1-hourly-note'), null);
     assert.match(await page.textContent('#inq1-daily h2'), /2026-08/);
     assert.equal(await page.getAttribute('#inq1-start', 'max'), '2026-08-29');
     await page.fill('#inq1-start', '2026-08-20'); await page.waitForTimeout(400);
