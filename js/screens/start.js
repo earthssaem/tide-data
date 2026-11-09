@@ -3,7 +3,7 @@
 import { h, confirmDialog } from '../util/dom.js';
 import { escapeHtml } from '../util/format.js';
 import { fmtDateTime } from '../util/time.js';
-import { INQUIRIES } from '../content/questions.js';
+import { INQUIRIES, REVEALS } from '../content/questions.js';
 import { studentLine } from '../report/model.js';
 import { legacyList } from '../state/persistence.js';
 
@@ -57,6 +57,13 @@ export function render(app, container) {
   const err = form.querySelector('.form-error');
   const actions = form.querySelector('.start-actions');
 
+  /** 이 학생이 이 컴퓨터에서 이미 자료를 확인했다면: 새로 시작해도 그 단계 답은 다시 고정됨을 미리 알림 */
+  function priorNote(st) {
+    const e = app.attemptsEntryFor?.(st);
+    const done = ['moon', 'weather'].filter((k) => e?.reveals?.[k]).map((k) => `[${REVEALS[k].label}]`);
+    return done.length ? `\n\n이 학생은 이 컴퓨터에서 이미 ${done.join('·')}을(를) 했습니다. 새로 시작해도 그 단계 전에 쓴 답은 그때의 답으로 다시 고정되고, 새로 시작한 기록은 보고서에 남습니다.` : '';
+  }
+
   function readStudent() {
     const st = { grade: f.grade.value.trim(), klass: f.klass.value.trim(), number: f.number.value.trim(), name: f.name.value.trim() };
     const problems = [];
@@ -95,7 +102,7 @@ export function render(app, container) {
     if (s.started) {
       const ok = await confirmDialog({
         title: '새로 시작할까요?',
-        body: `이 컴퓨터에 저장된 작성 내용(${studentLine(s.student)}, 작성한 문항 ${filled(s)}개)이 지워지고 새로 시작합니다.\n기존 내용을 계속 쓰려면 [이어서 작성하기]를 누르세요.`,
+        body: `이 컴퓨터에 저장된 작성 내용(${studentLine(s.student)}, 작성한 문항 ${filled(s)}개)이 지워지고 새로 시작합니다.\n기존 내용을 계속 쓰려면 [이어서 작성하기]를 누르세요.${priorNote(st)}`,
         okLabel: '지우고 새로 시작', danger: true,
       });
       if (!ok) return;

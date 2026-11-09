@@ -17,7 +17,8 @@ import { layoutChart } from '../chart/layout.js';
 import { layoutToSVG, screenMeasure } from '../chart/svg.js';
 import { $, h, confirmDialog, alertDialog, choiceDialog, downloadBlob, pickFile, toast } from '../util/dom.js';
 import { escapeHtml } from '../util/format.js';
-import { EXPORT_NOTICE } from '../assessment/session-log.js';
+import { EXPORT_NOTICE, sanitizeLog, exportLog } from '../assessment/session-log.js';
+import { ASSESSMENT_CONFIG } from '../assessment/config.js';
 import { fmtRange, fmtDateTime, HOUR, DAY } from '../util/time.js';
 import { checkSession, renderLogin, teacherFetch, logout, expiryText, currentSession } from '../teacher-auth.js';
 
@@ -159,7 +160,8 @@ function render(app, T) {
     h('ul', { class: 'small' },
       ...EXPORT_NOTICE.map((t) => h('li', {}, t)),
       h('li', {}, '보고서의 응시 기록은 그 컴퓨터·브라우저에 남은 기록만 담습니다. 다른 컴퓨터·브라우저에서 처음부터 하거나 브라우저 설정으로 사이트 데이터를 지우면 알 수 없습니다.'),
-      h('li', {}, '이 안내는 학생 화면과 보고서에는 표시하지 않습니다(화면 이탈 기록 파일(JSON)에는 들어 있음).'))));
+      h('li', {}, '이 안내는 학생 화면과 보고서에는 표시하지 않습니다(화면 이탈 기록 파일(JSON)에는 들어 있음).')),
+    recordsDownload()));
 
   const bar = h('div', { class: 'card t-bar' });
   const caseSel = h('select', { id: 't-case', 'aria-label': '평가 사례' });
@@ -398,4 +400,21 @@ async function revert(app, T) {
   if (T.storage === 'server') persist(T);
   render(app, T);
   toast('학생용 배포 설정으로 되돌렸습니다.');
+}
+
+/** 이 컴퓨터(브라우저)에 남은 화면 이탈 기록 받기 — 학생 화면에는 두지 않고 교사 화면에서만(공용 컴퓨터에서 다른 학생 기록이 섞여 나가지 않게) */
+function recordsDownload() {
+  let log = null;
+  try { log = sanitizeLog(JSON.parse(localStorage.getItem(ASSESSMENT_CONFIG.storageKey) || 'null'), ASSESSMENT_CONFIG.maxSessions); } catch { log = null; }
+  const n = log?.sessions?.length || 0;
+  const box = h('p', { class: 'small', id: 't-records-dl' }, `이 컴퓨터(브라우저)에 남은 화면 이탈 기록: ${n}건. `);
+  if (n) {
+    box.append(h('button', { type: 'button', class: 'btn btn-sm btn-secondary', id: 't-records-dl-btn', onclick: () => {
+      const d = new Date();
+      const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}-${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`;
+      downloadBlob(new Blob([JSON.stringify(exportLog(log), null, 2)], { type: 'application/json' }), `화면이탈기록_이컴퓨터_${stamp}.json`);
+    } }, '이 컴퓨터의 화면 이탈 기록 받기(JSON)'));
+    box.append(h('span', { class: 'muted' }, ' 세션에는 학생 이름이 따로 저장되지 않으므로, 학생이 평가 종료 화면에서 받은 파일(이름 포함)과 세션 ID로 맞춰 보세요.'));
+  }
+  return box;
 }

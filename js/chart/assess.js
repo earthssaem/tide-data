@@ -313,9 +313,9 @@ export function q11PrevLines(ad, prev) {
   return [
     `관측 조위가 가장 높았던 때: ${rec(prev.peak, 'tide', '관측 조위')}`,
     `해면기압이 가장 낮았던 때: ${rec(prev.pressure, 'pressureSea', '해면기압')}`,
-    `저기압이 해수면을 높이는 까닭: ${prev.pressureText?.trim() || '(작성하지 않음)'}`,
+    `기압에 대해 쓴 설명: ${prev.pressureText?.trim() || '(작성하지 않음)'}`,
     `풍속이 가장 강했던 때: ${rec(prev.wind, 'windSpeed', '풍속')}`,
-    `강풍이 해수면을 높이는 까닭: ${prev.windText?.trim() || '(작성하지 않음)'}`,
+    `바람에 대해 쓴 설명: ${prev.windText?.trim() || '(작성하지 않음)'}`,
   ];
 }
 

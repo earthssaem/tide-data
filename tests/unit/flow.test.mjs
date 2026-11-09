@@ -127,7 +127,7 @@ test('보고서: 공개 전에는 기상·태풍·위상·⑪ 내용 없음, 공
   const side = s4.items.find((x) => x.type === 'side');
   assert.equal(side.left, '바다에서 밀려옴');
   assert.equal(side.right, st.answers.q11);
-  assert.match(side.rightTitle, /저기압·강풍/);
+  assert.match(side.rightTitle, /추가 자료를 근거로 한 설명/);
   assert.ok(!m.missing.some((x) => x.qid === 'q11'));
   assert.ok(!allText(m).includes('안정적') && !allText(m).includes('최근접'), '공개 뒤에도 기간 해석 문구·최근접 시각 없음');
   assert.ok(!/무결성|지울 수 있|지워졌을|data\/raw\//.test(allText(m)), '보고서에 교사용 유의 사항·저장소 경로 없음');
@@ -263,7 +263,7 @@ test('문항 ⑨: 서술형(글). 잠시 쓰였던 세부 문항 형식 답은 �
   const st = emptyState(ad.id, ad.dataVersion);
   const q11 = ALL_QUESTIONS.find((q) => q.id === 'q11');
   assert.equal(q11.kind, 'text');
-  assert.match(q11.text, /저기압, 강풍/);
+  for (const w of ['저기압', '강풍', '해일']) assert.ok(!(q11.text + q11.tip).includes(w), `⑨ 문항에 요인 이름 '${w}' 없음`);
   const raw = JSON.parse(JSON.stringify(st));
   raw.answers.q11 = '글 답';
   assert.equal(sanitizeState(raw).answers.q11, '글 답');
@@ -278,7 +278,7 @@ test('문항 ⑨: 서술형(글). 잠시 쓰였던 세부 문항 형식 답은 �
   assert.equal(L[0], '처음 글 답');
   assert.equal(L[1], '(문항이 바뀌기 전에 쓴 답)');
   assert.match(L[2], /관측 조위가 가장 높았던 때: 기간 A · 2022-09-06 05:00 · 관측 조위 \d+(\.\d)? cm/);
-  assert.ok(L.includes('저기압이 해수면을 높이는 까닭: 기압이 낮았다.'));
+  assert.ok(L.includes('기압에 대해 쓴 설명: 기압이 낮았다.'));
   // 다시 저장·불러와도 보관 유지
   assert.deepEqual(sanitizeState(JSON.parse(JSON.stringify(s2))).answers.q11prev, s2.answers.q11prev);
   // 빈 세부 답은 보관하지 않음

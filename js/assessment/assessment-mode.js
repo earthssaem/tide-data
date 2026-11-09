@@ -150,7 +150,6 @@ function emit(name, detail = {}) {
 // ───────── 화면: 시작 안내 ─────────
 function showGuide(message = '') {
   const log = readLog();
-  const past = log.sessions.filter((s) => s.status === 'ended');
   const supported = fsSupported();
   overlay.className = 'asmt-overlay asmt-guide';
   overlay.innerHTML = `
@@ -169,7 +168,6 @@ function showGuide(message = '') {
       <div class="asmt-actions">
         <button type="button" class="asmt-btn asmt-btn-primary" data-act="start" ${supported ? '' : 'disabled'}>평가 시작</button>
       </div>
-      ${past.length ? `<p class="asmt-small">이 컴퓨터에 지난 평가 기록 ${past.length}건이 있습니다. <button type="button" class="asmt-link" data-act="download">화면 이탈 기록 받기(JSON)</button></p>` : ''}
     </div>`;
   overlay.hidden = false;
   pill.hidden = true;

@@ -319,6 +319,8 @@ try {
   await check('새 평가 시작 안내로 돌아감(버튼 클릭 전 전체화면 강제 진입 없음)', async () => {
     assert.equal(await phase(page2), 'idle');
     assert.equal(await isFs(page2), false);
+    assert.equal(await page2.$('.asmt-guide [data-act=download]'), null, '시작 안내에 지난 기록 받기 없음(교사 화면으로 옮김)');
+    assert.ok(!(await overlayText(page2)).includes('지난 평가 기록'));
   });
 } catch (e) {
   results.push(['✗', '실행 중 오류', e.stack]);

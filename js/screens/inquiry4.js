@@ -1,7 +1,7 @@
 // 탐구 3(내부 이름 inq4) — 특이한 변화 (부산 관측 조위: 기간 A·B)
 // 공개 전: 두 기간의 관측 조위만(실제 날짜 표시, 같은 눈금 크기). 기상·태풍 관련 표시 없음.
 // [추가 자료 확인] 후: 두 기간의 조위·ASOS 해면기압·풍속(같은 시간 축, 가로축 맞춤), 시각 연결, 태풍 경로 지도.
-// 문항 ⑨: 두 기간의 차이를 폭풍 해일의 요인(저기압·강풍)을 포함해 기상·태풍 자료를 근거로 서술한다.
+// 문항 ⑨: 두 기간의 차이를 추가 자료(기상·태풍)를 근거로 서술한다(요인 이름은 문항에 쓰지 않음 — 학생이 자료에서 찾음).
 // 시각 연결(조위·기압·바람·태풍 시각을 함께 보기)은 자료의 시간대가 확인된 경우에만 켠다.
 import { h } from '../util/dom.js';
 import { fmtNum, escapeHtml } from '../util/format.js';
@@ -126,7 +126,7 @@ export function render(app, container) {
       sh11.body.append(h('div', { class: 'compare-prev', id: 'q11-prev' },
         h('p', { class: 'compare-prev-title' }, `내가 ${CIRCLED[Q10.no]}에 쓴 추측(추가 자료 확인 전)`),
         prev.trim() ? h('p', { class: 'compare-prev-text' }, prev) : h('p', { class: 'muted small' }, '(작성하지 않음)')),
-      textAnswer(app, Q11, { value: S().answers.q11, rows: 5, max: 1200, placeholder: '저기압과 강풍이 각각 해수면을 어떻게 높이는지, 그것이 두 기간의 자료에 어떻게 나타나는지 근거를 들어 3~4문장으로 쓰세요.', onInput: (v) => store.update((s) => { s.answers.q11 = v; }, { topic: 'answer' }) }));
+      textAnswer(app, Q11, { value: S().answers.q11, rows: 5, max: 1200, placeholder: '두 기간의 자료에서 달랐던 점을 근거로 들고, 그것이 해수면 높이를 어떻게 바꾸었는지 3~4문장으로 쓰세요.', onInput: (v) => store.update((s) => { s.answers.q11 = v; }, { topic: 'answer' }) }));
       const old = q11PrevLines(ad, S().answers.q11prev);
       if (old.length) sh11.body.append(h('div', { class: 'compare-prev', id: 'q11-old' },
         h('p', { class: 'compare-prev-title' }, `문항이 바뀌기 전에 쓴 ${CIRCLED[Q11.no]}의 답(보관)`), h('p', { class: 'compare-prev-text' }, old.join('\n'))));

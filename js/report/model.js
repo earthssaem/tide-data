@@ -81,7 +81,7 @@ export function layoutFigure(f, { width, measure, fontSize = 9.5 }) {
   }).filter(Boolean);
 }
 
-export function buildReport(ad, state, { attempts = null } = {}) {
+export function buildReport(ad, state, { attempts = null, others = [] } = {}) {
   const tz = ad.tz;
   const rv = state.reveals || {};
   const st = state.student;
@@ -166,7 +166,7 @@ export function buildReport(ad, state, { attempts = null } = {}) {
     s4.items.push({ type: 'note', text: `${PERIOD_NAMES.b} 태풍: ${periodTyphoonText(ad, 'b')}` });
     if (on(Q11)) {
       const q = qa(Q11, 'inq4');
-      s4.items.push({ ...q, type: 'side', leftTitle: `${CIRCLED[Q10.no]} 추가 자료 확인 전의 추측`, left: (answerOf(state, Q10) || '').trim(), rightTitle: `${CIRCLED[Q11.no]} 폭풍 해일 요인(저기압·강풍)을 포함한 설명`, right: q.lines.join('\n') });
+      s4.items.push({ ...q, type: 'side', leftTitle: `${CIRCLED[Q10.no]} 추가 자료 확인 전의 추측`, left: (answerOf(state, Q10) || '').trim(), rightTitle: `${CIRCLED[Q11.no]} 추가 자료를 근거로 한 설명`, right: q.lines.join('\n') });
     }
   } else {
     s4.items.push({ type: 'note', text: `[추가 자료 확인]을 하지 않아 추가 자료와 문항 ${CIRCLED[Q11.no]}은 보고서에 없습니다.` });
@@ -185,6 +185,12 @@ export function buildReport(ad, state, { attempts = null } = {}) {
       rows: ev.map((e) => [fmtDateTime(e.at, localTz()), `${howLabel(e.how)}${e.fileUpdatedAt ? ` (백업 작성 ${fmtDateTime(e.fileUpdatedAt, localTz())})` : ''}${e.priorReveals?.length ? ` — 이전 공개 기록 적용: ${e.priorReveals.map((k) => REVEALS[k].label).join('·')}` : ''}`]) });
     if (ev.filter((e) => e.how === 'new').length > 1) s6.items.push({ type: 'note', text: '같은 컴퓨터에서 이 학생이 2번 이상 새로 시작했습니다. 이미 공개한 단계의 답은 처음 공개할 때의 답으로 고정되어 있습니다.' });
   } else s6.items.push({ type: 'note', text: '이 컴퓨터에 남은 응시 기록이 없습니다.' });
+  // 같은 시간대(앞뒤 12시간)에 이 컴퓨터에서 다른 학생 정보로 남은 기록 — 다른 이름으로 자료를 먼저 확인했는지 교사가 볼 수 있게(이름은 첫 글자만)
+  const oth = (others || []).flatMap((o) => o.events.map((e) => [fmtDateTime(e.at, localTz()), o.who, howLabel(e.how)])).sort((x, y) => (x[0] < y[0] ? -1 : 1));
+  if (oth.length) {
+    s6.items.push({ type: 'table', title: `같은 시간대(앞뒤 12시간)에 이 컴퓨터에서 다른 학생 정보로 남은 기록 ${oth.length}건(${others.length}명)`, head: ['시각', '학생 정보', '내용'], rows: oth.slice(0, 40) });
+    if (oth.length > 40) s6.items.push({ type: 'note', text: `다른 학생 정보 기록 ${oth.length - 40}건은 생략했습니다.` });
+  }
 
   const sections = [s1, s2, s4, s5, s6].filter((s) => s.items.length);
   return {

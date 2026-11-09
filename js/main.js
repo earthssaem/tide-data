@@ -18,7 +18,7 @@ import { escapeHtml } from './util/format.js';
 import { fmtTime, fmtDateTime } from './util/time.js';
 import { answerOf } from './screens/common.js';
 import { answerLines } from './report/model.js';
-import { setAttemptsMode, recordEvent, recordReveal, applyPriorReveals, entryFor } from './state/attempts.js';
+import { setAttemptsMode, recordEvent, recordReveal, applyPriorReveals, entryFor, othersNear } from './state/attempts.js';
 
 import * as StartScreen from './screens/start.js';
 import * as Inq1Screen from './screens/inquiry1.js';
@@ -382,6 +382,6 @@ export function continueWork(student) {
   priorRevealNotice(applied);
 }
 
-Object.assign(app, { navigate, reveal, downloadBackup, downloadLegacy, importBackup, clearMyWork, startNew, continueWork, stepStatus, attemptsEntry: () => entryFor(app.ad.id, app.store.state.student) });
+Object.assign(app, { navigate, reveal, downloadBackup, downloadLegacy, importBackup, clearMyWork, startNew, continueWork, stepStatus, attemptsEntry: () => entryFor(app.ad.id, app.store.state.student), attemptsEntryFor: (st) => entryFor(app.ad.id, st), attemptsOthers: () => othersNear(app.ad.id, app.store.state.student) });
 
 boot();

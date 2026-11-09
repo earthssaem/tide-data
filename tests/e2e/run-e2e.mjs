@@ -267,8 +267,10 @@ try {
     assert.ok(tx.includes(`${Number(wx22.get('2022-09-06 05:00').wind_ms).toFixed(1)} m/s`));
   });
   await check('탐구 3 ⑨: ⑧의 추측(공개 전 답)을 옆에 표시', async () => assert.match(await page.textContent('#q11-prev'), /작성하지 않음/));
-  await check('탐구 3 ⑨: 저기압·강풍을 포함해 서술하는 글 문항(시각 기록 버튼 없음)', async () => {
-    assert.match(await page.textContent('#qt-q11'), /폭풍 해일의 요인\(저기압, 강풍\)을 포함하여/);
+  await check('탐구 3 ⑨: 추가 자료를 근거로 서술하는 글 문항 — 요인 이름(저기압·강풍·해일)을 알려 주지 않음', async () => {
+    assert.match(await page.textContent('#qt-q11'), /추가 자료\(기상·태풍\)에서 근거를 찾아/);
+    const q = await page.textContent('#q-q11');
+    for (const w of ['저기압', '강풍', '해일', '바람이 강', '기압이 낮']) assert.ok(!q.includes(w), `⑨에 '${w}' 없음`);
     assert.ok(await page.$('#ans-q11'));
     assert.equal(await page.$('[id^=q11-rec-]'), null);
     assert.ok(!(await page.textContent('#inq4-tide-a')).includes('내가 고름'));
@@ -362,7 +364,7 @@ try {
     assert.match(txt, /\[달의 위상 확인\] 전에 작성한 답/);
     assert.match(txt, /확인한 달의 위상/);
     assert.match(txt, /⑧ 추가 자료 확인 전의 추측/);
-    assert.match(txt, /⑨ 폭풍 해일 요인\(저기압·강풍\)을 포함한 설명/);
+    assert.match(txt, /⑨ 추가 자료를 근거로 한 설명/);
     assert.match(txt, /문항 ⑩/);
     assert.ok(!txt.includes('안정적인 기간') && !txt.includes('최근접'), '보고서에도 기간 해석 문구·최근접 시각 없음');
     assert.ok(txt.includes('태풍 경로와 관측소 위치'));
@@ -373,6 +375,8 @@ try {
   const beforeRetake = await stateOf(page);
   await go(page, 'start');
   await page.click('#btn-start');
+  await page.waitForSelector('dialog[open]');
+  await check('재응시: 지우고 새로 시작 확인 창에 이미 확인한 단계는 다시 고정된다고 안내', async () => assert.match(await page.textContent('dialog[open]'), /이미 \[달의 위상 확인\]·\[추가 자료 확인\]을\(를\) 했습니다.*다시 고정/s));
   await okDialog(page); // 지우고 새로 시작
   await page.waitForSelector('dialog[open]');
   await check('재응시: 같은 학생이 새로 시작하면 이전 공개 기록 안내, 공개 전 답 고정', async () => {
@@ -396,6 +400,25 @@ try {
     await okDialog(page);
     assert.ok(await page.evaluate(() => localStorage.getItem('tideLabAssess.v1.attempts')));
     assert.equal(await page.evaluate(() => localStorage.getItem('tideLab.v1.work')), null);
+  });
+  await check('재응시: 다른 학생 정보(가짜 이름)로 먼저 자료를 확인하면 본인 보고서에 같은 시간대 다른 학생 기록으로 남음', async () => {
+    await page.evaluate(() => {
+      window.__tideApp.startNew({ grade: '3', klass: '2', number: '99', name: '가짜이름' });
+      window.__tideApp.store.update((s) => { s.reveals.weather = null; });
+    });
+    await page.waitForTimeout(300);
+    await go(page, 'inq4');
+    await page.click('#btn-reveal-weather'); await okDialog(page);
+    await page.waitForSelector('dialog[open]', { state: 'detached' }).catch(() => {});
+    await page.evaluate(() => { window.__tideApp.startNew({ grade: '3', klass: '2', number: '15', name: '김학생' }); });
+    await page.waitForTimeout(300);
+    if (await page.$('dialog[open]')) await page.click('dialog[open] button');
+    await go(page, 'report');
+    const rp = await page.textContent('[data-part=attempts]');
+    assert.match(rp, /같은 시간대\(앞뒤 12시간\)에 이 컴퓨터에서 다른 학생 정보로 남은 기록/);
+    assert.ok(rp.includes('3학년 2반 99번 가○○○'), '이름은 첫 글자만');
+    assert.ok(!rp.includes('가짜이름'));
+    assert.match(rp, /3학년 2반 99번 가○○○\s*\[추가 자료 확인\]/);
   });
   await check('학생 화면은 서버(API)나 외부로 아무것도 보내지 않음(답은 학생 브라우저에만)', async () => assert.deepEqual(studentApi, []));
 
@@ -460,6 +483,7 @@ try {
   await check('교사용: 임시 후보에 교사 검토 필요 표시, 기본 설정 검증 통과', async () => {
     assert.ok(await tp.isVisible('#t-review-badge'));
     assert.match(await tp.textContent('#t-records-note'), /부정행위를 판정하거나 감점하지 마십시오/, '기록 해석 유의 사항은 교사 화면에');
+    assert.match(await tp.textContent('#t-records-dl'), /이 컴퓨터\(브라우저\)에 남은 화면 이탈 기록: \d+건/);
     assert.equal(await tp.$('#asmt-root .asmt-overlay:not([hidden])'), null);
     assert.equal(await tp.$$eval('#t-valid .t-v-error', (x) => x.length), 0);
     assert.match(await tp.textContent('#t-valid'), /모든 자료 KST 확인/);

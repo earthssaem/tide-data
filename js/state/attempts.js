@@ -81,5 +81,31 @@ export function applyPriorReveals(state) {
   return applied;
 }
 
+/**
+ * 같은 시간대에 이 컴퓨터에서 '다른 학생 정보'로 남은 기록(가짜 이름으로 자료를 먼저 확인한 뒤 본인 이름으로 새로 시작하는 경우를 교사가 볼 수 있게).
+ * 이 학생의 기록 시각 앞뒤 windowMs 안의 사건만 고른다. 이름은 첫 글자만 보여 준다.
+ * @returns {{who:string, events:{at:number, how:string}[]}[]}
+ */
+export function othersNear(caseId, student, { windowMs = 12 * 3600e3 } = {}) {
+  const k = studentKey(caseId, student);
+  if (!k) return [];
+  const all = loadAttempts().students;
+  const mine = all[k]?.events || [];
+  if (!mine.length) return [];
+  const t0 = Math.min(...mine.map((e) => e.at)) - windowMs, t1 = Math.max(...mine.map((e) => e.at)) + windowMs;
+  const out = [];
+  for (const [ok, e] of Object.entries(all)) {
+    if (ok === k || !ok.startsWith(`${caseId}|`)) continue;
+    const ev = (e.events || []).filter((x) => x.at >= t0 && x.at <= t1).map((x) => ({ at: x.at, how: x.how }));
+    if (ev.length) out.push({ who: maskStudent(e.student), events: ev });
+  }
+  return out.sort((a, b) => a.events[0].at - b.events[0].at);
+}
+export function maskStudent(st = {}) {
+  const nm = String(st.name || '').trim();
+  const m = nm ? nm[0] + '○'.repeat(Math.max(1, [...nm].length - 1)) : '(이름 없음)';
+  return `${st.grade || '□'}학년 ${st.klass || '□'}반 ${st.number || '□'}번 ${m}`;
+}
+
 const HOW = { new: '새로 시작', continue: '이어서 작성', import: '백업 파일 불러오기', 'reveal-moon': '[달의 위상 확인]', 'reveal-weather': '[추가 자료 확인]', 'prior-reveal': '이전 공개 기록 적용' };
 export const howLabel = (h) => HOW[h] || h;
