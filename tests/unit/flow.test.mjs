@@ -194,18 +194,21 @@ test('예시·검증 사례: 예시 표시, 없는 자료는 미제공(만들지
   assert.deepEqual(ALL_QUESTIONS.map((q) => q.no), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
 });
 
-test('10분 간격 예측(부산 2026-09): 정시 값은 1시간 예측과 같고 탐구 1에 쓰임', async () => {
+test('10분 간격 예측(부산 2025-10~2026-09 전체): 정시 값은 1시간 예측과 같고, 학생이 어느 달을 골라도 탐구 1에 쓰임', async () => {
   const { inq1Series } = await import('../../js/chart/assess.js');
+  const { applyStudentPeriod } = await import('../../js/setup/setup.js');
   const ad = applySetup(await load('khoa-assess-2025-26'), deployed());
   const p10 = ad.st.DT_0005.predicted10;
-  assert.deepEqual(p10.months, ['2026-09']);
+  assert.deepEqual(p10.months, ad.months, '자료가 있는 모든 달');
   assert.equal(p10.intervalMs, 600000);
-  assert.equal(p10.points.length, 30 * 144);
+  assert.equal(p10.points.length, 365 * 144);
+  assert.equal(p10.points.filter((p) => p.v == null).length, 0, '결측 없음');
   const hourly = new Map(ad.st.DT_0005.predicted.points.map((p) => [p.t, p.v]));
   for (const p of p10.points.filter((x) => x.t % 3600e3 === 0)) assert.equal(p.v, hourly.get(p.t));
   assert.equal(inq1Series(ad), p10);
-  const other = applySetup(await load('khoa-assess-2025-26'), { ...deployed(), month: '2026-08', inq1: { start: '2026-08-10 00:00', end: '2026-08-13 00:00', countStart: '2026-08-11 00:00' } });
-  assert.equal(inq1Series(other), other.st.DT_0005.predicted, '10분 자료가 없는 달은 1시간 자료');
+  for (const m of ['2025-10', '2026-02', '2026-08']) assert.equal(inq1Series(applyStudentPeriod(ad, { month: m, inq1: null, inq2: null })), p10, `${m}도 10분 자료`);
+  const mini = applySetup(await load('test-minimal'), null);
+  assert.equal(inq1Series(mini), mini.st[mini.rep].predicted, '10분 자료가 없는 사례는 1시간 자료');
 });
 
 test('문항 ④ 배치판: 달 1·달 2의 위치각 저장, 옮기지 않은 판은 빈 답, 이유 저장, 이전 형식은 보관', () => {
