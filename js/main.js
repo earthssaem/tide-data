@@ -10,7 +10,7 @@ import {
   emptyState, loadLocal, clearLocal, makeBackupText, backupFilename, parseBackup, sanitizeState, setStorageMode, legacyList,
 } from './state/persistence.js';
 import { STEPS, INQUIRIES, CONCLUSION, REVEALS, CIRCLED, isEnabled } from './content/questions.js';
-import { applySetup, loadDeployedSetup, loadTeacherSetup, parseSetup } from './setup/setup.js';
+import { applySetup, loadDeployedSetup, loadTeacherSetup, parseSetup, isOutdatedSetup } from './setup/setup.js';
 import { loadKoreaMap } from './chart/map.js';
 import { checkSession, renderLogin, teacherFetch } from './teacher-auth.js';
 import { $, h, confirmDialog, alertDialog, downloadBlob, pickFile, toast } from './util/dom.js';
@@ -86,12 +86,18 @@ async function boot() {
     app.registry = await loadRegistry();
     let cfg = null;
     if (app.mode === 'preview') {
+      // 서버 저장은 잠시 뒤에 이뤄지므로, 이 브라우저에 바로 저장된 사본이 더 최근이면 그것을 쓴다(메모는 미리보기에 쓰지 않음)
+      let serverAt = 0;
       if (teacherSession?.storage === 'server') {
         const r = await teacherFetch('/api/teacher/setup');
         if (r.status === 401) { location.reload(); return; }
-        if (r.ok && r.setup) { try { cfg = parseSetup(r.setup); app.setupSource = '서버에 저장한 교사 설정'; } catch { cfg = null; } }
+        if (r.ok && r.setup) { try { cfg = parseSetup(r.setup); serverAt = Date.parse(r.setup.savedAt || '') || 0; app.setupSource = '서버에 저장한 교사 설정'; } catch { cfg = null; } }
       }
-      if (!cfg) { cfg = loadTeacherSetup(); if (cfg) app.setupSource = '이 브라우저에 저장한 교사 설정'; }
+      const localCfg = loadTeacherSetup();
+      const localAt = Date.parse(localCfg?.updatedAt || '') || 0;
+      if (localCfg && (!cfg || localAt > serverAt + 500)) { cfg = localCfg; app.setupSource = cfg && serverAt ? '이 브라우저에 저장한 교사 설정(서버보다 최근)' : '이 브라우저에 저장한 교사 설정'; }
+      // 앱 개편 전에 저장한 교사 설정은 미리보기에 쓰지 않는다(교사 화면을 열면 새 기본값으로 바뀜)
+      if (isOutdatedSetup(cfg)) cfg = null;
       if (!cfg) {
         try { cfg = await loadDeployedSetup(readText); app.setupSource = '학생용 배포 설정(data/assessment.json)'; } catch { cfg = null; }
       }

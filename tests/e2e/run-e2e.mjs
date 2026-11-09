@@ -352,6 +352,8 @@ try {
   const tp = await ctx.newPage();
   watch(tp, 'teacher');
   const apiStatus = (p, path, method = 'GET', body) => p.evaluate(async ([u, m, b]) => (await fetch(u, { method: m, headers: b ? { 'Content-Type': 'application/json' } : {}, body: b ? JSON.stringify(b) : undefined })).status, [path, method, body]);
+  // 앱 개편 전(설정 형식 2)에 서버에 저장해 둔 교사 설정: 기간 A·B가 예전 값
+  upstash.data.set('tidelab:teacher:setup', { v: JSON.stringify({ format: 'tide-lab-assessment-setup', version: 2, caseId: 'khoa-assess-2025-26', month: '2026-09', memo: '교사메모비밀문장', questions: { q7: false }, inq1: { start: '2026-09-10 00:00', end: '2026-09-13 00:00', countStart: '2026-09-11 00:00' }, inq2: { start: '2026-09-10 00:00', end: '2026-09-13 00:00' }, inq4: { a: { start: '2022-09-24 00:00', end: '2022-09-29 00:00' }, b: { start: '2026-09-04 00:00', end: '2026-09-09 00:00' } } }), exp: null });
   await tp.goto(BASE + '?mode=teacher');
   await tp.waitForSelector('#t-login-form');
   await check('로그인 전: 교사 설정 화면 차단, 보호된 요청 401', async () => {
@@ -390,6 +392,18 @@ try {
   await check('로그인 후에도 CSRF 토큰 없는 설정 변경은 거부(403)', async () => {
     assert.equal(await apiStatus(tp, '/api/teacher/setup', 'PUT', { format: 'tide-lab-assessment-setup', version: 2, caseId: 'khoa-assess-2025-26' }), 403);
     assert.equal(await apiStatus(tp, '/api/teacher/setup'), 200);
+  });
+  await check('교사용: 앱 개편 전 저장 설정은 새 기본값으로 바꾸고 메모 유지, 이전 값 안내', async () => {
+    const tx = await tp.textContent('#t-migrated');
+    assert.match(tx, /비교 기간 A\s*2022-09-24 ~ 2022-09-29/);
+    assert.match(tx, /비교 기간 B\s*2026-09-04 ~ 2026-09-09/);
+    const c = await tp.evaluate(() => window.__tideApp.teacher.cfg);
+    assert.deepEqual(c.inq4, { a: { start: '2022-09-04 00:00', end: '2022-09-09 00:00' }, b: { start: '2022-09-25 00:00', end: '2022-09-30 00:00' } });
+    assert.equal(c.memo, '교사메모비밀문장');
+    assert.equal(await tp.$('#t-diff'), null, '바꾼 뒤에는 배포 설정과 차이 없음');
+    await tp.waitForTimeout(900);
+    assert.equal(JSON.parse(upstash.data.get('tidelab:teacher:setup').v).version, 3, '새 형식으로 다시 저장');
+    await tp.click('#t-migrated button');
   });
   await check('교사용: 임시 후보에 교사 검토 필요 표시, 기본 설정 검증 통과', async () => {
     assert.ok(await tp.isVisible('#t-review-badge'));
@@ -432,7 +446,7 @@ try {
     const d = readFileSync(depPath, 'utf8'); const t2 = readFileSync(tchPath, 'utf8');
     assert.equal(dep.suggestedFilename(), 'assessment.json');
     assert.ok(!d.includes('교사메모비밀문장')); assert.ok(t2.includes('교사메모비밀문장'));
-    const j = JSON.parse(d); assert.equal(j.version, 2); assert.equal(j.month, '2026-08'); assert.equal(j.questions.q10, false);
+    const j = JSON.parse(d); assert.equal(j.version, 3); assert.equal(j.month, '2026-08'); assert.equal(j.questions.q10, false);
   });
 
   // ───── 미리보기: 교사 설정 적용, 학생 답과 분리 ─────

@@ -7,7 +7,9 @@ import { parseDateTime, fmtDateTime, fmtRange, parts, DAY, HOUR } from '../util/
 import { ALL_QUESTIONS, ALL_QUESTION_IDS, CIRCLED } from '../content/questions.js';
 
 export const SETUP_FORMAT = 'tide-lab-assessment-setup';
-export const SETUP_VERSION = 2;
+export const SETUP_VERSION = 3;
+// 형식 2: 탐구 1~4(예측과 실제 포함) 시절에 저장한 설정 — 읽기는 하지만, 교사 화면·미리보기에서는 새 기본값으로 바꾼다
+export const SETUP_MIN_READ = 2;
 export const SETUP_URL = 'data/assessment.json';
 export const TEACHER_SETUP_KEY = 'tideLabTeacher.v1.setup';
 
@@ -51,7 +53,7 @@ export function defaultSetup(ad) {
 export function parseSetup(obj, fallback = null) {
   if (!isObj(obj) || obj.format !== SETUP_FORMAT) throw new Error('조석 데이터 탐구실의 평가 설정 파일이 아닙니다.');
   if (typeof obj.version !== 'number' || obj.version > SETUP_VERSION) throw new Error('이 앱에서 읽을 수 없는 설정 파일 버전입니다.');
-  if (obj.version < SETUP_VERSION) throw new Error('이전 구성(관측소 선택·탐구 1~5)의 설정 파일입니다. 지금 구성에서는 읽을 수 없으니 교사용 화면에서 다시 설정하세요.');
+  if (obj.version < SETUP_MIN_READ) throw new Error('이전 구성(관측소 선택·탐구 1~5)의 설정 파일입니다. 지금 구성에서는 읽을 수 없으니 교사용 화면에서 다시 설정하세요.');
   if (typeof obj.caseId !== 'string' || !obj.caseId) throw new Error('설정 파일에 사례(caseId)가 없습니다.');
   const fb = fallback || {};
   const q = {};
@@ -61,6 +63,7 @@ export function parseSetup(obj, fallback = null) {
   return {
     format: SETUP_FORMAT,
     version: SETUP_VERSION,
+    savedVersion: obj.version, // 저장 당시 형식(형식 2는 앱 개편 전 설정)
     caseId: obj.caseId.slice(0, 100),
     title: typeof obj.title === 'string' ? obj.title.slice(0, 200) : '',
     updatedAt: typeof obj.updatedAt === 'string' ? obj.updatedAt.slice(0, 40) : '',
@@ -177,13 +180,34 @@ export function validateSetup(ad0, cfg) {
 
 /** 학생용 배포 파일: 교사용 메모를 빼고 내보낸다 */
 export function studentDeployment(cfg) {
-  const { memo, forTeacher, savedAt, ...rest } = cfg;
+  const { memo, forTeacher, savedAt, savedVersion, ...rest } = cfg;
   return { ...rest, format: SETUP_FORMAT, version: SETUP_VERSION, updatedAt: new Date().toISOString() };
 }
 
 /** 교사 보관용 파일(메모 포함) */
 export function teacherExport(cfg) {
-  return { ...cfg, format: SETUP_FORMAT, version: SETUP_VERSION, updatedAt: new Date().toISOString(), forTeacher: true };
+  const { savedVersion, ...rest } = cfg;
+  return { ...rest, format: SETUP_FORMAT, version: SETUP_VERSION, updatedAt: new Date().toISOString(), forTeacher: true };
+}
+
+/** 앱 개편 전(형식 2)에 저장한 교사 설정인지 */
+export const isOutdatedSetup = (cfg) => !!cfg && typeof cfg.savedVersion === 'number' && cfg.savedVersion < SETUP_VERSION;
+
+/**
+ * 개편 전 교사 설정 → 새 기본값(학생용 배포 설정, 없으면 사례 기본값)으로 바꾸고 메모만 옮긴다.
+ * @returns {{cfg, old:Array<[string,string]>}} old: 바뀐 이전 값(화면 안내용)
+ */
+export function migrateOutdatedSetup(oldCfg, base) {
+  const fmt = (r) => (r?.start ? `${r.start.slice(0, 10)} ~ ${r.end.slice(0, 10)}` : '—');
+  const old = [
+    ['분석 연월', oldCfg.month || '—'],
+    ['탐구 1 구간', fmt(oldCfg.inq1)],
+    ['탐구 2 기간', fmt(oldCfg.inq2)],
+    ['비교 기간 A', fmt(oldCfg.inq4?.a)],
+    ['비교 기간 B', fmt(oldCfg.inq4?.b)],
+  ];
+  const { savedVersion, ...b } = JSON.parse(JSON.stringify(base));
+  return { cfg: { ...b, version: SETUP_VERSION, memo: oldCfg.memo || '', reviewed: false }, old };
 }
 
 // ───────────────────────── 읽기·저장 ─────────────────────────

@@ -9,7 +9,7 @@
 import { loadRegistry, loadCase } from '../data/loader.js';
 import {
   SETUP_FORMAT, SETUP_VERSION, parseSetup, defaultSetup, applySetup, validateSetup, studentDeployment, teacherExport,
-  loadTeacherSetup, saveTeacherSetup, clearTeacherSetup, loadDeployedSetup, fmtLocal, parseLocal, monthRange,
+  loadTeacherSetup, saveTeacherSetup, clearTeacherSetup, loadDeployedSetup, fmtLocal, parseLocal, monthRange, isOutdatedSetup, migrateOutdatedSetup,
 } from '../setup/setup.js';
 import { INQUIRIES, CONCLUSION, CIRCLED, ALL_QUESTIONS } from '../content/questions.js';
 import { inq1MainSpec, inq1MonthSpec, inq1Series, inq2Specs, inq4TideSpecs, periodTyphoonText } from '../chart/assess.js';
@@ -70,11 +70,20 @@ async function start(app, message = '') {
     if (!r.ok) storage = 'local';
   }
   const local = loadTeacherSetup();
-  const cfg = serverCfg || local || (deployed ? JSON.parse(JSON.stringify(deployed)) : { format: SETUP_FORMAT, version: SETUP_VERSION, caseId: registry.defaultCase });
-  const source = serverCfg ? '서버에 저장한 교사 설정(로그인으로 보호)' : local ? '이 브라우저에 저장한 교사 설정' : deployed ? '학생용 배포 설정(data/assessment.json)' : '새 설정';
-  const T = { registry, deployed, cfg, source, storage, ad: null, savedAt: serverCfg || local ? Date.now() : null, saveTimer: null };
+  let cfg = serverCfg || local || (deployed ? JSON.parse(JSON.stringify(deployed)) : { format: SETUP_FORMAT, version: SETUP_VERSION, caseId: registry.defaultCase });
+  let source = serverCfg ? '서버에 저장한 교사 설정(로그인으로 보호)' : local ? '이 브라우저에 저장한 교사 설정' : deployed ? '학생용 배포 설정(data/assessment.json)' : '새 설정';
+  // 앱 개편 전(형식 2) 저장 설정: 새 기본값(배포 설정)으로 바꾸고 메모만 옮긴 뒤 바로 저장
+  let migrated = null;
+  if ((serverCfg || local) && isOutdatedSetup(cfg)) {
+    const r = migrateOutdatedSetup(cfg, deployed && deployed.caseId === cfg.caseId ? deployed : { format: SETUP_FORMAT, version: SETUP_VERSION, caseId: cfg.caseId });
+    migrated = r.old;
+    cfg = r.cfg;
+    source = '새 기본값(앱 개편 전 저장 설정을 바꿈)';
+  }
+  const T = { registry, deployed, cfg, source, storage, ad: null, savedAt: serverCfg || local ? Date.now() : null, saveTimer: null, migrated };
   app.teacher = T; // 검증용
   await loadCaseFor(T, cfg.caseId);
+  if (migrated) persist(T);
   render(app, T);
   // 세션이 끝나면 로그인 화면으로
   clearTimeout(app.teacherExpiry);
@@ -171,6 +180,14 @@ function render(app, T) {
     sampleCases.length ? h('p', { class: 'small' }, '기능 시험(가상 데이터, 학생에게 제공하지 않음): ', ...sampleCases.map((c, i) => [i ? ' · ' : '', h('a', { href: `?mode=preview&case=${encodeURIComponent(c.id)}`, target: '_blank', rel: 'noopener' }, c.label || c.id)])) : null,
   ].filter(Boolean));
   screen.append(bar);
+  if (T.migrated) {
+    screen.append(h('section', { class: 'card notice notice-info t-migrated', id: 't-migrated' },
+      h('h2', { class: 'h-sm' }, '앱이 바뀌어 저장된 교사 설정을 새 기본값으로 바꿨습니다'),
+      h('p', { class: 'small' }, '탐구 구성(예측과 실제 삭제, 비교 기간 A·B 모두 부산 2022년 9월 등)이 바뀌기 전에 저장한 설정이라, 학생용 배포 설정 값으로 바꾸고 저장했습니다. 교사용 메모는 그대로 옮겼습니다. 아래 이전 값을 참고해 필요하면 다시 고르세요.'),
+      h('table', { class: 'data-table compact' }, h('thead', {}, h('tr', {}, h('th', {}, '항목'), h('th', {}, '이전에 저장한 값'))),
+        h('tbody', {}, ...T.migrated.map(([a, b]) => h('tr', {}, h('th', {}, a), h('td', {}, b))))),
+      h('button', { type: 'button', class: 'btn btn-ghost btn-xs', onclick: () => { T.migrated = null; render(app, T); } }, '안내 닫기')));
+  }
   const diff = deployDiff(T);
   if (diff) screen.append(diff);
   screen.append(editor(app, T));
