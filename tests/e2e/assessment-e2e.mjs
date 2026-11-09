@@ -63,6 +63,7 @@ try {
     assert.match(await overlayText(page), /평가 시작 안내/);
     assert.equal(await appInert(page), true);
     assert.equal(await phase(page), 'idle');
+    assert.ok(!/부정행위|무결성|localStorage/.test(await overlayText(page)), '교사용 유의 사항은 학생 화면에 없음');
   });
   await page.screenshot({ path: join(OUT, 'asmt-guide.png') });
 
@@ -286,6 +287,7 @@ try {
     assert.ok(s.endedAt);
     assert.equal(s.departures.length, nEnd);
     assert.equal(l.activeId, null);
+    assert.ok(!/부정행위|무결성|localStorage|fullscreenchange/.test(await page2.textContent('.asmt-ended')), '종료 화면에 교사용 유의 사항 없음');
   });
   await page2.evaluate(() => { window.dispatchEvent(new Event('blur')); });
   await wait(2300);

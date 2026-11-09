@@ -3,7 +3,7 @@
 // 학생이 그래프에서 고른 지점·날짜·구간은 그 문항의 그래프에 그대로 그려 넣는다(같은 그래프를 쓰는 문항은 그림 하나를 함께 씀).
 // 아직 공개하지 않은 자료(달의 위상, 기상·태풍)는 보고서에도 나오지 않는다. 교사용 메모는 넣지 않는다.
 
-import { INQUIRIES, CONCLUSION, REVEALS, CIRCLED, Q11_PARTS, PREDICTED_TEXT, OBSERVED_TEXT, DATUM_CAUTION, isEnabled, qLabel } from '../content/questions.js';
+import { INQUIRIES, CONCLUSION, REVEALS, CIRCLED, PREDICTED_TEXT, OBSERVED_TEXT, DATUM_CAUTION, isEnabled, qLabel } from '../content/questions.js';
 import { answerOf } from '../screens/common.js';
 import { howLabel } from '../state/attempts.js';
 import { fmtRange, fmtDateTime, fmtDateKo, DAY, HOUR } from '../util/time.js';
@@ -11,7 +11,7 @@ import { fmtNum } from '../util/format.js';
 import { layoutChart } from '../chart/layout.js';
 import {
   inq1MainSpec, inq1MonthSpec, inq2Specs, inq2ZoomSpec, inq2ZoomId, stationsMapLayout, inq4TideSpecs, weatherSpec,
-  typhoonMapLayout, extremaIn, q11Value, fmtWx, periodTitle, periodCd, PERIOD_NAMES, periodTyphoonText,
+  typhoonMapLayout, extremaIn, q11PrevLines, periodTitle, periodCd, PERIOD_NAMES, periodTyphoonText,
 } from '../chart/assess.js';
 
 const localTz = () => ({ offsetMinutes: -new Date().getTimezoneOffset(), label: '' });
@@ -59,21 +59,9 @@ export function answerLines(ad, state, q) {
       return L;
     }
     case 'q11': {
-      const L = [];
-      const any = a && (Q11_PARTS.some((P) => a[P.key] || (P.textKey && String(a[P.textKey] || '').trim())));
-      if (any) {
-        for (const P of Q11_PARTS) {
-          const r = a[P.key];
-          let rec = '(기록하지 않음)';
-          if (r) {
-            const v = q11Value(ad, r, P.rec.kind);
-            rec = `${PERIOD_NAMES[r.k]} · ${fmtDateTime(r.t, tz)} · ${P.rec.kind === 'tide' ? `관측 조위 ${cm(v)}` : `${P.rec.kind === 'pressureSea' ? '해면기압' : '풍속'} ${fmtWx(P.rec.kind, v)}`}`;
-          }
-          L.push(`(${P.mark}) ${P.rec.label}: ${rec}`);
-          if (P.textKey) L.push(`(${P.mark}) ${P.title}이 해수면을 높이는 까닭: ${String(a[P.textKey] || '').trim() || '(작성하지 않음)'}`);
-        }
-      }
-      if (a && String(a.old || '').trim()) L.push(`(문항이 바뀌기 전에 쓴 답) ${a.old.trim()}`);
+      const L = typeof a === 'string' && a.trim() ? [a.trim()] : [];
+      const old = q11PrevLines(ad, state.answers.q11prev);
+      if (old.length) L.push('(문항이 바뀌기 전에 쓴 답)', ...old);
       return L;
     }
     default: return typeof a === 'string' && a.trim() ? [a.trim()] : [];
@@ -165,13 +153,11 @@ export function buildReport(ad, state, { attempts = null } = {}) {
   if (on(Q10)) s4.items.push(qa(Q10, 'inq4'));
   if (rv.weather) {
     s4.items.push({ type: 'note', text: `[추가 자료 확인] ${fmtDateTime(rv.weather.at, localTz())} — 아래는 그 뒤에 본 자료와 답입니다.` });
-    const q11Shown = on(Q11) ? state.answers.q11 : null;
-    const anyRec = q11Shown && Q11_PARTS.some((P) => q11Shown[P.key]);
     for (const k of ['a', 'b']) {
-      s4.items.push(fig(`f6${k}`, `그림 6${k === 'a' ? '가' : '나'}. ${periodTitle(ad, k, true)} — 관측 조위와 ${periodCd(ad, k).weather?.station?.name || '기상 관측 지점'} 해면기압·풍속(같은 시간 축, 가로축 맞춤)${anyRec ? ` — ${CIRCLED[Q11.no]}에서 고른 시각` : ''}`, [
-        { height: 150, spec: (ctx) => inq4TideSpecs(ctx, ad, { revealed: true, compact: true, q11: q11Shown })[k === 'a' ? 0 : 1] },
-        { height: 140, spec: (ctx) => weatherSpec(ctx, ad, k, 'pressureSea', { title: false, q11: q11Shown }) },
-        { height: 125, spec: (ctx) => weatherSpec(ctx, ad, k, 'windSpeed', { title: false, q11: q11Shown }) },
+      s4.items.push(fig(`f6${k}`, `그림 6${k === 'a' ? '가' : '나'}. ${periodTitle(ad, k, true)} — 관측 조위와 ${periodCd(ad, k).weather?.station?.name || '기상 관측 지점'} 해면기압·풍속(같은 시간 축, 가로축 맞춤)`, [
+        { height: 150, spec: (ctx) => inq4TideSpecs(ctx, ad, { revealed: true, compact: true })[k === 'a' ? 0 : 1] },
+        { height: 140, spec: (ctx) => weatherSpec(ctx, ad, k, 'pressureSea', { title: false }) },
+        { height: 125, spec: (ctx) => weatherSpec(ctx, ad, k, 'windSpeed', { title: false }) },
       ]));
     }
     if (ad.past?.typhoon) {
@@ -180,12 +166,7 @@ export function buildReport(ad, state, { attempts = null } = {}) {
     s4.items.push({ type: 'note', text: `${PERIOD_NAMES.b} 태풍: ${periodTyphoonText(ad, 'b')}` });
     if (on(Q11)) {
       const q = qa(Q11, 'inq4');
-      s4.items.push({ ...q, type: 'side', leftTitle: `${CIRCLED[Q10.no]} 추가 자료 확인 전의 추측`, left: (answerOf(state, Q10) || '').trim(), rightTitle: `${CIRCLED[Q11.no]} 폭풍 해일 요인(저기압·강풍) 확인`, right: q.lines.join('\n') });
-      const a11 = state.answers.q11 || {};
-      if (!q.empty) {
-        const miss = Q11_PARTS.flatMap((P) => [!a11[P.key] && ad.timeBasis?.confirmed ? `(${P.mark}) 시각 기록` : null, P.textKey && !String(a11[P.textKey] || '').trim() ? `(${P.mark}) 설명` : null]).filter(Boolean);
-        if (miss.length) missing.push({ step: 'inq4', qid: 'q11', label: `${qLabel(Q11)} ${miss.join(', ')}` });
-      }
+      s4.items.push({ ...q, type: 'side', leftTitle: `${CIRCLED[Q10.no]} 추가 자료 확인 전의 추측`, left: (answerOf(state, Q10) || '').trim(), rightTitle: `${CIRCLED[Q11.no]} 폭풍 해일 요인(저기압·강풍)을 포함한 설명`, right: q.lines.join('\n') });
     }
   } else {
     s4.items.push({ type: 'note', text: `[추가 자료 확인]을 하지 않아 추가 자료와 문항 ${CIRCLED[Q11.no]}은 보고서에 없습니다.` });
@@ -197,13 +178,13 @@ export function buildReport(ad, state, { attempts = null } = {}) {
   const s5 = { key: 'conclusion', title: CONCLUSION.title, sub: CONCLUSION.goal, items: CONCLUSION.questions.filter(on).map((q) => qa(q, 'conclusion')) };
 
   // ── 응시 기록(이 컴퓨터·브라우저) ──
-  const s6 = { key: 'attempts', title: '응시 기록', sub: '이 컴퓨터·브라우저에 남은 이 학생의 기록입니다. 다른 컴퓨터·브라우저의 기록은 포함되지 않으며, 브라우저 설정으로 지울 수 있어 무결성이 보장되지 않습니다.', items: [] };
+  const s6 = { key: 'attempts', title: '응시 기록', sub: '이 컴퓨터에서 이 학생이 시작·불러오기·자료 확인을 한 기록입니다.', items: [] };
   const ev = attempts?.events || [];
   if (ev.length) {
     s6.items.push({ type: 'table', title: `기록 ${ev.length}건(시작 ${ev.filter((e) => e.how === 'new').length}회)`, head: ['시각', '내용'],
       rows: ev.map((e) => [fmtDateTime(e.at, localTz()), `${howLabel(e.how)}${e.fileUpdatedAt ? ` (백업 작성 ${fmtDateTime(e.fileUpdatedAt, localTz())})` : ''}${e.priorReveals?.length ? ` — 이전 공개 기록 적용: ${e.priorReveals.map((k) => REVEALS[k].label).join('·')}` : ''}`]) });
     if (ev.filter((e) => e.how === 'new').length > 1) s6.items.push({ type: 'note', text: '같은 컴퓨터에서 이 학생이 2번 이상 새로 시작했습니다. 이미 공개한 단계의 답은 처음 공개할 때의 답으로 고정되어 있습니다.' });
-  } else s6.items.push({ type: 'note', text: '이 컴퓨터·브라우저에 남은 응시 기록이 없습니다(다른 컴퓨터에서 작성했거나 기록이 지워졌을 수 있음).' });
+  } else s6.items.push({ type: 'note', text: '이 컴퓨터에 남은 응시 기록이 없습니다.' });
 
   const sections = [s1, s2, s4, s5, s6].filter((s) => s.items.length);
   return {
@@ -260,7 +241,7 @@ export function sourceRows(ad, state) {
   if (rv.moon && ad.moon) out.push({ role: '달의 위상', lines: [ad.moon.meta.provider && `제공: ${ad.moon.meta.provider}`, ad.moon.meta.identifier && `식별자: ${ad.moon.meta.identifier}`].filter(Boolean) });
   const tb = ad.timeBasis || {};
   const tbNote = rv.weather ? tb.note : tb.confirmed ? '조위(예측·관측)는 국립해양조사원 조석표(시각 9hE)·바다누리 관측값과 대조해 KST로 확인' : tb.note;
-  out.push({ role: '시간대 확인', lines: [tbNote || '', tb.evidence ? `근거: ${tb.evidence}` : ''].filter(Boolean) });
+  out.push({ role: '시간대 확인', lines: [tbNote || ''].filter(Boolean) }); // 근거 파일 경로(저장소 안)는 학생 보고서에 넣지 않음(README·교사용)
   return out;
 }
 

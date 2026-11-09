@@ -267,32 +267,13 @@ try {
     assert.ok(tx.includes(`${Number(wx22.get('2022-09-06 05:00').wind_ms).toFixed(1)} m/s`));
   });
   await check('탐구 3 ⑨: ⑧의 추측(공개 전 답)을 옆에 표시', async () => assert.match(await page.textContent('#q11-prev'), /작성하지 않음/));
-  await check('탐구 3 ⑨: 저기압·강풍 세부 문항(가)(나)(다)와 기록 버튼', async () => {
-    assert.match(await page.textContent('#qt-q11'), /저기압, 강풍/);
-    for (const k of ['peak', 'pressure', 'wind']) assert.ok(await page.$(`#q11-${k}`), k);
-    assert.ok(await page.$('#ans-q11-pressure') && await page.$('#ans-q11-wind'));
-    assert.equal(await page.$('#ans-q11-peak'), null, '(가)는 시각 기록만');
-    assert.match(await page.textContent('#q11-rec-peak'), /아직 기록하지 않음/);
+  await check('탐구 3 ⑨: 저기압·강풍을 포함해 서술하는 글 문항(시각 기록 버튼 없음)', async () => {
+    assert.match(await page.textContent('#qt-q11'), /폭풍 해일의 요인\(저기압, 강풍\)을 포함하여/);
+    assert.ok(await page.$('#ans-q11'));
+    assert.equal(await page.$('[id^=q11-rec-]'), null);
+    assert.ok(!(await page.textContent('#inq4-tide-a')).includes('내가 고름'));
   });
-  await page.click('#q11-rec-peak-a');
-  await page.focus('#inq4-pressureSea-a');
-  await page.keyboard.press('ArrowRight'); await page.keyboard.press('Enter'); // 06:00
-  await page.waitForTimeout(150);
-  await page.click('#q11-rec-pressure-a');
-  await page.click('#q11-rec-wind-a');
-  await page.fill('#ans-q11-pressure', '기간 A는 963 hPa까지 낮아져 기간 B보다 훨씬 낮았고, 기압이 낮으면 해수면을 누르는 힘이 약해져 해수면이 부풀어 오른다.');
-  await page.fill('#ans-q11-wind', '기간 A는 바람이 기간 B보다 훨씬 강했고, 강한 바람이 바닷물을 해안 쪽으로 밀어 쌓는다.');
-  await check('탐구 3 ⑨: 기록한 시각과 그 시각의 원자료 값, 그래프에 표시', async () => {
-    const st = (await stateOf(page)).answers.q11;
-    assert.equal(st.peak.k, 'a'); assert.equal(st.pressure.k, 'a');
-    assert.equal(st.pressure.t - st.peak.t, 3600e3);
-    assert.ok((await page.textContent('#q11-rec-peak')).includes(`기간 A · 2022-09-06 05:00 · 관측 조위 ${fmtV(obs22.get('2022-09-06 05:00'))} cm`));
-    assert.ok((await page.textContent('#q11-rec-pressure')).includes(`2022-09-06 06:00 · 해면기압 ${Number(wx22.get('2022-09-06 06:00').pressure_sea_hpa).toFixed(1)} hPa`));
-    assert.ok((await page.textContent('#inq4-tide-a')).includes('최고(내가 고름)'));
-    assert.ok((await page.textContent('#inq4-pressureSea-a')).includes('최저(내가 고름)'));
-    assert.ok((await page.textContent('#inq4-windSpeed-a')).includes('최대(내가 고름)'));
-    assert.ok(!(await page.textContent('#inq4-tide-b')).includes('내가 고름'));
-  });
+  await page.fill('#ans-q11', '기간 A에는 2022년 9월 6일 새벽 해면기압이 963 hPa까지 낮아져 해수면을 누르는 힘이 약해졌고, 풍속도 기간 B보다 훨씬 강해 바닷물이 해안 쪽으로 밀려와 조위가 크게 높아졌다. 태풍 힌남노의 중심이 부산 가까이 지났다.');
 
   // ───── 6. 종합 ─────
   await go(page, 'conclusion');
@@ -362,9 +343,7 @@ try {
       const v = st.answers[k];
       assert.ok(norm(body).includes(norm(v)), k);
     }
-    assert.ok(norm(body).includes(norm(`(가) 관측 조위가 가장 높았던 때: 기간 A · 2022-09-06 05:00 · 관측 조위 ${fmtV(obs22.get('2022-09-06 05:00'))} cm`)), 'q11 (가)');
-    assert.ok(norm(body).includes(norm(`(나) 해면기압이 가장 낮았던 때: 기간 A · 2022-09-06 06:00`)), 'q11 (나)');
-    for (const k of ['pressureText', 'windText']) assert.ok(norm(body).includes(norm(st.answers.q11[k])), `q11 ${k}`);
+    assert.ok(norm(body).includes(norm(st.answers.q11.slice(0, 20))) && norm(body).includes(norm(st.answers.q11.slice(-12))), 'q11(나란히)');
     assert.ok(body.includes('만조로 고른 지점: 2026-09-11 03:00'));
     assert.ok(body.includes('간조로 고른 지점: 2026-09-11 09:30'));
     assert.ok(body.includes('대조로 고른 날: 2026년 9월 12일'));
@@ -383,8 +362,7 @@ try {
     assert.match(txt, /\[달의 위상 확인\] 전에 작성한 답/);
     assert.match(txt, /확인한 달의 위상/);
     assert.match(txt, /⑧ 추가 자료 확인 전의 추측/);
-    assert.match(txt, /⑨ 폭풍 해일 요인\(저기압·강풍\) 확인/);
-    assert.ok(txt.includes('최고(내가 고름)') && txt.includes('최저(내가 고름)'), '⑨ 기록 시각이 그림 6에 표시');
+    assert.match(txt, /⑨ 폭풍 해일 요인\(저기압·강풍\)을 포함한 설명/);
     assert.match(txt, /문항 ⑩/);
     assert.ok(!txt.includes('안정적인 기간') && !txt.includes('최근접'), '보고서에도 기간 해석 문구·최근접 시각 없음');
     assert.ok(txt.includes('태풍 경로와 관측소 위치'));
@@ -481,6 +459,7 @@ try {
   });
   await check('교사용: 임시 후보에 교사 검토 필요 표시, 기본 설정 검증 통과', async () => {
     assert.ok(await tp.isVisible('#t-review-badge'));
+    assert.match(await tp.textContent('#t-records-note'), /부정행위를 판정하거나 감점하지 마십시오/, '기록 해석 유의 사항은 교사 화면에');
     assert.equal(await tp.$('#asmt-root .asmt-overlay:not([hidden])'), null);
     assert.equal(await tp.$$eval('#t-valid .t-v-error', (x) => x.length), 0);
     assert.match(await tp.textContent('#t-valid'), /모든 자료 KST 확인/);

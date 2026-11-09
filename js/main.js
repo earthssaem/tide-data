@@ -357,7 +357,7 @@ export async function clearMyWork() {
 function priorRevealNotice(applied) {
   if (!applied.length) return;
   const names = applied.map((k) => `[${REVEALS[k].label}]`).join('·');
-  alertDialog({ title: '이전 응시 기록이 있습니다', body: `이 컴퓨터에 같은 학생이 ${names}을(를) 한 기록이 있습니다.\n그 단계 전에 쓴 답은 그때의 답으로 고정되어 다시 쓸 수 없습니다(재응시 공정성).\n이 내용은 보고서의 '응시 기록'에도 남습니다.` });
+  alertDialog({ title: '이전 응시 기록이 있습니다', body: `이 컴퓨터에 같은 학생이 ${names}을(를) 한 기록이 있습니다.\n그 단계 전에 쓴 답은 그때의 답으로 고정되어 다시 쓸 수 없습니다.\n이 내용은 보고서의 '응시 기록'에도 남습니다.` });
 }
 
 export function startNew(student) {

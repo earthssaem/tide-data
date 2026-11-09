@@ -17,6 +17,7 @@ import { layoutChart } from '../chart/layout.js';
 import { layoutToSVG, screenMeasure } from '../chart/svg.js';
 import { $, h, confirmDialog, alertDialog, choiceDialog, downloadBlob, pickFile, toast } from '../util/dom.js';
 import { escapeHtml } from '../util/format.js';
+import { EXPORT_NOTICE } from '../assessment/session-log.js';
 import { fmtRange, fmtDateTime, HOUR, DAY } from '../util/time.js';
 import { checkSession, renderLogin, teacherFetch, logout, expiryText, currentSession } from '../teacher-auth.js';
 
@@ -152,6 +153,13 @@ function render(app, T) {
       <li><b>보관·다른 컴퓨터</b> — <b>교사 보관용 파일</b>(메모 포함)을 받아 두고, 다른 컴퓨터에서 [설정 파일 불러오기]로 이어서 고칠 수 있습니다.</li>
     </ol>`;
   screen.append(steps);
+  // 학생 화면에는 보이지 않는 기록 해석 유의 사항(교사용)
+  screen.append(h('details', { class: 'card t-records-note', id: 't-records-note' },
+    h('summary', {}, h('b', {}, '화면 이탈 기록·응시 기록을 볼 때 유의할 점')),
+    h('ul', { class: 'small' },
+      ...EXPORT_NOTICE.map((t) => h('li', {}, t)),
+      h('li', {}, '보고서의 응시 기록은 그 컴퓨터·브라우저에 남은 기록만 담습니다. 다른 컴퓨터·브라우저에서 처음부터 하거나 브라우저 설정으로 사이트 데이터를 지우면 알 수 없습니다.'),
+      h('li', {}, '이 안내는 학생 화면과 보고서에는 표시하지 않습니다(화면 이탈 기록 파일(JSON)에는 들어 있음).'))));
 
   const bar = h('div', { class: 'card t-bar' });
   const caseSel = h('select', { id: 't-case', 'aria-label': '평가 사례' });

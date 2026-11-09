@@ -21,7 +21,7 @@
 import { ASSESSMENT_CONFIG as CFG } from './config.js';
 import {
   emptyLog, sanitizeLog, makeSessionId, newSession, recordDeparture, addSignal, closeIncident, endSession,
-  openIncident, departureCount, exportLog, localIso, fmtDurationKo, DEPARTURE_TYPES, EXPORT_NOTICE,
+  openIncident, departureCount, exportLog, localIso, fmtDurationKo, DEPARTURE_TYPES,
 } from './session-log.js';
 
 // ───────── 저장소 ─────────
@@ -170,7 +170,6 @@ function showGuide(message = '') {
         <button type="button" class="asmt-btn asmt-btn-primary" data-act="start" ${supported ? '' : 'disabled'}>평가 시작</button>
       </div>
       ${past.length ? `<p class="asmt-small">이 컴퓨터에 지난 평가 기록 ${past.length}건이 있습니다. <button type="button" class="asmt-link" data-act="download">화면 이탈 기록 받기(JSON)</button></p>` : ''}
-      <p class="asmt-small asmt-muted">화면 이탈 기록은 브라우저 이벤트로 수집한 참고 자료이며, 이것만으로 부정행위를 판정하지 않습니다.</p>
     </div>`;
   overlay.hidden = false;
   pill.hidden = true;
@@ -235,7 +234,6 @@ function showEnded(sessionId) {
         <button type="button" class="asmt-btn asmt-btn-primary" data-act="download">화면 이탈 기록 받기(JSON)</button>
         <button type="button" class="asmt-btn" data-act="new">새 평가 시작 안내로</button>
       </div>
-      <p class="asmt-small asmt-muted">${EXPORT_NOTICE.map(esc).join(' ')}</p>
     </div>`;
   overlay.hidden = false;
   pill.hidden = true;
