@@ -67,9 +67,11 @@ const fig = (id, caption, panels) => ({ type: 'figure', id, caption, panels });
 
 /** 그림의 각 패널을 배치(폭·글자 크기는 화면/PDF가 정함) */
 export function layoutFigure(f, { width, measure, fontSize = 9.5 }) {
+  // 그래프가 여러 개 쌓인 그림은 왼쪽 여백을 같게 해 가로축(시각)을 맞춘다
+  const padLeft = f.panels.filter((p) => p.spec).length > 1 ? Math.round(fontSize * 5.6) : undefined;
   return f.panels.map((p) => {
     if (p.map) return p.map(Math.min(width, p.maxWidth || width), measure, fontSize);
-    return layoutChart(p.spec({ width, height: p.height, measure, fontSize }));
+    return layoutChart(p.spec({ width, height: p.height, measure, fontSize, padLeft }));
   }).filter(Boolean);
 }
 
@@ -145,7 +147,8 @@ export function buildReport(ad, state, { attempts = null } = {}) {
   if (rv.weather) {
     s4.items.push({ type: 'note', text: `[추가 자료 확인] ${fmtDateTime(rv.weather.at, localTz())} — 아래는 그 뒤에 본 자료와 답입니다.` });
     for (const k of ['a', 'b']) {
-      s4.items.push(fig(`f6${k}`, `그림 6${k === 'a' ? '가' : '나'}. ${periodTitle(ad, k, true)} — ${periodCd(ad, k).weather?.station?.name || '기상 관측 지점'} 해면기압·풍속(조위 그래프와 같은 시간 축)`, [
+      s4.items.push(fig(`f6${k}`, `그림 6${k === 'a' ? '가' : '나'}. ${periodTitle(ad, k, true)} — 관측 조위와 ${periodCd(ad, k).weather?.station?.name || '기상 관측 지점'} 해면기압·풍속(같은 시간 축, 가로축 맞춤)`, [
+        { height: 150, spec: (ctx) => inq4TideSpecs(ctx, ad, { revealed: true, compact: true })[k === 'a' ? 0 : 1] },
         { height: 140, spec: (ctx) => weatherSpec(ctx, ad, k, 'pressureSea', { title: false }) },
         { height: 125, spec: (ctx) => weatherSpec(ctx, ad, k, 'windSpeed', { title: false }) },
       ]));

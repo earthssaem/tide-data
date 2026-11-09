@@ -7,7 +7,7 @@ import { fmtNum, escapeHtml } from '../util/format.js';
 import { fmtDateTime } from '../util/time.js';
 import { INQUIRIES, OBSERVED_TEXT, CIRCLED } from '../content/questions.js';
 import { createPanel, SharedCursor, tipRow, staticLayoutHTML } from '../chart/panel.js';
-import { inq4TideSpecs, weatherSpec, periodTitle, periodCd, typhoonMapLayout, closestTyphoonPoint, fmtWx, valueAt, PERIOD_NAMES, periodTyphoonText } from '../chart/assess.js';
+import { alignedPad, inq4TideSpecs, weatherSpec, periodTitle, periodCd, typhoonMapLayout, closestTyphoonPoint, fmtWx, valueAt, PERIOD_NAMES, periodTyphoonText } from '../chart/assess.js';
 import { screenMeasure } from '../chart/svg.js';
 import { loadKoreaMap } from '../chart/map.js';
 import { nearestValid, pointAt } from '../analysis/series.js';
@@ -63,13 +63,13 @@ export function render(app, container) {
       const hostT = h('div', { class: 'chart-host', id: `inq4-tide-${k}` });
       block.append(hostT);
       const i = k === 'a' ? 0 : 1;
-      panels.push(createPanel({ host: hostT, height: 230, ariaLabel: `부산 관측 조위 ${PERIOD_NAMES[k]}`, cursor, build: (ctx) => inq4TideSpecs(ctx, ad, { revealed: true, compact: true })[i], pick: tidePick(k), describe: tideTip(k), onClick }));
+      panels.push(createPanel({ host: hostT, height: 230, ariaLabel: `부산 관측 조위 ${PERIOD_NAMES[k]}`, cursor, build: (ctx) => inq4TideSpecs({ ...ctx, padLeft: alignedPad(ctx) }, ad, { revealed: true, compact: true })[i], pick: tidePick(k), describe: tideTip(k), onClick }));
       for (const kind of WX) {
         const host = h('div', { class: 'chart-host', id: `inq4-${kind}-${k}` });
         block.append(host);
         panels.push(createPanel({
           host, height: 150, ariaLabel: `${kind} ${PERIOD_NAMES[k]}`, cursor,
-          build: (ctx) => weatherSpec(ctx, ad, k, kind, { compact: true }),
+          build: (ctx) => weatherSpec({ ...ctx, padLeft: alignedPad(ctx) }, ad, k, kind, { compact: true }),
           pick: (t) => { const p = cd.weather ? nearestValid(cd.weather.points, t, { key: kind, t0: ad.win[k][0], t1: ad.win[k][1] }) : null; return p ? { t: p.t, v: p[kind] } : null; },
           describe: (tg) => `<div class="tip-title">${escapeHtml(fmtDateTime(tg.t, tz))}</div>${tipRow(kind === 'pressureSea' ? '해면기압' : kind === 'windSpeed' ? '풍속' : '풍향', fmtWx(kind, tg.v))}`,
           onClick,

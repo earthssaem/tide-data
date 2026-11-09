@@ -4,7 +4,7 @@ import { fmtNum, escapeHtml } from '../util/format.js';
 import { fmtDateTime, fmtRange } from '../util/time.js';
 import { INQUIRIES, PREDICTED_TEXT, DATUM_CAUTION, TIDE_TYPES } from '../content/questions.js';
 import { createPanel, SharedCursor, tipRow, staticLayoutHTML } from '../chart/panel.js';
-import { inq2Specs, inq2Series, stationsMapLayout } from '../chart/assess.js';
+import { inq2Specs, inq2Series, stationsMapLayout, alignedPad } from '../chart/assess.js';
 import { screenMeasure } from '../chart/svg.js';
 import { loadKoreaMap } from '../chart/map.js';
 import { nearestValid } from '../analysis/series.js';
@@ -51,7 +51,7 @@ export function render(app, container) {
     card.append(host);
     panels.push(createPanel({
       host, height: i === ad.stationList.length - 1 ? 210 : 190, ariaLabel: `${s.name} 예측 조위`, cursor,
-      build: (ctx) => inq2Specs(ctx, ad, S().ui.inq2Scale)[i],
+      build: (ctx) => inq2Specs({ ...ctx, padLeft: alignedPad(ctx) }, ad, S().ui.inq2Scale)[i],
       pick: (t) => {
         const d = inq2Series(ad, S().ui.inq2Scale)[i];
         const p = nearestValid(d.series.points, t, { t0: view[0], t1: view[1] });

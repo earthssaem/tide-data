@@ -236,3 +236,18 @@ test('기상 지점: ASOS(약 1 km)와 조위관측소 자체 기압 1년 비교
   const m = JSON.parse(readFileSync(join(ROOT, 'data/raw/khoa/manifest.json'), 'utf8'));
   assert.ok(Object.entries(m.requests).filter(([k]) => k.startsWith('airpress|DT_0005|2022-09')).every(([, r]) => r.status === 'nodata'));
 });
+
+test('탐구 3 쌓은 그래프: 조위·기압·풍속의 같은 시각이 같은 가로 위치(화면·PDF)', async () => {
+  const { inq4TideSpecs, weatherSpec, alignedPad } = await import('../../js/chart/assess.js');
+  const ad = applySetup(await load('khoa-assess-2025-26'), deployed());
+  const ctx = { width: 900, height: 180, measure, fontSize: 13 };
+  const c = { ...ctx, padLeft: alignedPad(ctx) };
+  const t = Date.parse('2022-09-06T05:00:00+09:00');
+  const xs = [layoutChart(inq4TideSpecs(c, ad, { revealed: true, compact: true })[0]), layoutChart(weatherSpec(c, ad, 'a', 'pressureSea', { compact: true })), layoutChart(weatherSpec(c, ad, 'a', 'windSpeed', { compact: true }))].map((L) => L.tToX(t));
+  assert.ok(xs.every((x) => Math.abs(x - xs[0]) < 0.01), xs.join(','));
+  const st = emptyState(ad.id, ad.dataVersion); st.reveals.weather = { at: 1, answers: { q9: '', q10: '' } };
+  const f = buildReport(ad, st).sections.flatMap((x) => x.items).find((x) => x.id === 'f6a');
+  const px = layoutFigure(f, { width: 487, measure, fontSize: 9 }).map((L) => L.tToX(t));
+  assert.equal(px.length, 3);
+  assert.ok(px.every((x) => Math.abs(x - px[0]) < 0.01), px.join(','));
+});

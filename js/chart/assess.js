@@ -71,6 +71,9 @@ export function sharedTickStep(domains, plotH) {
   return niceStep(Math.max(...spans), Math.max(2, Math.floor(plotH / 34)));
 }
 
+/** 위아래로 쌓은 그래프들의 가로축을 맞추려고 같은 왼쪽 여백을 쓴다(세로축 숫자 폭이 달라도 같은 시각이 같은 자리에) */
+export const alignedPad = (ctx) => Math.round((ctx.fontSize || 12) * 5.6);
+
 function baseSpec(ctx, cd, view) {
   return {
     width: ctx.width, height: ctx.height, measure: ctx.measure, fontSize: ctx.fontSize || 12,
