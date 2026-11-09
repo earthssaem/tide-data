@@ -154,6 +154,17 @@ export function fmtDurationKo(ms) {
   return [h ? `${h}시간` : '', m ? `${m}분` : '', `${r}초`].filter(Boolean).join(' ');
 }
 
+/**
+ * 보고서(PDF)에 넣을 평가 세션: 지금 진행 중인 세션(자세히)과, 앞뒤 windowMs 안에 이 컴퓨터에 남은 다른 세션(요약).
+ * 다른 세션도 넣는 까닭: [평가 종료] 뒤 새 평가를 시작해 이탈 횟수를 0으로 되돌린 경우도 교사가 볼 수 있게.
+ */
+export function reportSessions(log, { now = Date.now(), windowMs = 12 * 3600e3 } = {}) {
+  const sessions = log?.sessions || [];
+  const current = sessions.find((s) => s.id === log.activeId && s.status !== 'ended') || null;
+  const others = sessions.filter((s) => s !== current && (s.lastSeenAt ?? s.startedAt) >= now - windowMs && s.startedAt <= now + windowMs);
+  return { current, others, at: now };
+}
+
 export const EXPORT_NOTICE = [
   '이 기록은 브라우저 이벤트(fullscreenchange, visibilitychange, blur/focus, pagehide)로 수집한 참고 자료입니다.',
   '브라우저 이벤트만으로 이탈 원인이나 다른 프로그램 사용 여부를 알 수 없습니다. 유형은 관찰된 신호를 뜻합니다.',

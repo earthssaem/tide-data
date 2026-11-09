@@ -18,6 +18,8 @@ import { escapeHtml } from './util/format.js';
 import { fmtTime, fmtDateTime } from './util/time.js';
 import { answerOf } from './screens/common.js';
 import { answerLines } from './report/model.js';
+import { ASSESSMENT_CONFIG } from './assessment/config.js';
+import { sanitizeLog, reportSessions } from './assessment/session-log.js';
 import { setAttemptsMode, recordEvent, recordReveal, applyPriorReveals, entryFor, othersNear } from './state/attempts.js';
 
 import * as StartScreen from './screens/start.js';
@@ -382,6 +384,14 @@ export function continueWork(student) {
   priorRevealNotice(applied);
 }
 
-Object.assign(app, { navigate, reveal, downloadBackup, downloadLegacy, importBackup, clearMyWork, startNew, continueWork, stepStatus, attemptsEntry: () => entryFor(app.ad.id, app.store.state.student), attemptsEntryFor: (st) => entryFor(app.ad.id, st), attemptsOthers: () => othersNear(app.ad.id, app.store.state.student) });
+/** 보고서에 넣을 화면 이탈 기록(평가 모드를 쓰지 않으면 null) */
+function departuresInfo() {
+  if (!ASSESSMENT_CONFIG.enabled) return null;
+  let log = null;
+  try { log = sanitizeLog(JSON.parse(localStorage.getItem(ASSESSMENT_CONFIG.storageKey) || 'null'), ASSESSMENT_CONFIG.maxSessions); } catch { log = null; }
+  return reportSessions(log || { sessions: [], activeId: null });
+}
+
+Object.assign(app, { navigate, reveal, downloadBackup, downloadLegacy, importBackup, clearMyWork, startNew, continueWork, stepStatus, attemptsEntry: () => entryFor(app.ad.id, app.store.state.student), attemptsEntryFor: (st) => entryFor(app.ad.id, st), attemptsOthers: () => othersNear(app.ad.id, app.store.state.student), departuresInfo });
 
 boot();

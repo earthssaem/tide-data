@@ -6,6 +6,7 @@
 import { INQUIRIES, CONCLUSION, REVEALS, CIRCLED, PREDICTED_TEXT, OBSERVED_TEXT, DATUM_CAUTION, isEnabled, qLabel } from '../content/questions.js';
 import { answerOf } from '../screens/common.js';
 import { howLabel } from '../state/attempts.js';
+import { fmtDurationKo } from '../assessment/session-log.js';
 import { fmtRange, fmtDateTime, fmtDateKo, DAY, HOUR } from '../util/time.js';
 import { fmtNum } from '../util/format.js';
 import { layoutChart } from '../chart/layout.js';
@@ -81,7 +82,7 @@ export function layoutFigure(f, { width, measure, fontSize = 9.5 }) {
   }).filter(Boolean);
 }
 
-export function buildReport(ad, state, { attempts = null, others = [] } = {}) {
+export function buildReport(ad, state, { attempts = null, others = [], departures = null } = {}) {
   const tz = ad.tz;
   const rv = state.reveals || {};
   const st = state.student;
@@ -192,7 +193,28 @@ export function buildReport(ad, state, { attempts = null, others = [] } = {}) {
     if (oth.length > 40) s6.items.push({ type: 'note', text: `다른 학생 정보 기록 ${oth.length - 40}건은 생략했습니다.` });
   }
 
-  const sections = [s1, s2, s4, s5, s6].filter((s) => s.items.length);
+  // ── 화면 이탈 기록(평가 모드) — 이 PDF를 만든 시각까지 ──
+  const s7 = { key: 'departures', title: '화면 이탈 기록', sub: '평가 중 전체화면 해제·다른 탭이나 창으로 이동·화면을 2초 이상 벗어난 기록입니다(이 보고서를 만든 시각까지).', items: [] };
+  if (departures) {
+    const t = (ms) => (ms == null ? '—' : fmtDateTime(ms, localTz()));
+    const dur = (ms) => (ms == null ? '—' : fmtDurationKo(ms));
+    const cur = departures.current;
+    if (cur) {
+      const total = cur.departures.reduce((a, d) => a + (d.durationMs || 0), 0);
+      s7.items.push({ type: 'table', title: '이번 평가', head: ['항목', '내용'], rows: [
+        ['세션', cur.id], ['평가 시작', t(cur.startedAt)], ['보고서 작성', t(departures.at)],
+        ['화면 이탈', `${cur.departures.length}회${cur.departures.length ? ` · 합계 ${dur(total)}` : ''}`],
+      ] });
+      if (cur.departures.length) s7.items.push({ type: 'table', title: `이번 평가의 화면 이탈 ${cur.departures.length}회`, head: ['번호', '유형', '이탈', '복귀', '지속 시간'],
+        rows: cur.departures.map((d) => [String(d.no), d.typeLabel, `${t(d.startedAt)}${d.startEstimated ? ' (추정)' : ''}`, d.returnedAt == null ? '복귀 전' : t(d.returnedAt), dur(d.durationMs)]) });
+    } else s7.items.push({ type: 'note', text: '진행 중인 평가가 없을 때 만든 보고서입니다(평가 모드의 화면 이탈 기록 없음).' });
+    if (departures.others?.length) {
+      s7.items.push({ type: 'table', title: `같은 시간대(앞뒤 12시간)에 이 컴퓨터에서 진행한 다른 평가 ${departures.others.length}건`, head: ['세션', '시작', '종료(마지막 확인)', '화면 이탈'],
+        rows: departures.others.map((s) => [s.id, t(s.startedAt), s.status === 'ended' ? t(s.endedAt) : `${t(s.lastSeenAt)} (종료 기록 없음)`, `${s.departures.length}회`]) });
+    }
+  }
+
+  const sections = [s1, s2, s4, s5, s6, s7].filter((s) => s.items.length);
   return {
     appName: '조석 데이터 탐구실',
     title: '조석 데이터 탐구 보고서',

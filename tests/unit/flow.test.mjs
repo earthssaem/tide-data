@@ -300,3 +300,27 @@ test('탐구 2 확대 그래프: 고른 지역만 세로축을 늘림(값은 같
   assert.match(z.header.title, /묵호 확대/);
   assert.ok(layoutChart(z).items.length > 10);
 });
+
+test('보고서 화면 이탈 기록: 진행 중 세션 자세히, 같은 시간대 다른 세션 요약, 평가 모드 없으면 절 없음', async () => {
+  const { reportSessions, newSession, recordDeparture, closeIncident, endSession } = await import('../../js/assessment/session-log.js');
+  const ad = applySetup(await load('khoa-assess-2025-26'), deployed());
+  const st = emptyState(ad.id, ad.dataVersion);
+  const now = Date.UTC(2026, 10, 9, 3, 0);
+  const old = newSession({ id: 'asmt-old', startedAt: now - 3 * 3600e3 });
+  recordDeparture(old, { type: 'hidden', at: now - 2.5 * 3600e3 }); closeIncident(old, now - 2.4 * 3600e3); endSession(old, now - 2 * 3600e3);
+  const far = newSession({ id: 'asmt-far', startedAt: now - 40 * 3600e3 }); endSession(far, now - 39 * 3600e3);
+  const cur = newSession({ id: 'asmt-cur', startedAt: now - 3600e3 });
+  recordDeparture(cur, { type: 'fullscreen-exit', at: now - 1800e3 }); closeIncident(cur, now - 1700e3);
+  const info = reportSessions({ activeId: 'asmt-cur', sessions: [far, old, cur] }, { now });
+  assert.equal(info.current.id, 'asmt-cur');
+  assert.deepEqual(info.others.map((s) => s.id), ['asmt-old']);
+  const m = buildReport(ad, st, { departures: info });
+  const sec = m.sections.find((s) => s.key === 'departures');
+  const txt = JSON.stringify(sec);
+  assert.match(txt, /화면 이탈","1회 · 합계 1분 40초/);
+  assert.match(txt, /이번 평가의 화면 이탈 1회/);
+  assert.match(txt, /같은 시간대\(앞뒤 12시간\)에 이 컴퓨터에서 진행한 다른 평가 1건/);
+  assert.ok(txt.includes('asmt-old') && !txt.includes('asmt-far'));
+  assert.equal(buildReport(ad, st, { departures: null }).sections.find((s) => s.key === 'departures'), undefined);
+  assert.match(JSON.stringify(buildReport(ad, st, { departures: { current: null, others: [], at: now } }).sections.find((s) => s.key === 'departures')), /진행 중인 평가가 없을 때/);
+});

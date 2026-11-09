@@ -273,6 +273,19 @@ try {
     assert.ok(!KEY.startsWith('tideLab.'));
   });
 
+  await check('보고서(PDF 구성)에 이번 평가의 화면 이탈 기록이 그대로 들어감', async () => {
+    const s = await active(page2);
+    await page2.evaluate(() => window.__tideApp.navigate('report'));
+    await page2.waitForSelector('[data-part=departures]');
+    const t = await page2.textContent('[data-part=departures]');
+    assert.ok(t.includes(s.id), '세션 ID');
+    assert.match(t, new RegExp(`화면 이탈\\s*${s.departures.length}회`));
+    assert.ok(t.includes(s.departures[0].typeLabel));
+    assert.match(t, /\(추정\)/, '재접속 추정 시각 표시');
+    const n = await page2.evaluate(() => window.__tideApp.departuresInfo().current.departures.length);
+    assert.equal(n, s.departures.length);
+  });
+
   // 정상 종료
   const nEnd = (await active(page2)).departures.length;
   await page2.click('.asmt-pill [data-act=end]');

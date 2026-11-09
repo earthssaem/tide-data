@@ -312,7 +312,8 @@ try {
   await page.waitForSelector('#btn-pdf');
   await check('보고서 미리보기: 탐구 1~4·종합 순서, 고른 지점이 그래프에 포함', async () => {
     const parts = await page.$$eval('.rp-section', (x) => x.map((s) => s.dataset.part));
-    assert.deepEqual(parts, ['inq1', 'inq2', 'inq4', 'conclusion', 'attempts', 'sources']);
+    assert.deepEqual(parts, ['inq1', 'inq2', 'inq4', 'conclusion', 'attempts', 'departures', 'sources']);
+    assert.match(await page.textContent('[data-part=departures]'), /이번 평가.*화면 이탈\s*\d+회/s);
     assert.match(await page.textContent('#rp-f1'), /만조\(내가 고름\)/);
     assert.match(await page.textContent('#rp-f2'), /대조\(내가 고름\)/);
     assert.equal(await page.$$eval('#rp-q4 .rp-orbit svg', (x) => x.length), 2);
@@ -335,7 +336,7 @@ try {
     assert.ok(new RegExp(`\\b${pages}\\s*/\\s*${pages}\\b`).test(txt));
   });
   await check('PDF 구성 순서', async () => {
-    const order = ['학생 정보와 자료', '탐구 1. 조석의 규칙', '탐구 2. 지역별 차이', '탐구 3. 특이한 변화', '종합', '응시 기록', '자료 출처와 분석의 한계'];
+    const order = ['학생 정보와 자료', '탐구 1. 조석의 규칙', '탐구 2. 지역별 차이', '탐구 3. 특이한 변화', '종합', '응시 기록', '화면 이탈 기록', '자료 출처와 분석의 한계'];
     let pos = -1;
     for (const o of order) { const i = norm(body).indexOf(norm(o), pos + 1); assert.ok(i > pos, o); pos = i; }
   });
