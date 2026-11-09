@@ -174,15 +174,15 @@ export function inq1MonthSpec(ctx, ad, ans, { showMoon = false, focusDay = null,
 
 // ───────────── 탐구 2 ─────────────
 /**
- * 탐구 2에 그릴 값. 'same'(같은 축): 지역마다 기간 평균을 0으로 한 높이(예측 조위 − 기간 평균)를 세 지역 같은 세로축에 그린다.
- *   관측소마다 높이의 기준(0 cm)이 달라 원래 숫자를 한 축에 놓으면 높낮이 비교처럼 보이므로, 평균을 빼서 오르내림만 남긴다.
- * 'own'(개별 눈금): 원래 예측 조위를 지역마다 다른 세로축에 그린다.
+ * 탐구 2에 그릴 값: 지역마다 이 기간의 평균을 0으로 한 높이(예측 조위 − 기간 평균).
+ *   관측소마다 높이의 기준(0 cm)이 달라 원래 숫자를 놓으면 높낮이 비교처럼 보이므로, 평균을 빼서 오르내림만 남긴다.
+ * 'same'(같은 축): 세 지역을 똑같은 세로축에 — 조차 비교용.
+ * 'own'(지역별 확대): 지역마다 세로축을 그 지역의 오르내림에 맞춰 늘림 — 반복 모양 보기용(조차 비교에는 쓰지 않음).
  */
 export function inq2Series(ad, mode = 'same') {
   const view = ad.win.inq2;
   return ad.stationList.map((s) => {
     const src = ad.st[s.id].predicted;
-    if (mode !== 'same') return { s, series: src, mean: null };
     const vals = src.points.filter((p) => p.t >= view[0] && p.t <= view[1] && p.v != null).map((p) => p.v);
     const mean = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
     return { s, mean, series: { ...src, points: src.points.map((p) => ({ ...p, v: p.v == null ? null : Math.round((p.v - mean) * 100) / 100 })) } };
@@ -192,46 +192,27 @@ export function inq2Series(ad, mode = 'same') {
 export function inq2Specs(ctx, ad, mode = 'same', { cursor = null } = {}) {
   const view = ad.win.inq2;
   const list = inq2Series(ad, mode);
-  let doms, step = null;
+  const sym = (H) => { const st = niceStep(2 * H, 6); return { step: st, top: Math.ceil(H / st) * st }; };
+  const ext = list.map(({ series }) => extremaIn(series, view[0], view[1]));
+  const absMax = (e) => (e ? Math.max(Math.abs(e.max.v), Math.abs(e.min.v)) : 10);
+  let doms, steps;
   if (mode === 'same') {
-    const ext = list.map(({ series }) => extremaIn(series, view[0], view[1])).filter(Boolean);
-    const H = Math.max(10, ...ext.map((e) => Math.max(Math.abs(e.max.v), Math.abs(e.min.v)))) * 1.1;
-    step = niceStep(2 * H, 6);
-    const top = Math.ceil(H / step) * step;
-    doms = list.map(() => [-top, top]);
-  } else doms = yDomains(list.map(({ series }) => ({ series, t0: view[0], t1: view[1] })), 'own');
+    const { step, top } = sym(Math.max(10, ...ext.map(absMax)) * 1.1);
+    doms = list.map(() => [-top, top]); steps = list.map(() => step);
+  } else {
+    const each = ext.map((e) => sym(Math.max(1, absMax(e)) * 1.15));
+    doms = each.map((x) => [-x.top, x.top]); steps = each.map((x) => x.step);
+  }
   return list.map(({ s, series }, i) => tideSpec({ ...ctx, hideXTitle: i < list.length - 1 }, {
-    cd: ad.st[s.id], kind: 'predicted', series, view, yDomain: doms[i], tickStep: step,
+    cd: ad.st[s.id], kind: 'predicted', series, view, yDomain: doms[i], tickStep: steps[i],
     title: `${s.name} (${s.sea}) 예측 조위`,
-    subtitle: `${fmtRange(view[0], view[1], ad.tz)} · 세로축: ${mode === 'same' ? '세 지역 같은 축(지역마다 이 기간의 평균 높이를 0으로)' : '지역마다 따로(원래 예측 조위)'}${sampleTag(ad.st[s.id])}`,
-    yLabel: mode === 'same' ? '평균과의 차이 (cm)' : '조위 (cm)',
-    legendLabel: mode === 'same' ? '예측 조위 − 이 기간의 평균 (1시간 간격 값을 이은 선)' : null,
-    zeroLine: mode === 'same', zeroLabel: '기간 평균',
+    subtitle: `${fmtRange(view[0], view[1], ad.tz)} · 세로축: ${mode === 'same' ? '세 지역 같은 축(지역마다 이 기간의 평균 높이를 0으로)' : '지역별 확대(지역마다 눈금이 다름 — 조차 비교는 같은 축으로)'}${sampleTag(ad.st[s.id])}`,
+    yLabel: '평균과의 차이 (cm)',
+    legendLabel: '예측 조위 − 이 기간의 평균 (1시간 간격 값을 이은 선)',
+    zeroLine: true, zeroLabel: '기간 평균',
     noLegend: i > 0, cursor,
   }));
 }
-
-/**
- * 탐구 2 확대 그래프: 한 지역만 세로축을 늘려 반복 모양을 자세히 본다(같은 축 그래프에서 오르내림이 작아 모양이 안 보일 때).
- * 값은 같은 축 그래프와 같이 '예측 조위 − 기간 평균'이고, 세로 눈금만 그 지역에 맞춘다.
- */
-export function inq2ZoomSpec(ctx, ad, id, { cursor = null } = {}) {
-  const view = ad.win.inq2;
-  const list = inq2Series(ad, 'same');
-  const d = list.find((x) => x.s.id === id) || list[list.length - 1];
-  const e = extremaIn(d.series, view[0], view[1]);
-  const H = e ? Math.max(1, Math.abs(e.max.v), Math.abs(e.min.v)) * 1.15 : 10;
-  const step = niceStep(2 * H, 6);
-  const top = Math.ceil(H / step) * step;
-  return tideSpec(ctx, {
-    cd: ad.st[d.s.id], kind: 'predicted', series: d.series, view, yDomain: [-top, top], tickStep: step,
-    title: `${d.s.name} 확대 — 세로축만 늘린 그래프`,
-    subtitle: `세로 눈금이 위의 같은 축 그래프와 다릅니다. 조차 비교는 위 그래프로, 반복 모양은 이 그래프로 보세요.${sampleTag(ad.st[d.s.id])}`,
-    yLabel: '평균과의 차이 (cm)', legendLabel: '예측 조위 − 이 기간의 평균 (1시간 간격 값을 이은 선)',
-    zeroLine: true, zeroLabel: '기간 평균', color: COLORS.pick2, cursor,
-  });
-}
-export const inq2ZoomId = (ad, ui) => (ad.stationList.some((s) => s.id === ui?.inq2Zoom) ? ui.inq2Zoom : ad.stationList[ad.stationList.length - 1].id);
 
 /** 관측소 위치 지도 */
 export function stationsMapLayout({ stations, width, measure, fontSize = 11, title = '관측소 위치' }) {

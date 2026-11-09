@@ -173,7 +173,7 @@ export function validateSetup(ad0, cfg) {
   if (!ad.timeBasis?.confirmed) add('warn', '시간대', '자료의 시간대가 확인되지 않아 탐구 3의 시각 연결(조위·기압·바람·태풍 시각 함께 보기)을 켜지 않습니다.');
   else add('ok', '시간대', `모든 자료 KST 확인(${ad.timeBasis.checkedAt?.slice(0, 10) || ''}) — 탐구 3 시각 연결 사용`);
   const off = ALL_QUESTIONS.filter((q) => st.questions[q.id] === false);
-  add('info', '문항', off.length ? `끈 문항: ${off.map((q) => CIRCLED[q.no]).join(' ')}` : '모든 문항(①~⑩)을 씁니다.');
+  add('info', '문항', off.length ? `끈 문항: ${off.map((q) => CIRCLED[q.no]).join(' ')}` : `모든 문항(①~${CIRCLED[ALL_QUESTIONS.at(-1).no]})을 씁니다.`);
   if (!st.reviewed) add('info', '검토', '교사 검토 필요 — 임시 후보 설정입니다. 그래프를 확인한 뒤 [검토 완료]를 표시하세요.');
   return out;
 }

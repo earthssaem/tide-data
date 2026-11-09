@@ -73,7 +73,7 @@ export function applyPriorReveals(state) {
   const e = entryFor(state.caseId, state.student);
   if (!e) return [];
   const applied = [];
-  for (const kind of ['moon', 'weather']) {
+  for (const kind of ['weather']) { // 달의 위상 공개는 없앰(이전 기록은 보관만)
     const r = e.reveals?.[kind];
     if (r && !state.reveals[kind]) { state.reveals[kind] = JSON.parse(JSON.stringify(r)); applied.push(kind); }
     else if (r && state.reveals[kind] && r.at < state.reveals[kind].at) { state.reveals[kind] = JSON.parse(JSON.stringify(r)); applied.push(kind); }

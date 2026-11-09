@@ -28,7 +28,7 @@ export function render(app, container) {
   }
   const right = h('aside', { class: 'qpanel', 'aria-label': '문항과 답' });
   const list = h('ol', { class: 'questions' });
-  for (const q of CONCLUSION.questions) { const li = simpleTextQuestion(app, q, { rows: 3, placeholder: '1~2문장으로 정리하세요.' }); if (li) list.append(li); }
+  for (const q of CONCLUSION.questions) { const li = simpleTextQuestion(app, q, { rows: 3, placeholder: q.placeholder }); if (li) list.append(li); }
   right.append(list);
   ws.append(left, right);
   container.append(ws);

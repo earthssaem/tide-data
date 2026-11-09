@@ -6,7 +6,7 @@ import { INQUIRIES, PREDICTED_TEXT } from '../content/questions.js';
 import { createPanel, tipRow } from '../chart/panel.js';
 import { inq1MainSpec, inq1MonthSpec, inq1Series } from '../chart/assess.js';
 import { nearestValid } from '../analysis/series.js';
-import { inquiryHeader, questionShell, answerOf, numberInput, revealCard, textAnswer } from './common.js';
+import { inquiryHeader, questionShell, answerOf, numberInput, textAnswer } from './common.js';
 import { createOrbitBoard } from './orbit-board.js';
 
 const dayText = (k) => { if (!k) return '—'; const [y, m, d] = k.split('-').map(Number); const w = '일월화수목금토'[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]; return `${y}년 ${m}월 ${d}일(${w})`; };
@@ -19,7 +19,6 @@ export function render(app, container) {
   const S = () => store.state;
   const [Q1, Q2, Q3, Q4] = def.questions;
   const panels = [];
-  const moonShown = () => !!S().reveals.moon;
 
   container.append(inquiryHeader(def));
   const ws = h('div', { class: 'workspace' });
@@ -81,12 +80,11 @@ export function render(app, container) {
     h('p', { class: 'data-line' }, '1시간 간격 예측 조위를 이은 선입니다. 마우스를 올리면 그날 하루(00시~24시)가 색칠되고, 누르면 그날을 고릅니다. 날짜 글자는 그날의 가운데에 있습니다.')));
   const host2 = h('div', { class: 'chart-host' });
   const dayBar = h('div', { class: 'pick-bar', id: 'q3-pickbar', 'aria-live': 'polite' });
-  const moonList = h('div', { class: 'moon-list small', id: 'moon-list' });
-  card2.append(host2, dayBar, moonList);
+  card2.append(host2, dayBar);
   left.append(card2);
   const p2 = createPanel({
     host: host2, height: 300, ariaLabel: '부산 예측 조위 한 달 그래프', step: DAY,
-    build: (ctx) => inq1MonthSpec(ctx, ad, answerQ3View(), { showMoon: moonShown(), focusDay: currentDay, title: false }),
+    build: (ctx) => inq1MonthSpec(ctx, ad, answerQ3View(), { focusDay: currentDay, title: false }),
     pick: (t) => { const p = nearestValid(cd.predicted.points, t, { t0: ad.win.month[0], t1: ad.win.month[1] - 1 }); return p ? { t: p.t, v: p.v } : null; },
     hoverBand: (t) => { const k = dayKey(t, tz); const a = Date.parse(`${k}T00:00:00Z`) - tz.offsetMinutes * 60000; return [a, a + DAY]; },
     describe: (tg) => `<div class="tip-title">${escapeHtml(dayText(dayKey(tg.t, tz)))}</div>${tipRow('시각', fmtDateTime(tg.t, tz).slice(11))}${tipRow('예측 조위', `${fmtNum(tg.v, 1)} cm`)}<div class="tip-hint">누르면 색칠된 이 날을 고릅니다</div>`,
@@ -98,27 +96,20 @@ export function render(app, container) {
     dayBar.innerHTML = '';
     if (!currentDay) { dayBar.append(h('span', { class: 'muted small' }, '그래프를 누르면 그날의 날짜가 여기에 나타납니다.')); return; }
     dayBar.append(h('span', { class: 'pick-now' }, h('b', {}, '고른 날 '), dayText(currentDay)));
-    if (Q3 && questionShellEnabled(Q3) && !S().reveals.moon) {
+    if (Q3 && questionShellEnabled(Q3)) {
       dayBar.append(
         h('button', { type: 'button', class: 'btn btn-sm btn-secondary', id: 'q3-set-spring', onclick: () => setQ3('spring') }, '대조로 기록'),
         h('button', { type: 'button', class: 'btn btn-sm btn-secondary', id: 'q3-set-neap', onclick: () => setQ3('neap') }, '소조로 기록'));
     }
   }
   function setQ3(kind) {
-    if (!currentDay || S().reveals.moon) return;
+    if (!currentDay) return;
     store.update((s) => { s.answers.q3[kind] = currentDay; }, { topic: 'answer', immediate: true });
     toast(`${kind === 'spring' ? '대조' : '소조'}로 기록했습니다.`);
     p2.render();
     renderQ3();
   }
   renderDayBar();
-  function renderMoonList() {
-    moonList.innerHTML = '';
-    if (!moonShown() || !cd.moon) return;
-    const ph = cd.moon.phases.filter((p) => p.t >= ad.win.month[0] - DAY && p.t < ad.win.month[1] + DAY);
-    moonList.append(h('p', {}, h('b', {}, '달의 위상 '), ph.map((p) => `${p.label} ${fmtDateTime(p.t, tz, { year: false })}`).join(' · '), h('span', { class: 'muted' }, ' (계산값, KST)')));
-  }
-  renderMoonList();
 
   // ── 문항 ──
   const list = h('ol', { class: 'questions' });
@@ -184,12 +175,6 @@ export function render(app, container) {
   renderQ1();
   renderQ3();
   list.append(q1Host, ...(q2Li ? [q2Li] : []), q3Host, ...(q4Li ? [q4Li] : []));
-  // [달의 위상 확인] — ④ 아래
-  right.append(revealCard(app, 'moon', {
-    title: '달의 위상 확인',
-    text: `③에서 고른 날짜와 ④의 그림은 이 버튼을 누르는 순간 그대로 보관되고, 그 뒤에는 고칠 수 없습니다. 누르면 한 달 그래프에 달의 위상이 표시됩니다.`,
-    doneText: '한 달 그래프에 달의 위상을 표시했습니다. ③·④는 확인 전 답으로 고정되었습니다.',
-  }));
 
   return { destroy() { panels.forEach((p) => p.destroy()); } };
 }

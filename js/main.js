@@ -328,7 +328,7 @@ export async function importBackup() {
   next.started = true;
   next.dataVersion = next.dataVersion || app.ad.dataVersion;
   // 백업에 있는 공개 기록은 이 컴퓨터 기록에도 남기고, 이 컴퓨터에 더 이른 공개 기록이 있으면 그것을 적용(공개 전 백업으로 잠금이 풀리지 않게)
-  for (const kind of ['moon', 'weather']) if (next.reveals[kind]) recordReveal(app.ad.id, next.student, kind, next.reveals[kind]);
+  for (const kind of ['weather']) if (next.reveals[kind]) recordReveal(app.ad.id, next.student, kind, next.reveals[kind]);
   const applied = applyPriorReveals(next);
   recordEvent(app.ad.id, next.student, 'import', { file: file.name.slice(0, 120), fileUpdatedAt: r.state.updatedAt, ...(applied.length ? { priorReveals: applied } : {}) });
   app.store.replace(next);

@@ -102,7 +102,7 @@ test('저장 형식 3: 이전 형식 거부, 답 정리, 백업 왕복', async (
   assert.equal(r.state.answers.q6.DT_0005.reason, '높이가 다름');
 });
 
-test('보고서: 공개 전에는 기상·태풍·위상·⑪ 내용 없음, 공개 후 고정된 답 사용', async () => {
+test('보고서: 공개 전에는 기상·태풍·위상·⑨ 내용 없음, 공개 후 고정된 답 사용, 달의 위상 없음, 잠깐 생각하기는 쓴 경우만', async () => {
   const ad = applySetup(await load('khoa-assess-2025-26'), deployed());
   const st = emptyState(ad.id, ad.dataVersion);
   st.student = { grade: '2', klass: '3', number: '7', name: '홍길동' };
@@ -114,11 +114,13 @@ test('보고서: 공개 전에는 기상·태풍·위상·⑪ 내용 없음, 공
   for (const w of ['태풍', '힌남노', '기압', '풍속', '풍향', '기상', '안정적', '삭 ', '망 ']) assert.ok(!before.includes(w), `공개 전 보고서에 '${w}' 없음`);
   assert.ok(m.missing.some((x) => x.reveal));
   assert.ok(m.missing.some((x) => x.qid === 'q11'));
-  // 공개(달의 위상·추가 자료): 공개 순간 답 보관 후 현재 답을 바꿔도 보고서는 보관본
+  assert.ok(!m.sections.find((s) => s.key === 'inq2').items.some((x) => x.id === 'think2'), '잠깐 생각하기를 안 쓰면 보고서에 없음');
+  // 이전 저장분의 달의 위상 공개 기록이 있어도 ③④는 고정하지 않고 위상도 보이지 않음. 추가 자료는 공개 순간 답 보관
   st.reveals.moon = { at: Date.now(), answers: { q3: { ...st.answers.q3 }, q4: { spring: null, neap: null } } };
   st.reveals.weather = { at: Date.now(), answers: { q9: st.answers.q9, q10: st.answers.q10 } };
-  st.answers.q3.spring = '2026-09-01';
+  st.answers.q3.spring = '2026-09-12';
   st.answers.q10 = '바꾼 답';
+  st.answers.think2 = '서해는 바다가 얕고 만이 좁아서';
   st.answers.q11 = '기간 A에는 해면기압이 크게 낮아져 해수면이 부풀어 올랐고, 강한 바람이 바닷물을 해안으로 밀어 조위가 높아졌다.';
   m = buildReport(ad, st);
   const q3 = answerLines(ad, st, ALL_QUESTIONS.find((q) => q.id === 'q3'));
@@ -131,10 +133,16 @@ test('보고서: 공개 전에는 기상·태풍·위상·⑪ 내용 없음, 공
   assert.ok(!m.missing.some((x) => x.qid === 'q11'));
   assert.ok(!allText(m).includes('안정적') && !allText(m).includes('최근접'), '공개 뒤에도 기간 해석 문구·최근접 시각 없음');
   assert.ok(!/무결성|지울 수 있|지워졌을|data\/raw\//.test(allText(m)), '보고서에 교사용 유의 사항·저장소 경로 없음');
-  const f3 = m.sections.find((s) => s.key === 'inq2').items.find((x) => x.id === 'f3');
-  assert.match(f3.caption, /묵호 확대\(세로축만 늘림\)/);
-  assert.equal(f3.panels.filter((p) => p.spec).length, 4, '세 지역 + 확대 그래프');
-  assert.ok(m.sections[0].items.some((x) => x.type === 'table' && /달의 위상/.test(x.title)));
+  const s2 = m.sections.find((s) => s.key === 'inq2');
+  const f3 = s2.items.find((x) => x.id === 'f3');
+  assert.equal(f3.panels.filter((p) => p.spec).length, 3, '세 지역(확대 그래프 없음)');
+  const th = s2.items.find((x) => x.id === 'think2');
+  assert.equal(th.label, '추가 생각 · 평가 제외');
+  assert.deepEqual(th.lines, ['서해는 바다가 얕고 만이 좁아서']);
+  assert.ok(!allText(m).includes('조석파'), '설명 전문은 보고서에 넣지 않음');
+  assert.ok(!m.missing.some((x) => x.qid === 'think2'));
+  assert.ok(!/달의 위상|삭 |망 /.test(allText(m)), '달의 위상 표·그림 없음');
+  assert.ok(!m.sections[0].items.some((x) => x.lockedNote), '③④ 고정 없음');
   // 그림은 실제로 그릴 수 있음(그래프 공유: 탐구 1 문항 ①②는 그림 하나)
   const figs = m.sections[0].items.filter((x) => x.type === 'figure');
   assert.equal(figs.length, 2);
@@ -183,7 +191,7 @@ test('예시·검증 사례: 예시 표시, 없는 자료는 미제공(만들지
   assert.equal(gap.length, 6);
   assert.ok(gap.every((p) => p.v === null), '결측 시각은 0이 아니라 null');
   assert.equal(INQUIRIES.length, 3);
-  assert.deepEqual(ALL_QUESTIONS.map((q) => q.no), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  assert.deepEqual(ALL_QUESTIONS.map((q) => q.no), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
 });
 
 test('10분 간격 예측(부산 2026-09): 정시 값은 1시간 예측과 같고 탐구 1에 쓰임', async () => {
@@ -286,19 +294,15 @@ test('문항 ⑨: 서술형(글). 잠시 쓰였던 세부 문항 형식 답은 �
   assert.equal(sanitizeState(raw).answers.q11prev, undefined);
 });
 
-test('탐구 2 확대 그래프: 고른 지역만 세로축을 늘림(값은 같은 축과 같음), 기본은 마지막 지역', async () => {
-  const { inq2ZoomSpec, inq2ZoomId, inq2Specs } = await import('../../js/chart/assess.js');
+test('탐구 2 지역별 확대: 값은 같은 축과 같고(평균 0) 세로축만 지역마다 늘림', async () => {
+  const { inq2Specs } = await import('../../js/chart/assess.js');
   const ad = applySetup(await load('khoa-assess-2025-26'), deployed());
-  assert.equal(inq2ZoomId(ad, {}), 'DT_0006');
-  assert.equal(inq2ZoomId(ad, { inq2Zoom: 'DT_0001' }), 'DT_0001');
-  assert.equal(inq2ZoomId(ad, { inq2Zoom: 'zzz' }), 'DT_0006');
-  const ctx = { width: 600, height: 230, measure, fontSize: 12 };
-  const z = inq2ZoomSpec(ctx, ad, 'DT_0006');
-  const same = inq2Specs(ctx, ad, 'same')[2];
-  assert.ok(z.y.domain[1] < same.y.domain[1] / 4, `확대 ${z.y.domain} vs 같은 축 ${same.y.domain}`);
-  assert.deepEqual(z.series[0].points.slice(0, 50), same.series[0].points.slice(0, 50));
-  assert.match(z.header.title, /묵호 확대/);
-  assert.ok(layoutChart(z).items.length > 10);
+  const ctx = { width: 600, height: 200, measure, fontSize: 12 };
+  const same = inq2Specs(ctx, ad, 'same'), own = inq2Specs(ctx, ad, 'own');
+  assert.deepEqual(own[2].series[0].points.slice(0, 30), same[2].series[0].points.slice(0, 30));
+  assert.ok(own[2].y.domain[1] < same[2].y.domain[1] / 4, `묵호 ${own[2].y.domain} vs ${same[2].y.domain}`);
+  assert.ok(own[0].y.domain[1] > own[2].y.domain[1]);
+  for (const sp of own) { assert.equal(sp.y.domain[0], -sp.y.domain[1]); assert.match(sp.header.subtitle, /지역별 확대/); assert.equal(sp.y.label, '평균과의 차이 (cm)'); }
 });
 
 test('보고서 화면 이탈 기록: 진행 중 세션 자세히, 같은 시간대 다른 세션 요약, 평가 모드 없으면 절 없음', async () => {

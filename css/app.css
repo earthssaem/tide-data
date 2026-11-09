@@ -548,4 +548,13 @@ textarea:focus { border-color: var(--teal); }
 .rp-orbit svg { background: #0f1b2d; }
 .answer-label { font-weight: 700; font-size: .92rem; margin: .6rem 0 .2rem; }
 
-.zoom-box { border-top: 1px dashed var(--line); margin-top: .6rem; padding-top: .5rem; }
+
+/* 탐구 2 잠깐 생각하기(선택·평가 제외) */
+.think-card { margin-top: .9rem; padding: .7rem .8rem; border: 1px dashed var(--line); border-radius: 10px; background: #fbfaf5; }
+.think-card h3 { font-size: .95rem; margin: 0 0 .35rem; color: var(--navy); }
+.think-q { margin: 0 0 .2rem; font-weight: 600; }
+.think-actions { margin-top: .45rem; }
+.think-explain { margin-top: .55rem; font-size: .92rem; line-height: 1.6; }
+.think-explain ul { margin: .35rem 0; padding-left: 1.1rem; }
+.think-explain li { margin: .2rem 0; }
+.think-note { margin: .4rem 0 0; }

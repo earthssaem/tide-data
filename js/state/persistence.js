@@ -36,7 +36,8 @@ export function emptyAnswers() {
     q5: ['', '', ''],
     q6: {},
     q7: { t0: null, t1: null, text: '' }, // 삭제된 탐구(예측과 실제)의 답 — 이미 쓴 내용은 지우지 않고 보관만
-    q8: '', q9: '', q10: '', q11: '', q12: '',
+    q8: '', q9: '', q10: '', q11: '', q12: '', q13: '',
+    think2: '', // 탐구 2 '잠깐 생각하기'(선택, 평가 제외)
   };
 }
 
@@ -53,7 +54,7 @@ export function emptyState(caseId, dataVersion) {
     answers: emptyAnswers(),
     // 자료 공개: 공개한 순간의 답을 따로 보관(이후 해당 답은 고정)
     reveals: { moon: null, weather: null },
-    ui: { inq2Scale: 'same', inq2Zoom: null }, // inq2Zoom: 탐구 2 확대 그래프 지역(없으면 마지막 지역)
+    ui: { inq2Scale: 'same' },
     createdAt: now,
     updatedAt: now,
     lastPdfAt: null,
@@ -229,7 +230,8 @@ export function sanitizeAnswers(a) {
   const q7 = isObj(x.q7) ? x.q7 : {};
   const t0 = num(q7.t0), t1 = num(q7.t1);
   out.q7 = { t0: t0 != null && t1 != null && t1 > t0 ? t0 : null, t1: t0 != null && t1 != null && t1 > t0 ? t1 : null, text: shortText(q7.text, 2000) };
-  for (const k of ['q8', 'q9', 'q10', 'q12']) out[k] = shortText(x[k], 4000);
+  for (const k of ['q8', 'q9', 'q10', 'q12', 'q13']) out[k] = shortText(x[k], 4000);
+  out.think2 = shortText(x.think2, 300);
   // ⑨는 서술형(글). 잠시 쓰였던 세부 문항 형식({peak, pressure, wind, pressureText, windText})의 답은 지우지 않고 q11prev로 보관
   const o11 = isObj(x.q11) ? x.q11 : null;
   out.q11 = typeof x.q11 === 'string' ? shortText(x.q11, 4000) : shortText(o11?.text ?? o11?.old, 4000);
@@ -266,7 +268,7 @@ export function sanitizeState(obj) {
   const rv = isObj(obj.reveals) ? obj.reveals : {};
   s.reveals = { moon: sanitizeReveal(rv.moon, 'moon'), weather: sanitizeReveal(rv.weather, 'weather') };
   const ui = isObj(obj.ui) ? obj.ui : {};
-  s.ui = { inq2Scale: ui.inq2Scale === 'own' ? 'own' : 'same', inq2Zoom: typeof ui.inq2Zoom === 'string' && STATION_ID.test(ui.inq2Zoom) ? ui.inq2Zoom : null };
+  s.ui = { inq2Scale: ui.inq2Scale === 'own' ? 'own' : 'same' };
   s.createdAt = num(obj.createdAt) ?? s.createdAt;
   s.updatedAt = num(obj.updatedAt) ?? s.updatedAt;
   s.lastPdfAt = num(obj.lastPdfAt);

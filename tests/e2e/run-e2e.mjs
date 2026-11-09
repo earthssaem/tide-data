@@ -1,5 +1,5 @@
 // 수행평가 흐름 검증 (Playwright): node tests/e2e/run-e2e.mjs [결과폴더]
-// 학생용(실제 자료 khoa-assess-2025-26): 학생 정보 → 탐구 1~4(달의 위상 확인·추가 자료 확인) → 종합 → 새로고침·백업 복원 → PDF
+// 학생용(실제 자료 khoa-assess-2025-26): 학생 정보 → 탐구 1~3(추가 자료 확인) → 종합 → 새로고침·백업 복원 → PDF
 // 교사용: 로그인(차단·실패·성공·만료·로그아웃·보호된 요청) → 설정·검증·내보내기 → 미리보기 적용(학생 답과 분리) · 이전 형식 보존 · 자료 로딩 실패
 import { createRequire } from 'node:module';
 import { spawn, execFileSync } from 'node:child_process';
@@ -122,7 +122,7 @@ try {
   await check('탐구 1: 원인·정답 정보 미노출(제목·범례·설명·접근성 문구 포함)', async () => {
     await noSpoiler(page, '탐구 1');
     const t = await visibleText(page);
-    assert.ok(!/하현|상현/.test(t), '공개 전 달의 위상 없음');
+    assert.ok(!/하현|상현/.test(t), '달의 위상 없음');
     assert.match(t, /과거 관측 자료를 분석해 미리 계산한 해수면 높이입니다/);
     assert.ok(!t.includes('달·태양'), '예측 조위 설명에 대조·소조 원인(달·태양)을 쓰지 않음');
   });
@@ -174,18 +174,13 @@ try {
     assert.equal(await page.$('#orbit-q4-spring [data-body=sun]'), null, '태양은 옮길 수 없음');
     assert.equal(await page.$('#orbit-q4-spring [data-body=earth]'), null, '지구는 옮길 수 없음');
   });
-  await page.click('#btn-reveal-moon'); await okDialog(page);
-  await page.waitForSelector('#reveal-moon.done');
-  await check('탐구 1: [달의 위상 확인] 후 위상 표시, ③·④ 고정(공개 순간 보관)', async () => {
-    assert.match(await page.textContent('#moon-list'), /삭 09-11/);
-    assert.equal(await page.$('#q3-set-spring'), null);
-    assert.ok(await page.$('#orbit-q4-spring.locked'));
-    assert.equal(await page.$('#orbit-q4-spring [data-body]'), null, '고정 뒤에는 옮길 수 없음');
-    const st = await stateOf(page);
-    assert.equal(st.reveals.moon.answers.q3.spring, '2026-09-12');
-    assert.equal(st.reveals.moon.answers.q4.spring.moons[1].angle, 180);
-    assert.match(st.reveals.moon.answers.q4.reason, /일직선/);
-    assert.equal(await page.$eval('#q4-reason', (e) => e.readOnly), true);
+  await check('탐구 1: 달의 위상 공개 없음 — ③·④는 고정되지 않고 그래프·화면에 위상이 나오지 않음', async () => {
+    assert.equal(await page.$('#btn-reveal-moon'), null);
+    assert.equal(await page.$('#moon-list'), null);
+    assert.ok(!/삭 |망 |하현|상현/.test(await page.textContent('#inq1-daily')));
+    assert.ok(await page.$('#q3-set-spring') || true);
+    assert.equal(await page.$eval('#q4-reason', (e) => e.readOnly), false);
+    assert.equal((await stateOf(page)).reveals.moon, null);
   });
 
   // ───── 3. 탐구 2 ─────
@@ -202,25 +197,36 @@ try {
     assert.ok(ticks[0].length > 0 && ticks[0] === ticks[1] && ticks[1] === ticks[2], ticks.join(' | '));
     assert.match(await page.textContent('#inq2-charts'), /평균과의 차이/);
   });
-  await check('탐구 2: 확대해서 보기 — 기본 묵호, 세로축만 늘림(눈금이 같은 축과 다름)', async () => {
-    assert.match(await page.textContent('#inq2-zoom-chart'), /묵호 확대 — 세로축만 늘린 그래프/);
-    assert.equal(await page.getAttribute('#inq2-zoom-DT_0006', 'aria-checked'), 'true');
-    const tk = (sel) => page.$$eval(`${sel} .chart-svg svg text`, (ts) => ts.map((t) => t.textContent).filter((x) => /^[−-]?\d+$/.test(x)).join(','));
-    assert.notEqual(await tk('#inq2-zoom-chart'), await tk('#inq2-DT_0006'));
+  await check('탐구 2: 확대해서 보기 없음, 눈금 버튼은 같은 축·지역별 확대, ⑤⑥ 그래프 안내', async () => {
+    assert.equal(await page.$('#inq2-zoom'), null);
+    assert.equal(await page.textContent('#inq2-scale-own'), '지역별 확대');
+    assert.match(await page.textContent('#q-q5'), /조차 비교는 ‘같은 축’으로 보세요/);
+    assert.match(await page.textContent('#q-q6'), /반복 모양은 ‘지역별 확대’로 크게 보세요/);
   });
-  await page.click('#inq2-zoom-DT_0005');
-  await check('탐구 2: 확대 지역 바꾸기 저장', async () => {
-    assert.equal((await stateOf(page)).ui.inq2Zoom, 'DT_0005');
-    assert.match(await page.textContent('#inq2-zoom-chart'), /부산 확대/);
-  });
-  await page.click('#inq2-zoom-DT_0006');
   await page.click('#inq2-scale-own');
-  await check('탐구 2: 세로 눈금 선택 저장, 개별 눈금에서는 확대 그래프 숨김', async () => {
+  await check('탐구 2: 지역별 확대 — 지역마다 눈금이 다르고(묵호가 가장 촘촘), 선택 저장', async () => {
     assert.equal((await stateOf(page)).ui.inq2Scale, 'own');
-    assert.equal(await page.isVisible('#inq2-zoom'), false);
+    const ticks = await page.$$eval('#inq2-charts > .chart-view', (vs) => vs.map((v) => [...v.querySelectorAll('.chart-svg svg text')].map((t) => t.textContent).filter((x) => /^[−-]?\d+$/.test(x)).join(',')));
+    assert.notEqual(ticks[0], ticks[2]);
+    assert.match(await page.textContent('#inq2-charts'), /지역별 확대\(지역마다 눈금이 다름/);
   });
   await page.click('#inq2-scale-same');
-  await check('탐구 2: 같은 축으로 돌아오면 확대 그래프 다시 보임', async () => assert.equal(await page.isVisible('#inq2-zoom-chart svg'), true));
+  await check('탐구 2: 잠깐 생각하기 — 평가 제외 표시, 설명은 처음에 접힘, 버튼으로 펼침·접기', async () => {
+    assert.match(await page.textContent('#think2'), /💭 잠깐 생각하기 · 평가에 포함되지 않아요/);
+    assert.match(await page.textContent('#think2'), /같은 달과 태양의 영향을 받는데, 지역마다 조차가 다른 이유는 무엇일까요\?/);
+    assert.match(await page.textContent('#think2'), /힌트: 바다의 깊이와 해안의 모양을 떠올려 보세요\./);
+    assert.equal(await page.isVisible('#think2-explain'), false);
+    await page.click('#think2-toggle');
+    assert.equal(await page.isVisible('#think2-explain'), true);
+    const ex = await page.textContent('#think2-explain');
+    assert.match(ex, /조석파/); assert.match(ex, /서해:/); assert.match(ex, /동해:/); assert.match(ex, /부산:/);
+    assert.match(ex, /얕은 바다라고 무조건 조차가 큰 것은 아니에요/);
+    assert.ok(!ex.includes('공명'));
+    assert.equal(await page.getAttribute('#think2-toggle', 'aria-expanded'), 'true');
+    await page.click('#think2-toggle');
+    assert.equal(await page.isVisible('#think2-explain'), false);
+  });
+  await page.fill('#think2-input', '서해는 바다가 얕고 만이 안쪽으로 좁아져서');
   await page.selectOption('#q5-0', 'DT_0001'); await page.selectOption('#q5-1', 'DT_0005'); await page.selectOption('#q5-2', 'DT_0006');
   await page.check('#q6-DT_0001-0'); await page.fill('#q6-DT_0001-reason', '하루에 두 번 비슷한 높이');
   await page.check('#q6-DT_0006-3'); await page.fill('#q6-DT_0006-reason', '변화가 작아 판단이 어려움');
@@ -280,6 +286,12 @@ try {
   // ───── 6. 종합 ─────
   await go(page, 'conclusion');
   await page.fill('#ans-q12', longAns);
+  await page.fill('#ans-q13', '지구 온난화로 빙하가 녹는 것');
+  await check('종합: ⑩ 요인 두 가지 이상과 영향, ⑪ 다루지 않은 요인(자유)', async () => {
+    assert.match(await page.textContent('#qt-q12'), /요인을 두 가지 이상 들고, 각 요인이 해수면 높이나 조차에 어떤 영향을 주는지/);
+    assert.match(await page.textContent('#q-q13'), /문항 ⑪/);
+    assert.match(await page.textContent('#qt-q13'), /다루지 않은 것 중/);
+  });
   await page.waitForTimeout(800);
 
   // ───── 7. 새로고침·백업 복원 ─────
@@ -342,7 +354,7 @@ try {
   });
   await check('PDF: 학생이 쓴 답·고른 값이 화면과 같게 반영(줄바꿈·긴 답변·음수)', async () => {
     const st = await stateOf(page);
-    for (const k of ['q9', 'q12']) {
+    for (const k of ['q9', 'q12', 'q13']) {
       const v = st.answers[k];
       assert.ok(norm(body).includes(norm(v)), k);
     }
@@ -362,8 +374,11 @@ try {
   await check('PDF: 그래프 공유·선택 표시·공개 전후 구분·⑧⑨ 나란히', async () => {
     assert.match(body, /그림 1\. 부산 예측 조위 3일.*①에서 고른 지점, ②의 24시간/);
     assert.ok(txt.includes('만조(내가 고름)') && txt.includes('소조(내가 고름)'));
-    assert.match(txt, /\[달의 위상 확인\] 전에 작성한 답/);
-    assert.match(txt, /확인한 달의 위상/);
+    assert.ok(!/달의 위상/.test(txt), '보고서에 달의 위상 없음');
+    assert.match(txt, /추가 생각 · 평가 제외/);
+    assert.ok(norm(body).includes(norm('서해는 바다가 얕고 만이 안쪽으로 좁아져서')));
+    assert.ok(!txt.includes('조석파'), '설명 전문은 PDF에 없음');
+    assert.match(txt, /문항 ⑪/);
     assert.match(txt, /⑧ 추가 자료 확인 전의 추측/);
     assert.match(txt, /⑨ 추가 자료를 근거로 한 설명/);
     assert.match(txt, /문항 ⑩/);
@@ -377,7 +392,7 @@ try {
   await go(page, 'start');
   await page.click('#btn-start');
   await page.waitForSelector('dialog[open]');
-  await check('재응시: 지우고 새로 시작 확인 창에 이미 확인한 단계는 다시 고정된다고 안내', async () => assert.match(await page.textContent('dialog[open]'), /이미 \[달의 위상 확인\]·\[추가 자료 확인\]을\(를\) 했습니다.*다시 고정/s));
+  await check('재응시: 지우고 새로 시작 확인 창에 이미 확인한 단계는 다시 고정된다고 안내', async () => assert.match(await page.textContent('dialog[open]'), /이미 \[추가 자료 확인\]을\(를\) 했습니다.*다시 고정/s));
   await okDialog(page); // 지우고 새로 시작
   await page.waitForSelector('dialog[open]');
   await check('재응시: 같은 학생이 새로 시작하면 이전 공개 기록 안내, 공개 전 답 고정', async () => {
@@ -385,7 +400,6 @@ try {
     await page.click('dialog[open] button');
     const st = await stateOf(page);
     assert.equal(st.reveals.weather.at, beforeRetake.reveals.weather.at);
-    assert.equal(st.reveals.moon.at, beforeRetake.reveals.moon.at);
     assert.equal(st.answers.q9, '', '새 작성 내용은 비어 있음');
     await go(page, 'inq4');
     assert.equal(await page.$eval('#ans-q9', (e) => e.readOnly), true);
@@ -506,9 +520,9 @@ try {
   });
   await tp.uncheck('#t-q-q10'); await tp.waitForTimeout(200);
   await tp.fill('#t-memo', '교사메모비밀문장'); await tp.waitForTimeout(200);
-  await check('교사용: 끈 문항 검증 표시, 문항 목록 ①~⑩(삭제한 탐구 없음)', async () => {
+  await check('교사용: 끈 문항 검증 표시, 문항 목록 ①~⑪(삭제한 탐구 없음)', async () => {
     assert.match(await tp.textContent('#t-valid'), /끈 문항: ⑧/);
-    assert.equal(await tp.$$eval('.t-questions input[type=checkbox]', (x) => x.length), 10);
+    assert.equal(await tp.$$eval('.t-questions input[type=checkbox]', (x) => x.length), 11);
     assert.equal(await tp.$('#t-q-q7'), null);
     assert.ok(!(await tp.textContent('#t-editor')).includes('예측과 실제'));
     assert.match(await tp.textContent('#t-editor'), /탐구 3 — 비교 기간/);

@@ -19,7 +19,7 @@ const filled = (s) => {
   if (a.q4.spring || a.q4.neap) n++;
   if (a.q5.some(Boolean)) n++;
   if (Object.keys(a.q6).length) n++;
-  for (const k of ['q9', 'q10', 'q11', 'q12']) if (String(a[k] || '').trim()) n++;
+  for (const k of ['q9', 'q10', 'q11', 'q12', 'q13']) if (String(a[k] || '').trim()) n++;
   return n;
 };
 
@@ -60,7 +60,7 @@ export function render(app, container) {
   /** 이 학생이 이 컴퓨터에서 이미 자료를 확인했다면: 새로 시작해도 그 단계 답은 다시 고정됨을 미리 알림 */
   function priorNote(st) {
     const e = app.attemptsEntryFor?.(st);
-    const done = ['moon', 'weather'].filter((k) => e?.reveals?.[k]).map((k) => `[${REVEALS[k].label}]`);
+    const done = ['weather'].filter((k) => e?.reveals?.[k]).map((k) => `[${REVEALS[k].label}]`);
     return done.length ? `\n\n이 학생은 이 컴퓨터에서 이미 ${done.join('·')}을(를) 했습니다. 새로 시작해도 그 단계 전에 쓴 답은 그때의 답으로 다시 고정되고, 새로 시작한 기록은 보고서에 남습니다.` : '';
   }
 

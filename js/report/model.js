@@ -1,9 +1,9 @@
 // 보고서 구성 — 미리보기(HTML)와 PDF가 같은 구성을 사용한다(화면 답과 PDF 내용 일치).
 // 학생이 쓰지 않은 답은 비워 두고 '작성하지 않음'으로만 표시한다(임의로 채우지 않음).
 // 학생이 그래프에서 고른 지점·날짜·구간은 그 문항의 그래프에 그대로 그려 넣는다(같은 그래프를 쓰는 문항은 그림 하나를 함께 씀).
-// 아직 공개하지 않은 자료(달의 위상, 기상·태풍)는 보고서에도 나오지 않는다. 교사용 메모는 넣지 않는다.
+// 아직 공개하지 않은 자료(기상·태풍)는 보고서에도 나오지 않는다. 교사용 메모는 넣지 않는다.
 
-import { INQUIRIES, CONCLUSION, REVEALS, CIRCLED, PREDICTED_TEXT, OBSERVED_TEXT, DATUM_CAUTION, isEnabled, qLabel } from '../content/questions.js';
+import { INQUIRIES, CONCLUSION, REVEALS, CIRCLED, THINK2, PREDICTED_TEXT, OBSERVED_TEXT, DATUM_CAUTION, isEnabled, qLabel } from '../content/questions.js';
 import { answerOf } from '../screens/common.js';
 import { howLabel } from '../state/attempts.js';
 import { fmtDurationKo } from '../assessment/session-log.js';
@@ -11,7 +11,7 @@ import { fmtRange, fmtDateTime, fmtDateKo, DAY, HOUR } from '../util/time.js';
 import { fmtNum } from '../util/format.js';
 import { layoutChart } from '../chart/layout.js';
 import {
-  inq1MainSpec, inq1MonthSpec, inq2Specs, inq2ZoomSpec, inq2ZoomId, stationsMapLayout, inq4TideSpecs, weatherSpec,
+  inq1MainSpec, inq1MonthSpec, inq2Specs, stationsMapLayout, inq4TideSpecs, weatherSpec,
   typhoonMapLayout, extremaIn, q11PrevLines, periodTitle, periodCd, PERIOD_NAMES, periodTyphoonText,
 } from '../chart/assess.js';
 
@@ -115,7 +115,7 @@ export function buildReport(ad, state, { attempts = null, others = [], departure
     if (on(Q2)) s1.items.push(qa(Q2, 'inq1'));
   }
   if (on(Q3)) {
-    s1.items.push(fig('f2', `그림 2. 부산 예측 조위 한 달 (${ad.setup.month}) — ③에서 고른 날${rv.moon ? ', 달의 위상' : ''}`, [{ height: 230, spec: (ctx) => inq1MonthSpec(ctx, ad, view(state), { showMoon: !!rv.moon, title: false }) }]));
+    s1.items.push(fig('f2', `그림 2. 부산 예측 조위 한 달 (${ad.setup.month}) — ③에서 고른 날`, [{ height: 230, spec: (ctx) => inq1MonthSpec(ctx, ad, view(state), { title: false }) }]));
     s1.items.push(qa(Q3, 'inq1'));
   }
   if (on(Q4)) {
@@ -128,24 +128,21 @@ export function buildReport(ad, state, { attempts = null, others = [], departure
     const od = a.oldDrawings || state.answers.q4?.oldDrawings;
     if (od && (od.spring || od.neap)) s1.items.push({ type: 'drawings', id: 'q4-old', label: `${qLabel(Q4)} (이전 그림판에 그린 그림)`, text: '배치판으로 바뀌기 전에 그린 그림입니다.', lines: [], items: [{ title: '대조일 때', drawing: od.spring || null }, { title: '소조일 때', drawing: od.neap || null }] });
   }
-  if (rv.moon && ad.moon) {
-    const ph = ad.moon.phases.filter((p) => p.t >= ad.win.month[0] - DAY && p.t < ad.win.month[1] + DAY);
-    s1.items.push({ type: 'table', title: `확인한 달의 위상(계산값, ${tz.label}) — 확인 ${fmtDateTime(rv.moon.at, localTz())}`, head: ['위상', '시각'], rows: ph.map((p) => [p.label, fmtDateTime(p.t, tz)]) });
-  } else if (on(Q3) || on(Q4)) s1.items.push({ type: 'note', text: '[달의 위상 확인]을 하지 않았습니다.' });
-  if (!rv.moon && (on(Q3) || on(Q4))) missing.push({ step: 'inq1', label: '[달의 위상 확인]을 아직 누르지 않음', reveal: true });
 
   // ── 탐구 2 ──
   const s2 = { key: 'inq2', title: `탐구 2. ${INQUIRIES[1].title}`, sub: `인천·부산·묵호 예측 조위 · ${fmtRange(ad.win.inq2[0], ad.win.inq2[1], tz)} · ${DATUM_CAUTION}`, items: [] };
   if (on(Q5) || on(Q6)) {
     const mode = state.ui?.inq2Scale === 'own' ? 'own' : 'same';
-    s2.items.push(fig('f3', `그림 3. 세 지역의 예측 조위(같은 시간 축, 세로축: ${mode === 'same' ? '세 지역 같은 축(지역마다 기간 평균을 0으로)' : '지역마다 따로'})${mode === 'same' ? `, ${ad.stationList.find((s) => s.id === inq2ZoomId(ad, state.ui))?.name} 확대(세로축만 늘림)` : ''}와 관측소 위치`, [
+    s2.items.push(fig('f3', `그림 3. 세 지역의 예측 조위(같은 시간 축, 세로축: ${mode === 'same' ? '세 지역 같은 축(지역마다 기간 평균을 0으로)' : '지역별 확대(지역마다 눈금이 다름)'})와 관측소 위치`, [
       ...ad.stationList.map((s, i) => ({ height: i === ad.stationList.length - 1 ? 165 : 150, spec: (ctx) => inq2Specs(ctx, ad, mode)[i] })),
-      ...(mode === 'same' ? [{ height: 170, spec: (ctx) => inq2ZoomSpec(ctx, ad, inq2ZoomId(ad, state.ui)) }] : []),
       { map: (w, measure, fs) => stationsMapLayout({ stations: ad.stationList, width: w, measure, fontSize: fs, title: '관측소 위치' }), maxWidth: 240 },
     ]));
     if (on(Q5)) s2.items.push(qa(Q5, 'inq2'));
     if (on(Q6)) s2.items.push(qa(Q6, 'inq2'));
   }
+  // 잠깐 생각하기(선택·평가 제외): 쓴 경우에만, 설명 전문은 넣지 않음
+  const th = String(state.answers.think2 || '').trim();
+  if (th) s2.items.push({ type: 'qa', id: 'think2', label: THINK2.reportLabel, text: THINK2.question, lines: [th], empty: false, lockedNote: '', waitNote: '' });
 
   // ── 탐구 3(특이한 변화) ──
   const s4 = { key: 'inq4', title: `탐구 ${D4.no}. ${D4.title}`, sub: '부산 관측 조위 — 두 기간 비교(세로 눈금 간격 같음)', items: [] };
@@ -244,7 +241,6 @@ export function infoRows(ad, state) {
     ['탐구 2 (세 지역 예측)', fmtRange(W.inq2[0], W.inq2[1], tz)],
     ['탐구 3 (부산 관측)', `${PERIOD_NAMES.a} ${fmtRange(W.a[0], W.a[1], tz)} / ${PERIOD_NAMES.b} ${fmtRange(W.b[0], W.b[1], tz)}`],
     ['시간대', `${tz.name || tz.label}${ad.timeBasis?.confirmed ? ' — 공식 자료와 대조해 확인' : ' — 확인되지 않음'}`],
-    ['달의 위상 확인', rv.moon ? fmtDateTime(rv.moon.at, localTz()) : '하지 않음'],
     ['추가 자료 확인', rv.weather ? fmtDateTime(rv.weather.at, localTz()) : '하지 않음'],
     ['자료 버전', ad.dataVersion],
   ];
@@ -266,7 +262,6 @@ export function sourceRows(ad, state) {
     out.push({ role: '기상(부산 ASOS)', lines: dsLines(rep.weather, [...(ad.weatherSite?.text ? [ad.weatherSite.text] : []), `관측 지점: ${rep.weather?.station?.name || '—'}${rep.weather?.station?.note ? ` (${rep.weather.station.note})` : ''}`, '해면기압·풍속, 1시간 간격']) });
     if (ad.past?.typhoon) out.push({ role: '태풍 정보', lines: dsLines(ad.past.typhoon, [ad.past.typhoon.trackKind && `경로 종류: ${ad.past.typhoon.trackKind}`, ad.past.typhoon.note].filter(Boolean)) });
   }
-  if (rv.moon && ad.moon) out.push({ role: '달의 위상', lines: [ad.moon.meta.provider && `제공: ${ad.moon.meta.provider}`, ad.moon.meta.identifier && `식별자: ${ad.moon.meta.identifier}`].filter(Boolean) });
   const tb = ad.timeBasis || {};
   const tbNote = rv.weather ? tb.note : tb.confirmed ? '조위(예측·관측)는 국립해양조사원 조석표(시각 9hE)·바다누리 관측값과 대조해 KST로 확인' : tb.note;
   out.push({ role: '시간대 확인', lines: [tbNote || ''].filter(Boolean) }); // 근거 파일 경로(저장소 안)는 학생 보고서에 넣지 않음(README·교사용)
