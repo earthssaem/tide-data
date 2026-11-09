@@ -5,6 +5,7 @@
 
 import { INQUIRIES, CONCLUSION, REVEALS, CIRCLED, PREDICTED_TEXT, OBSERVED_TEXT, DATUM_CAUTION, isEnabled, qLabel } from '../content/questions.js';
 import { answerOf } from '../screens/common.js';
+import { howLabel } from '../state/attempts.js';
 import { fmtRange, fmtDateTime, fmtDateKo, DAY, HOUR } from '../util/time.js';
 import { fmtNum } from '../util/format.js';
 import { layoutChart } from '../chart/layout.js';
@@ -72,7 +73,7 @@ export function layoutFigure(f, { width, measure, fontSize = 9.5 }) {
   }).filter(Boolean);
 }
 
-export function buildReport(ad, state) {
+export function buildReport(ad, state, { attempts = null } = {}) {
   const tz = ad.tz;
   const rv = state.reveals || {};
   const st = state.student;
@@ -167,7 +168,16 @@ export function buildReport(ad, state) {
   // ── 종합 ──
   const s5 = { key: 'conclusion', title: CONCLUSION.title, sub: CONCLUSION.goal, items: CONCLUSION.questions.filter(on).map((q) => qa(q, 'conclusion')) };
 
-  const sections = [s1, s2, s4, s5].filter((s) => s.items.length);
+  // ── 응시 기록(이 컴퓨터·브라우저) ──
+  const s6 = { key: 'attempts', title: '응시 기록', sub: '이 컴퓨터·브라우저에 남은 이 학생의 기록입니다. 다른 컴퓨터·브라우저의 기록은 포함되지 않으며, 브라우저 설정으로 지울 수 있어 무결성이 보장되지 않습니다.', items: [] };
+  const ev = attempts?.events || [];
+  if (ev.length) {
+    s6.items.push({ type: 'table', title: `기록 ${ev.length}건(시작 ${ev.filter((e) => e.how === 'new').length}회)`, head: ['시각', '내용'],
+      rows: ev.map((e) => [fmtDateTime(e.at, localTz()), `${howLabel(e.how)}${e.fileUpdatedAt ? ` (백업 작성 ${fmtDateTime(e.fileUpdatedAt, localTz())})` : ''}${e.priorReveals?.length ? ` — 이전 공개 기록 적용: ${e.priorReveals.map((k) => REVEALS[k].label).join('·')}` : ''}`]) });
+    if (ev.filter((e) => e.how === 'new').length > 1) s6.items.push({ type: 'note', text: '같은 컴퓨터에서 이 학생이 2번 이상 새로 시작했습니다. 이미 공개한 단계의 답은 처음 공개할 때의 답으로 고정되어 있습니다.' });
+  } else s6.items.push({ type: 'note', text: '이 컴퓨터·브라우저에 남은 응시 기록이 없습니다(다른 컴퓨터에서 작성했거나 기록이 지워졌을 수 있음).' });
+
+  const sections = [s1, s2, s4, s5, s6].filter((s) => s.items.length);
   return {
     appName: '조석 데이터 탐구실',
     title: '조석 데이터 탐구 보고서',

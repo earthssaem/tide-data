@@ -8,7 +8,7 @@ import { itemsToSVG, layoutToSVG, screenMeasure, SCREEN_FONT } from '../chart/sv
 
 export function render(app, container) {
   const { ad, store } = app;
-  let model = buildReport(ad, store.state);
+  let model = buildReport(ad, store.state, { attempts: app.attemptsEntry?.() });
 
   container.append(h('div', { class: 'inq-head' },
     h('h1', {}, '보고서 확인·PDF'),
@@ -54,7 +54,7 @@ export function render(app, container) {
   let busy = false;
   dlBtn.addEventListener('click', async () => {
     if (busy) return;
-    model = buildReport(ad, store.state);
+    model = buildReport(ad, store.state, { attempts: app.attemptsEntry?.() });
     renderCheck();
     const issues = [];
     if (studentMissing()) issues.push('학생 정보가 비어 있음');

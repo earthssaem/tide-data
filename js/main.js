@@ -18,6 +18,7 @@ import { escapeHtml } from './util/format.js';
 import { fmtTime, fmtDateTime } from './util/time.js';
 import { answerOf } from './screens/common.js';
 import { answerLines } from './report/model.js';
+import { setAttemptsMode, recordEvent, recordReveal, applyPriorReveals, entryFor } from './state/attempts.js';
 
 import * as StartScreen from './screens/start.js';
 import * as Inq1Screen from './screens/inquiry1.js';
@@ -68,6 +69,7 @@ async function boot() {
     return;
   }
   setStorageMode(app.mode === 'preview' ? 'preview' : 'student');
+  setAttemptsMode(app.mode === 'preview' ? 'preview' : 'student');
   let teacherSession = null;
   if (app.mode === 'preview') {
     teacherSession = await checkSession();
@@ -240,6 +242,7 @@ export async function reveal(kind) {
     const answers = JSON.parse(JSON.stringify(Object.fromEntries(R.lockIds.map((id) => [id, x.answers[id]]))));
     x.reveals[kind] = { at: Date.now(), answers };
   }, { topic: 'reveal', immediate: true });
+  recordReveal(app.ad.id, app.store.state.student, kind, app.store.state.reveals[kind]);
   toast(`[${R.label}] 완료. 확인 전 답은 따로 보관되었습니다.`);
   navigate(app.currentStep, { replace: true });
   return true;
@@ -322,9 +325,14 @@ export async function importBackup() {
   const next = sanitizeState(JSON.parse(JSON.stringify(r.state)));
   next.started = true;
   next.dataVersion = next.dataVersion || app.ad.dataVersion;
+  // 백업에 있는 공개 기록은 이 컴퓨터 기록에도 남기고, 이 컴퓨터에 더 이른 공개 기록이 있으면 그것을 적용(공개 전 백업으로 잠금이 풀리지 않게)
+  for (const kind of ['moon', 'weather']) if (next.reveals[kind]) recordReveal(app.ad.id, next.student, kind, next.reveals[kind]);
+  const applied = applyPriorReveals(next);
+  recordEvent(app.ad.id, next.student, 'import', { file: file.name.slice(0, 120), fileUpdatedAt: r.state.updatedAt, ...(applied.length ? { priorReveals: applied } : {}) });
   app.store.replace(next);
   toast('백업 파일을 불러왔습니다.');
   navigate(next.step === 'start' ? 'inq1' : next.step);
+  priorRevealNotice(applied);
 }
 
 export async function clearMyWork() {
@@ -345,15 +353,35 @@ export async function clearMyWork() {
   navigate('start');
 }
 
+/** 이 학생이 이 컴퓨터에서 이미 공개한 단계가 있으면 알림(공개 전 답은 그때 답으로 고정) */
+function priorRevealNotice(applied) {
+  if (!applied.length) return;
+  const names = applied.map((k) => `[${REVEALS[k].label}]`).join('·');
+  alertDialog({ title: '이전 응시 기록이 있습니다', body: `이 컴퓨터에 같은 학생이 ${names}을(를) 한 기록이 있습니다.\n그 단계 전에 쓴 답은 그때의 답으로 고정되어 다시 쓸 수 없습니다(재응시 공정성).\n이 내용은 보고서의 '응시 기록'에도 남습니다.` });
+}
+
 export function startNew(student) {
   const st = emptyState(app.ad.id, app.ad.dataVersion);
   st.student = student;
   st.started = true;
   st.step = 'inq1';
+  const applied = applyPriorReveals(st);
+  recordEvent(app.ad.id, student, 'new', applied.length ? { priorReveals: applied } : {});
   app.store.replace(st);
   navigate('inq1');
+  priorRevealNotice(applied);
 }
 
-Object.assign(app, { navigate, reveal, downloadBackup, downloadLegacy, importBackup, clearMyWork, startNew, stepStatus });
+/** [이어서 작성하기]: 기록하고, 이 학생의 이전 공개 기록을 적용 */
+export function continueWork(student) {
+  let applied = [];
+  app.store.update((x) => { x.student = student; applied = applyPriorReveals(x); }, { immediate: true });
+  recordEvent(app.ad.id, student, 'continue', applied.length ? { priorReveals: applied } : {});
+  const s = app.store.state;
+  navigate(s.step && s.step !== 'start' ? s.step : 'inq1');
+  priorRevealNotice(applied);
+}
+
+Object.assign(app, { navigate, reveal, downloadBackup, downloadLegacy, importBackup, clearMyWork, startNew, continueWork, stepStatus, attemptsEntry: () => entryFor(app.ad.id, app.store.state.student) });
 
 boot();

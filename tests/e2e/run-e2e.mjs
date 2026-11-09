@@ -286,7 +286,7 @@ try {
   await page.waitForSelector('#btn-pdf');
   await check('보고서 미리보기: 탐구 1~4·종합 순서, 고른 지점이 그래프에 포함', async () => {
     const parts = await page.$$eval('.rp-section', (x) => x.map((s) => s.dataset.part));
-    assert.deepEqual(parts, ['inq1', 'inq2', 'inq4', 'conclusion', 'sources']);
+    assert.deepEqual(parts, ['inq1', 'inq2', 'inq4', 'conclusion', 'attempts', 'sources']);
     assert.match(await page.textContent('#rp-f1'), /만조\(내가 고름\)/);
     assert.match(await page.textContent('#rp-f2'), /대조\(내가 고름\)/);
     assert.equal(await page.$$eval('#rp-q4 .rp-orbit svg', (x) => x.length), 2);
@@ -309,7 +309,7 @@ try {
     assert.ok(new RegExp(`\\b${pages}\\s*/\\s*${pages}\\b`).test(txt));
   });
   await check('PDF 구성 순서', async () => {
-    const order = ['학생 정보와 자료', '탐구 1. 조석의 규칙', '탐구 2. 지역별 차이', '탐구 3. 특이한 변화', '종합', '자료 출처와 분석의 한계'];
+    const order = ['학생 정보와 자료', '탐구 1. 조석의 규칙', '탐구 2. 지역별 차이', '탐구 3. 특이한 변화', '종합', '응시 기록', '자료 출처와 분석의 한계'];
     let pos = -1;
     for (const o of order) { const i = norm(body).indexOf(norm(o), pos + 1); assert.ok(i > pos, o); pos = i; }
   });
@@ -345,6 +345,34 @@ try {
     assert.ok(txt.includes('(작성하지 않음)'));
   });
   execFileSync('pdftoppm', ['-r', '50', '-png', pdfPath, join(OUT, 'pdfpage')]);
+  // 재응시 공정성: 같은 학생이 새로 시작하면 이미 공개한 단계의 답은 처음 공개할 때 답으로 고정
+  const beforeRetake = await stateOf(page);
+  await go(page, 'start');
+  await page.click('#btn-start');
+  await okDialog(page); // 지우고 새로 시작
+  await page.waitForSelector('dialog[open]');
+  await check('재응시: 같은 학생이 새로 시작하면 이전 공개 기록 안내, 공개 전 답 고정', async () => {
+    assert.match(await page.textContent('dialog[open]'), /이전 응시 기록이 있습니다/);
+    await page.click('dialog[open] button');
+    const st = await stateOf(page);
+    assert.equal(st.reveals.weather.at, beforeRetake.reveals.weather.at);
+    assert.equal(st.reveals.moon.at, beforeRetake.reveals.moon.at);
+    assert.equal(st.answers.q9, '', '새 작성 내용은 비어 있음');
+    await go(page, 'inq4');
+    assert.equal(await page.$eval('#ans-q9', (e) => e.readOnly), true);
+    assert.equal(await page.inputValue('#ans-q9'), beforeRetake.reveals.weather.answers.q9, '처음 공개할 때 답이 보이고 고칠 수 없음');
+    await go(page, 'report');
+    const rp = await page.textContent('[data-part=attempts]');
+    assert.match(rp, /새로 시작.*이전 공개 기록 적용/s);
+    assert.match(rp, /백업 파일 불러오기/);
+    assert.match(rp, /\[추가 자료 확인\]/);
+  });
+  await check('재응시: 학생의 내 작성 내용 삭제로 응시 기록은 지워지지 않음', async () => {
+    await page.evaluate(() => { window.__tideApp.clearMyWork(); });
+    await okDialog(page);
+    assert.ok(await page.evaluate(() => localStorage.getItem('tideLabAssess.v1.attempts')));
+    assert.equal(await page.evaluate(() => localStorage.getItem('tideLab.v1.work')), null);
+  });
   await check('학생 화면은 서버(API)나 외부로 아무것도 보내지 않음(답은 학생 브라우저에만)', async () => assert.deepEqual(studentApi, []));
 
   // ───── 11. 교사용 설정 ─────

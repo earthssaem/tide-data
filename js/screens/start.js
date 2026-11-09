@@ -82,8 +82,7 @@ export function render(app, container) {
     cont.addEventListener('click', () => {
       const st = readStudent();
       if (!st) return;
-      store.update((x) => { x.student = st; }, { immediate: true });
-      app.navigate(s.step && s.step !== 'start' ? s.step : 'inq1');
+      app.continueWork(st);
     });
     actions.prepend(cont);
   }
