@@ -367,3 +367,28 @@ test('④ 배치판: 달은 궤도 위 네 자리(0°·90°·180°·270°)로 �
   assert.deepEqual(SLOTS, [0, 90, 180, 270]);
   assert.deepEqual([0, 32, 44, 46, 135.5, 181, 226, 314, 316, 359].map(snapAngle), [0, 0, 0, 90, 180, 180, 270, 270, 0, 0]);
 });
+
+test('학생 입장 코드: 확인값만 저장(PBKDF2), 맞는 코드만 통과, 배포 설정에 그대로 남음, 실제 배포 설정은 흔한 코드를 거부', async () => {
+  const E = await import('../../js/setup/entry.js');
+  const { studentDeployment } = await import('../../js/setup/setup.js');
+  const e = await E.makeEntry('2468', 20000);
+  assert.equal(e.alg, 'PBKDF2-SHA256');
+  assert.ok(!JSON.stringify(e).includes('2468'), '코드 자체는 저장하지 않음');
+  assert.equal(await E.checkEntry(e, '2468'), true);
+  assert.equal(await E.checkEntry(e, ' 24 68 '), true, '공백 무시');
+  assert.equal(await E.checkEntry(e, '2469'), false);
+  assert.equal(await E.checkEntry(e, ''), false);
+  assert.equal(E.validCode('12'), false); assert.equal(E.validCode('abc!'), false); assert.equal(E.validCode('3a9b'), true);
+  assert.equal(E.sanitizeEntry({ ...e, iterations: 5 }), null);
+  assert.equal(E.sanitizeEntry({ ...e, hash: '<script>' }), null);
+  const cfg = parseSetup({ ...deployed(), entry: e });
+  assert.deepEqual(cfg.entry, e);
+  assert.deepEqual(studentDeployment(cfg).entry, e, '학생용 배포 파일에 확인값');
+  assert.equal(parseSetup({ ...deployed(), entry: null }).entry, null, '입장 코드 없앰');
+  const raw = JSON.parse(readFileSync(new URL('../../data/assessment.json', import.meta.url), 'utf8'));
+  const real = E.sanitizeEntry(raw.entry);
+  assert.ok(real, '배포 설정에 입장 코드 확인값');
+  assert.ok(real.iterations >= 100000);
+  for (const c of ['0000', '1234', '1111']) assert.equal(await E.checkEntry(real, c), false, `흔한 코드 ${c} 거부`);
+  assert.ok(!/안정적|태풍이 가장/.test(raw.reviewNote || ''), '공개 배포 설정 메모에 답 힌트 없음');
+});

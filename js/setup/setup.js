@@ -5,6 +5,7 @@
 
 import { parseDateTime, fmtDateTime, fmtRange, parts, DAY, HOUR } from '../util/time.js';
 import { ALL_QUESTIONS, ALL_QUESTION_IDS, CIRCLED } from '../content/questions.js';
+import { sanitizeEntry } from './entry.js';
 
 export const SETUP_FORMAT = 'tide-lab-assessment-setup';
 export const SETUP_VERSION = 3;
@@ -79,6 +80,8 @@ export function parseSetup(obj, fallback = null) {
     },
     inq2: cleanRange(obj.inq2) || fb.inq2 || { start: '', end: '' },
     inq4: { a: cleanRange(i4.a) || fb.inq4?.a || { start: '', end: '' }, b: cleanRange(i4.b) || fb.inq4?.b || { start: '', end: '' } },
+    // 학생 입장 코드 확인값(코드 자체는 없음). 키가 없으면 '정하지 않음', null이면 '입장 코드 없음'
+    ...('entry' in obj ? { entry: sanitizeEntry(obj.entry) } : 'entry' in fb ? { entry: fb.entry } : {}),
   };
 }
 

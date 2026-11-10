@@ -18,6 +18,7 @@ import { layoutToSVG, screenMeasure } from '../chart/svg.js';
 import { $, h, confirmDialog, alertDialog, choiceDialog, downloadBlob, pickFile, toast } from '../util/dom.js';
 import { escapeHtml } from '../util/format.js';
 import { EXPORT_NOTICE } from '../assessment/session-log.js';
+import { makeEntry, validCode, normCode } from '../setup/entry.js';
 import { fmtRange, fmtDateTime, HOUR, DAY } from '../util/time.js';
 import { checkSession, renderLogin, teacherFetch, logout, expiryText, currentSession } from '../teacher-auth.js';
 
@@ -81,6 +82,8 @@ async function start(app, message = '') {
     cfg = r.cfg;
     source = '새 기본값(앱 개편 전 저장 설정을 바꿈)';
   }
+  // 입장 코드를 아직 정한 적 없는 교사 설정은 학생용 배포 설정의 입장 코드를 이어받는다(다시 배포할 때 빠지지 않게)
+  if (cfg && !('entry' in cfg) && deployed && deployed.caseId === cfg.caseId && 'entry' in deployed) cfg.entry = deployed.entry;
   const T = { registry, deployed, cfg, source, storage, ad: null, savedAt: serverCfg || local ? Date.now() : null, saveTimer: null, migrated };
   app.teacher = T; // 검증용
   await loadCaseFor(T, cfg.caseId);
@@ -218,6 +221,8 @@ function deployDiff(T) {
   const offC = ALL_QUESTIONS.filter((q) => c.questions[q.id] === false).map((q) => CIRCLED[q.no]).join(' ') || '없음';
   const offD = ALL_QUESTIONS.filter((q) => d.questions[q.id] === false).map((q) => CIRCLED[q.no]).join(' ') || '없음';
   if (offC !== offD) rows.push(['끈 문항', offC, offD]);
+  const ent = (x) => (x.entry?.hash ? '설정됨' : '없음');
+  if ((c.entry?.hash || null) !== (d.entry?.hash || null)) rows.push(['학생 입장 코드', c.entry?.hash && d.entry?.hash ? '다른 코드' : ent(c), ent(d)]);
   if (!rows.length) return null;
   const box = h('section', { class: 'card notice notice-warn t-diff', id: 't-diff' });
   const tbl = h('table', { class: 'data-table compact' }, h('thead', {}, h('tr', {}, h('th', {}, '항목'), h('th', {}, '저장된 교사 설정(미리보기에 적용 중)'), h('th', {}, '학생용 배포 설정'))),
@@ -253,6 +258,21 @@ function editor(app, T) {
   rv.addEventListener('change', () => change(() => { cfg.reviewed = rv.checked; }));
   card.append(h('div', { class: 't-row' }, h('label', { class: 'wx-check', for: 't-ed-reviewed' }, rv, ' 검토 완료(그래프·결측을 확인함)'),
     !cfg.reviewed ? h('span', { class: 'badge badge-warn', id: 't-review-badge' }, '교사 검토 필요 — 임시 후보 설정') : null));
+
+  // 학생 입장 코드(코드 자체는 저장하지 않고 확인값만)
+  const fsE = h('fieldset', { class: 't-fieldset', id: 't-entry' }, h('legend', {}, '학생 입장 코드'));
+  const eState = h('p', { class: 'small', id: 't-entry-state' }, cfg.entry?.hash ? '✓ 입장 코드가 설정되어 있습니다(코드는 저장하지 않으므로 여기서 다시 볼 수 없습니다).' : '입장 코드가 없습니다. 학생 화면이 바로 열립니다.');
+  const eIn = h('input', { type: 'text', id: 't-entry-code', inputmode: 'numeric', autocomplete: 'off', maxlength: 12, placeholder: '숫자·영문 4~12자', 'aria-label': '새 입장 코드' });
+  const eSet = h('button', { type: 'button', class: 'btn btn-secondary btn-sm', id: 't-entry-set', onclick: async () => {
+    if (!validCode(eIn.value)) { toast('입장 코드는 숫자·영문 4~12자로 정하세요.', 'warn'); eIn.focus(); return; }
+    eSet.disabled = true;
+    try { const e = await makeEntry(normCode(eIn.value)); change(() => { cfg.entry = e; }); toast('입장 코드를 정했습니다. 학생에게 적용하려면 학생용 배포 파일을 내보내 배포하세요.'); app.teacherRender?.(); }
+    catch (err) { toast(err.message, 'warn'); eSet.disabled = false; }
+  } }, cfg.entry?.hash ? '입장 코드 바꾸기' : '입장 코드 정하기');
+  const eOff = cfg.entry?.hash ? h('button', { type: 'button', class: 'btn btn-ghost btn-sm', id: 't-entry-off', onclick: () => { change(() => { cfg.entry = null; }); app.teacherRender?.(); } }, '입장 코드 없애기') : null;
+  fsE.append(eState, h('div', { class: 't-row' }, eIn, eSet, eOff),
+    h('p', { class: 'muted small' }, '학생 화면을 열면 먼저 이 코드를 묻습니다(교사 화면·미리보기는 묻지 않음). 한 번 통과하면 그 탭에서는 다시 묻지 않습니다. 코드는 학생 브라우저 안에서 확인하는 화면 잠금이라, 자료 파일까지 숨기지는 못합니다.'));
+  card.append(fsE);
 
   const sel = (id, label, options, value, onChange) => {
     const s = h('select', { id, 'aria-label': label });

@@ -10,6 +10,7 @@ import {
   emptyState, loadLocal, clearLocal, makeBackupText, backupFilename, parseBackup, sanitizeState, setStorageMode, legacyList,
 } from './state/persistence.js';
 import { STEPS, INQUIRIES, CONCLUSION, REVEALS, CIRCLED, isEnabled } from './content/questions.js';
+import { entryReady } from './entry/gate.js';
 import { applySetup, applyStudentPeriod, loadDeployedSetup, loadTeacherSetup, parseSetup, isOutdatedSetup } from './setup/setup.js';
 import { loadKoreaMap } from './chart/map.js';
 import { checkSession, renderLogin, teacherFetch } from './teacher-auth.js';
@@ -60,6 +61,7 @@ function showFatal(e) {
 }
 
 async function boot() {
+  await entryReady; // 학생 화면: 입장 코드를 통과해야 앱을 연다
   const mode = urlParam('mode');
   app.mode = mode === 'teacher' ? 'teacher' : mode === 'preview' ? 'preview' : 'student';
   document.documentElement.dataset.mode = app.mode;

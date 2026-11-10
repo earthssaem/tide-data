@@ -10,6 +10,7 @@ import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { hashPassword, signSession, COOKIE_NAME } from '../../api/_lib/auth.js';
 import { startFakeUpstash } from '../helpers/fake-upstash.mjs';
+import { makeEntry } from '../../js/setup/entry.js';
 
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
@@ -71,7 +72,13 @@ const server = spawn(process.execPath, [join(ROOT, 'tools/serve.mjs'), String(PO
 });
 await new Promise((r) => setTimeout(r, 700));
 const browser = await chromium.launch({ env: { ...process.env, LANG: 'C.UTF-8', LC_ALL: 'C.UTF-8' } });
-const newCtx = async (o) => { const c = await browser.newContext(o); c.setDefaultTimeout(15000); return c; };
+// 학생 입장 코드: 시험 코드를 저장소에 두지 않으려고, 보통의 시험은 '이 탭에서 이미 통과'한 상태로 시작한다(입장 코드 시험은 따로)
+const ENTRY_HASH = JSON.parse(readFileSync(join(ROOT, 'data/assessment.json'), 'utf8')).entry?.hash || null;
+const newCtx = async ({ entry = true, ...o } = {}) => {
+  const c = await browser.newContext(o); c.setDefaultTimeout(15000);
+  if (entry && ENTRY_HASH) await c.addInitScript((h) => { try { sessionStorage.setItem('tideLab.entryOk', h); } catch { /* 무시 */ } }, ENTRY_HASH);
+  return c;
+};
 const errors = [];
 const watch = (p, tag) => {
   p.on('pageerror', (e) => errors.push(`pageerror(${tag}): ${e.message}`));
@@ -90,6 +97,44 @@ const T = (s) => Date.parse(`${s.replace(' ', 'T')}:00+09:00`);
 const fmtV = (v) => (Math.round(v * 10) / 10).toFixed(1);
 
 try {
+  // ───── 0. 학생 입장 코드 ─────
+  await check('입장 코드: 배포 설정에 확인값만 있고(코드 없음) 학생 화면은 입장 코드부터 묻는다', async () => {
+    assert.ok(ENTRY_HASH, 'data/assessment.json에 entry 확인값');
+    const cg = await newCtx({ viewport: { width: 1280, height: 800 }, entry: false });
+    const pg = await cg.newPage(); watch(pg, 'entry-real');
+    await pg.goto(BASE);
+    await pg.waitForSelector('#entry-gate #entry-code');
+    assert.equal(await pg.$('#asmt-root'), null, '평가 시작 안내보다 먼저');
+    assert.equal(await pg.$('#btn-start'), null, '앱 화면(시작 화면)을 그리지 않음');
+    assert.ok(await pg.$('#loading'), '앱은 입장 전 상태 그대로');
+    await pg.fill('#entry-code', '0000'); await pg.click('#entry-submit');
+    await pg.waitForFunction(() => /맞지 않습니다/.test(document.querySelector('#entry-msg')?.textContent || ''));
+    assert.ok(await pg.$('#entry-gate'));
+    await cg.close();
+  });
+  await check('입장 코드: 맞는 코드면 평가 시작 안내로, 새로고침해도 다시 묻지 않고 새 탭은 다시 묻는다, 교사 화면은 묻지 않음', async () => {
+    const testEntry = await makeEntry('5678', 20000);
+    const cg = await newCtx({ viewport: { width: 1280, height: 800 }, entry: false });
+    await cg.route('**/data/assessment.json', async (route) => { const r = await route.fetch(); const j = await r.json(); j.entry = testEntry; await route.fulfill({ response: r, json: j }); });
+    const pg = await cg.newPage(); watch(pg, 'entry');
+    await pg.goto(BASE);
+    await pg.waitForSelector('#entry-gate');
+    for (let i = 0; i < 2; i++) { await pg.fill('#entry-code', '1111'); await pg.click('#entry-submit'); await pg.waitForFunction(() => !document.querySelector('#entry-submit').disabled); }
+    await pg.fill('#entry-code', '56 78'); await pg.click('#entry-submit');
+    await pg.waitForSelector('#entry-gate', { state: 'detached' });
+    await pg.waitForSelector('.asmt-guide [data-act=start]');
+    await pg.reload();
+    await pg.waitForSelector('.asmt-guide [data-act=start]');
+    assert.equal(await pg.$('#entry-gate'), null, '같은 탭 새로고침은 다시 묻지 않음');
+    const pg2 = await cg.newPage(); watch(pg2, 'entry2');
+    await pg2.goto(BASE);
+    await pg2.waitForSelector('#entry-gate');
+    await pg2.goto(`${BASE}?mode=teacher`);
+    await pg2.waitForSelector('#screen *');
+    assert.equal(await pg2.$('#entry-gate'), null, '교사 화면은 묻지 않음');
+    await cg.close();
+  });
+
   const ctx = await newCtx({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
   const page = await ctx.newPage();
   watch(page, 'student');
@@ -569,6 +614,7 @@ try {
   });
   await check('교사용: 임시 후보에 교사 검토 필요 표시, 기본 설정 검증 통과', async () => {
     assert.ok(await tp.isVisible('#t-review-badge'));
+    assert.match(await tp.textContent('#t-entry-state'), /입장 코드가 설정되어 있습니다/);
     assert.match(await tp.textContent('#t-records-note'), /부정행위를 판정하거나 감점하지 마십시오/, '기록 해석 유의 사항은 교사 화면에');
     assert.equal(await tp.$('#t-records-dl'), null, '이탈 기록 받기 없음(PDF에 포함)');
     assert.match(await tp.textContent('#t-records-note'), /PDF 보고서의 '화면 이탈 기록'/);
@@ -612,6 +658,7 @@ try {
     assert.equal(dep.suggestedFilename(), 'assessment.json');
     assert.ok(!d.includes('교사메모비밀문장')); assert.ok(t2.includes('교사메모비밀문장'));
     const j = JSON.parse(d); assert.equal(j.version, 3); assert.equal(j.month, '2026-08'); assert.equal(j.questions.q10, false);
+    assert.equal(j.entry?.hash, ENTRY_HASH, '학생용 배포 파일에 입장 코드 확인값이 이어짐');
   });
 
   // ───── 미리보기: 교사 설정 적용, 학생 답과 분리 ─────

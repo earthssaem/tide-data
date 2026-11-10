@@ -54,6 +54,9 @@ async function stubFullscreen(page, mode) {
 try {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 860 }, acceptDownloads: true });
   ctx.setDefaultTimeout(15000);
+  // 학생 입장 코드는 run-e2e에서 시험한다(여기서는 이미 통과한 탭으로)
+  const entryHash = JSON.parse(readFileSync(join(ROOT, 'data/assessment.json'), 'utf8')).entry?.hash;
+  if (entryHash) await ctx.addInitScript((h) => { try { sessionStorage.setItem('tideLab.entryOk', h); } catch { /* 무시 */ } }, entryHash);
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
   await page.goto(BASE);

@@ -19,6 +19,7 @@
 //  - 기존 앱(main.js)은 pause 이벤트를 받아 입력 중인 답안을 즉시 저장한다.
 
 import { ASSESSMENT_CONFIG as CFG } from './config.js';
+import { entryReady } from '../entry/gate.js';
 import {
   emptyLog, sanitizeLog, makeSessionId, newSession, recordDeparture, addSignal, closeIncident, endSession,
   openIncident, departureCount, localIso, fmtDurationKo, DEPARTURE_TYPES,
@@ -538,5 +539,7 @@ window.TideAssessment = {
   types: DEPARTURE_TYPES,
 };
 
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-else init();
+// 입장 코드를 통과한 뒤에 평가 시작 안내를 띄운다
+const go = () => entryReady.then(init);
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+else go();
