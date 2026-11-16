@@ -29,7 +29,7 @@ export const SIGNAL_LABELS = {
   reconnect: '재접속(종료 신호 없음)',
   'focus-loss-threshold': '포커스 상실 2초 경과',
   'resume-failed': '전체화면 복귀 실패·취소',
-  resume: '전체화면 복귀 성공·평가 재개',
+  resume: '전체화면 복귀 성공·활동 재개',
 };
 
 export function emptyLog() {
@@ -108,10 +108,10 @@ export function closeIncident(session, at) {
 }
 
 /** 정상 종료(이탈로 집계하지 않음) */
-export function endSession(session, at, reason = '학생이 [평가 종료]를 눌러 정상 종료') {
+export function endSession(session, at, reason = '학생이 [활동 종료]를 눌러 정상 종료') {
   const inc = openIncident(session);
   if (inc) {
-    inc.signals.push({ type: 'ended-while-paused', label: '중지 상태에서 평가 종료', at, detail: '' });
+    inc.signals.push({ type: 'ended-while-paused', label: '중지 상태에서 활동 종료', at, detail: '' });
     inc.returnedAt = null;
   }
   session.status = 'ended';

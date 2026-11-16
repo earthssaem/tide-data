@@ -140,7 +140,7 @@ export function buildReport(ad, state, { attempts = null, others = [], departure
     if (on(Q5)) s2.items.push(qa(Q5, 'inq2'));
     if (on(Q6)) s2.items.push(qa(Q6, 'inq2'));
   }
-  // 잠깐 생각하기(선택·평가 제외): 쓴 경우에만, 설명 전문은 넣지 않음
+  // 잠깐 생각하기(선택, 번호 없음): 쓴 경우에만, 설명 전문은 넣지 않음
   const th = String(state.answers.think2 || '').trim();
   if (th) s2.items.push({ type: 'qa', id: 'think2', label: THINK2.reportLabel, text: THINK2.question, lines: [th], empty: false, lockedNote: '', waitNote: '' });
 
@@ -175,14 +175,14 @@ export function buildReport(ad, state, { attempts = null, others = [], departure
   // ── 종합 ──
   const s5 = { key: 'conclusion', title: CONCLUSION.title, sub: CONCLUSION.goal, items: CONCLUSION.questions.filter(on).map((q) => qa(q, 'conclusion')) };
 
-  // ── 응시 기록(이 컴퓨터·브라우저) ──
-  const s6 = { key: 'attempts', title: '응시 기록', sub: '이 컴퓨터에서 이 학생이 시작·불러오기·자료 확인을 한 기록입니다.', items: [] };
+  // ── 활동 기록(재응시 공정성, 이 컴퓨터·브라우저) ──
+  const s6 = { key: 'attempts', title: '활동 기록', sub: '이 컴퓨터에서 이 학생이 시작·불러오기·자료 확인을 한 기록입니다.', items: [] };
   const ev = attempts?.events || [];
   if (ev.length) {
     s6.items.push({ type: 'table', title: `기록 ${ev.length}건(시작 ${ev.filter((e) => e.how === 'new').length}회)`, head: ['시각', '내용'],
       rows: ev.map((e) => [fmtDateTime(e.at, localTz()), `${howLabel(e.how)}${e.fileUpdatedAt ? ` (백업 작성 ${fmtDateTime(e.fileUpdatedAt, localTz())})` : ''}${e.priorReveals?.length ? ` — 이전 공개 기록 적용: ${e.priorReveals.map((k) => REVEALS[k].label).join('·')}` : ''}`]) });
     if (ev.filter((e) => e.how === 'new').length > 1) s6.items.push({ type: 'note', text: '같은 컴퓨터에서 이 학생이 2번 이상 새로 시작했습니다. 이미 공개한 단계의 답은 처음 공개할 때의 답으로 고정되어 있습니다.' });
-  } else s6.items.push({ type: 'note', text: '이 컴퓨터에 남은 응시 기록이 없습니다.' });
+  } else s6.items.push({ type: 'note', text: '이 컴퓨터에 남은 활동 기록이 없습니다.' });
   // 같은 시간대(앞뒤 12시간)에 이 컴퓨터에서 다른 학생 정보로 남은 기록 — 다른 이름으로 자료를 먼저 확인했는지 교사가 볼 수 있게(이름은 첫 글자만)
   const oth = (others || []).flatMap((o) => o.events.map((e) => [fmtDateTime(e.at, localTz()), o.who, howLabel(e.how)])).sort((x, y) => (x[0] < y[0] ? -1 : 1));
   if (oth.length) {
@@ -190,23 +190,23 @@ export function buildReport(ad, state, { attempts = null, others = [], departure
     if (oth.length > 40) s6.items.push({ type: 'note', text: `다른 학생 정보 기록 ${oth.length - 40}건은 생략했습니다.` });
   }
 
-  // ── 화면 이탈 기록(평가 모드) — 이 PDF를 만든 시각까지 ──
-  const s7 = { key: 'departures', title: '화면 이탈 기록', sub: '평가 중 전체화면 해제·다른 탭이나 창으로 이동·화면을 2초 이상 벗어난 기록입니다(이 보고서를 만든 시각까지).', items: [] };
+  // ── 화면 이탈 기록(전체화면 모드) — 이 PDF를 만든 시각까지 ──
+  const s7 = { key: 'departures', title: '화면 이탈 기록', sub: '활동 중 전체화면 해제·다른 탭이나 창으로 이동·화면을 2초 이상 벗어난 기록입니다(이 보고서를 만든 시각까지).', items: [] };
   if (departures) {
     const t = (ms) => (ms == null ? '—' : fmtDateTime(ms, localTz()));
     const dur = (ms) => (ms == null ? '—' : fmtDurationKo(ms));
     const cur = departures.current;
     if (cur) {
       const total = cur.departures.reduce((a, d) => a + (d.durationMs || 0), 0);
-      s7.items.push({ type: 'table', title: '이번 평가', head: ['항목', '내용'], rows: [
-        ['세션', cur.id], ['평가 시작', t(cur.startedAt)], ['보고서 작성', t(departures.at)],
+      s7.items.push({ type: 'table', title: '이번 활동', head: ['항목', '내용'], rows: [
+        ['세션', cur.id], ['활동 시작', t(cur.startedAt)], ['보고서 작성', t(departures.at)],
         ['화면 이탈', `${cur.departures.length}회${cur.departures.length ? ` · 합계 ${dur(total)}` : ''}`],
       ] });
-      if (cur.departures.length) s7.items.push({ type: 'table', title: `이번 평가의 화면 이탈 ${cur.departures.length}회`, head: ['번호', '유형', '이탈', '복귀', '지속 시간'],
+      if (cur.departures.length) s7.items.push({ type: 'table', title: `이번 활동의 화면 이탈 ${cur.departures.length}회`, head: ['번호', '유형', '이탈', '복귀', '지속 시간'],
         rows: cur.departures.map((d) => [String(d.no), d.typeLabel, `${t(d.startedAt)}${d.startEstimated ? ' (추정)' : ''}`, d.returnedAt == null ? '복귀 전' : t(d.returnedAt), dur(d.durationMs)]) });
-    } else s7.items.push({ type: 'note', text: '진행 중인 평가가 없을 때 만든 보고서입니다(평가 모드의 화면 이탈 기록 없음).' });
+    } else s7.items.push({ type: 'note', text: '진행 중인 활동이 없을 때 만든 보고서입니다(전체화면 모드의 화면 이탈 기록 없음).' });
     if (departures.others?.length) {
-      s7.items.push({ type: 'table', title: `같은 시간대(앞뒤 12시간)에 이 컴퓨터에서 진행한 다른 평가 ${departures.others.length}건`, head: ['세션', '시작', '종료(마지막 확인)', '화면 이탈'],
+      s7.items.push({ type: 'table', title: `같은 시간대(앞뒤 12시간)에 이 컴퓨터에서 진행한 다른 활동 ${departures.others.length}건`, head: ['세션', '시작', '종료(마지막 확인)', '화면 이탈'],
         rows: departures.others.map((s) => [s.id, t(s.startedAt), s.status === 'ended' ? t(s.endedAt) : `${t(s.lastSeenAt)} (종료 기록 없음)`, `${s.departures.length}회`]) });
     }
   }

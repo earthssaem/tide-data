@@ -37,7 +37,7 @@ export function emptyAnswers() {
     q6: {},
     q7: { t0: null, t1: null, text: '' }, // 삭제된 탐구(예측과 실제)의 답 — 이미 쓴 내용은 지우지 않고 보관만
     q8: '', q9: '', q10: '', q11: '', q12: '', q13: '',
-    think2: '', // 탐구 2 '잠깐 생각하기'(선택, 평가 제외)
+    think2: '', // 탐구 2 '잠깐 생각하기'(선택, 번호 없음)
   };
 }
 
@@ -321,7 +321,7 @@ export function parseBackup(text, { knownCaseIds, currentCaseId, currentDataVers
   if (obj.caseId !== state.caseId) return { ok: false, error: '백업 파일의 사례 정보가 서로 맞지 않습니다.' };
   if (!knownCaseIds.includes(state.caseId)) return { ok: false, error: `이 앱에 없는 사례(${state.caseId})의 백업입니다.` };
   const warnings = [];
-  if (state.caseId !== currentCaseId) warnings.push(`현재 평가 사례와 다른 사례(${state.caseId})의 백업입니다.`);
+  if (state.caseId !== currentCaseId) warnings.push(`지금 탐구하는 자료와 다른 사례(${state.caseId})의 백업입니다.`);
   else if (state.dataVersion !== currentDataVersion) warnings.push(`백업을 만들 때의 자료 버전(${state.dataVersion})과 현재 자료 버전(${currentDataVersion})이 다릅니다. 기록된 지점의 높이는 백업 당시 값으로 유지됩니다.`);
   return { ok: true, state, warnings };
 }

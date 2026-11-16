@@ -96,7 +96,7 @@ function buildDom() {
   root.id = 'asmt-root';
   root.innerHTML = `
     <div class="asmt-overlay" role="dialog" aria-modal="true" aria-labelledby="asmt-title" hidden></div>
-    <div class="asmt-pill" role="region" aria-label="평가 진행 상태" hidden></div>
+    <div class="asmt-pill" role="region" aria-label="활동 진행 상태" hidden></div>
     <div class="asmt-modal-backdrop" hidden><div class="asmt-modal" role="alertdialog" aria-modal="true" aria-labelledby="asmt-modal-title"></div></div>`;
   document.body.append(root);
   overlay = root.querySelector('.asmt-overlay');
@@ -156,18 +156,18 @@ function showGuide(message = '') {
   overlay.innerHTML = `
     <div class="asmt-card">
       <p class="asmt-kicker">조석 데이터 탐구실</p>
-      <h1 id="asmt-title">평가 시작 안내</h1>
+      <h1 id="asmt-title">활동 시작 안내</h1>
       <ul class="asmt-rules">
-        <li>[평가 시작]을 누르면 화면이 <b>전체화면</b>으로 바뀌고 평가가 시작됩니다.</li>
-        <li>평가 중에는 전체화면을 유지해야 합니다. 전체화면을 해제하거나, 다른 탭·창으로 이동하거나, 창 포커스를 2초 이상 잃으면 <b>평가가 일시 중지</b>되고 <b>화면 이탈 기록</b>이 남습니다.</li>
+        <li>[활동 시작]을 누르면 화면이 <b>전체화면</b>으로 바뀌고 활동이 시작됩니다.</li>
+        <li>활동 중에는 전체화면을 유지해야 합니다. 전체화면을 해제하거나, 다른 탭·창으로 이동하거나, 창 포커스를 2초 이상 잃으면 <b>활동이 일시 중지</b>되고 <b>화면 이탈 기록</b>이 남습니다.</li>
         <li>중지되면 [전체화면으로 복귀]를 눌러 전체화면으로 돌아와야 계속할 수 있습니다.</li>
         <li>작성한 답안은 지금처럼 이 브라우저에 자동 저장됩니다. 화면 이탈 기록도 이 컴퓨터의 브라우저에만 저장되며 외부로 전송되지 않습니다.</li>
-        <li>평가를 마치면 PDF 보고서를 내려받은 뒤 화면 아래의 [평가 종료]를 누르세요.</li>
+        <li>활동을 마치면 PDF 보고서를 내려받은 뒤 화면 아래의 [활동 종료]를 누르세요.</li>
       </ul>
-      ${supported ? '' : '<p class="asmt-error" role="alert">이 브라우저는 전체화면 기능을 지원하지 않아 평가를 시작할 수 없습니다. 선생님께 알려 주세요.</p>'}
+      ${supported ? '' : '<p class="asmt-error" role="alert">이 브라우저는 전체화면 기능을 지원하지 않아 활동을 시작할 수 없습니다. 선생님께 알려 주세요.</p>'}
       <p class="asmt-error" role="alert" ${message ? '' : 'hidden'}>${esc(message)}</p>
       <div class="asmt-actions">
-        <button type="button" class="asmt-btn asmt-btn-primary" data-act="start" ${supported ? '' : 'disabled'}>평가 시작</button>
+        <button type="button" class="asmt-btn asmt-btn-primary" data-act="start" ${supported ? '' : 'disabled'}>활동 시작</button>
       </div>
     </div>`;
   overlay.hidden = false;
@@ -193,10 +193,10 @@ function showPaused(message = '') {
   overlay.innerHTML = `
     <div class="asmt-card">
       <div class="asmt-icon" aria-hidden="true">!</div>
-      <h1 id="asmt-title">평가가 일시 중지되었습니다.</h1>
+      <h1 id="asmt-title">활동이 일시 중지되었습니다.</h1>
       <p class="asmt-lines">
         <span>${esc(PAUSE_LINE2[type] || PAUSE_LINE2['fullscreen-exit'])}</span>
-        <span>평가를 계속하려면 전체화면으로 복귀하세요.</span>
+        <span>활동을 계속하려면 전체화면으로 복귀하세요.</span>
         <span class="${state.lastSaveOk ? '' : 'asmt-error'}">${state.lastSaveOk ? '화면 이탈 기록이 저장되었습니다.' : '화면 이탈 기록을 저장하지 못했습니다(브라우저 저장 공간 문제). 선생님께 알려 주세요.'}</span>
       </p>
       <p class="asmt-error" role="alert" ${message ? '' : 'hidden'}>${esc(message)}</p>
@@ -220,7 +220,7 @@ function showEnded(sessionId) {
   const rows = (s?.departures || []).map((d) => `<tr><td>${d.no}</td><td>${esc(d.typeLabel)}</td><td>${esc(fmtLocal(d.startedAt))}${d.startEstimated ? ' (추정)' : ''}</td><td>${esc(fmtLocal(d.returnedAt))}</td><td>${esc(fmtDurationKo(d.durationMs) || '—')}</td></tr>`).join('');
   overlay.innerHTML = `
     <div class="asmt-card asmt-card-wide">
-      <h1 id="asmt-title">평가가 종료되었습니다.</h1>
+      <h1 id="asmt-title">활동이 종료되었습니다.</h1>
       <p>전체화면 모드가 해제되었고 화면 이탈 감지를 멈췄습니다. 정상 종료는 화면 이탈로 집계하지 않습니다.</p>
       <dl class="asmt-dl">
         <div><dt>세션 ID</dt><dd>${esc(s?.id || '')}</dd></div>
@@ -230,7 +230,7 @@ function showEnded(sessionId) {
       </dl>
       ${rows ? `<div class="asmt-table-wrap"><table class="asmt-table"><thead><tr><th>번호</th><th>유형(관찰된 신호)</th><th>이탈 시각</th><th>복귀 시각</th><th>지속 시간</th></tr></thead><tbody>${rows}</tbody></table></div>` : ''}
       <div class="asmt-actions">
-        <button type="button" class="asmt-btn" data-act="new">새 평가 시작 안내로</button>
+        <button type="button" class="asmt-btn" data-act="new">새 활동 시작 안내로</button>
       </div>
     </div>`;
   overlay.hidden = false;
@@ -251,7 +251,7 @@ function showRunning() {
 function renderPill() {
   const log = readLog();
   const s = log.sessions.find((x) => x.id === state.sessionId);
-  pill.innerHTML = `<span class="asmt-dot" aria-hidden="true"></span><span>평가 진행 중</span><span class="asmt-pill-count">화면 이탈 기록 ${departureCount(s)}회</span><button type="button" class="asmt-btn asmt-btn-sm" data-act="end">평가 종료</button>`;
+  pill.innerHTML = `<span class="asmt-dot" aria-hidden="true"></span><span>활동 진행 중</span><span class="asmt-pill-count">화면 이탈 기록 ${departureCount(s)}회</span><button type="button" class="asmt-btn asmt-btn-sm" data-act="end">활동 종료</button>`;
 }
 
 function closeModal() { modal.hidden = true; modal.firstElementChild.innerHTML = ''; }
@@ -259,12 +259,12 @@ function confirmEnd() {
   const work = readStudentWork();
   const box = modal.firstElementChild;
   box.innerHTML = `
-    <h2 id="asmt-modal-title">평가를 종료할까요?</h2>
-    <p>종료하면 전체화면이 해제되고 화면 이탈 감지를 멈춥니다. 이 평가 세션은 다시 이어서 진행할 수 없습니다.</p>
+    <h2 id="asmt-modal-title">활동을 종료할까요?</h2>
+    <p>종료하면 전체화면이 해제되고 화면 이탈 감지를 멈춥니다. 이 활동 세션은 다시 이어서 진행할 수 없습니다.</p>
     <p class="${work?.lastPdfAt ? '' : 'asmt-error'}">${work?.lastPdfAt ? `PDF 보고서를 마지막으로 만든 시각: ${esc(fmtLocal(work.lastPdfAt))}. 그 뒤에 답안을 고쳤다면 먼저 PDF를 다시 내려받으세요.` : '아직 PDF 보고서를 내려받지 않았습니다. 보고서 미리보기에서 PDF를 먼저 내려받으세요.'}</p>
     <div class="asmt-actions">
-      <button type="button" class="asmt-btn" data-act="cancel-end">계속 평가하기</button>
-      <button type="button" class="asmt-btn asmt-btn-danger" data-act="confirm-end">평가 종료</button>
+      <button type="button" class="asmt-btn" data-act="cancel-end">계속 활동하기</button>
+      <button type="button" class="asmt-btn asmt-btn-danger" data-act="confirm-end">활동 종료</button>
     </div>`;
   modal.hidden = false;
   box.querySelector('[data-act=cancel-end]').focus();
@@ -278,7 +278,7 @@ async function startAssessment() {
     await requestFs();
   } catch (e) {
     state.busy = false;
-    showGuide(`전체화면으로 전환하지 못해 평가를 시작하지 않았습니다. (${e.message || e}) 다시 [평가 시작]을 누르세요.`);
+    showGuide(`전체화면으로 전환하지 못해 활동을 시작하지 않았습니다. (${e.message || e}) 다시 [활동 시작]을 누르세요.`);
     return;
   }
   const now = Date.now();
@@ -306,7 +306,7 @@ async function resumeAssessment() {
   } catch (e) {
     mutate((log) => { const s = activeSession(log); if (s) addSignal(s, { type: 'resume-failed', at: Date.now(), detail: String(e.message || e) }); });
     state.busy = false;
-    showPaused('전체화면으로 복귀하지 못했습니다. 평가는 계속 중지 상태입니다. 다시 [전체화면으로 복귀]를 누르세요.');
+    showPaused('전체화면으로 복귀하지 못했습니다. 활동은 계속 중지 상태입니다. 다시 [전체화면으로 복귀]를 누르세요.');
     return;
   }
   const { ok } = mutate((log) => {

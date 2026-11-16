@@ -62,8 +62,10 @@ try {
   await page.goto(BASE);
   await page.waitForSelector('.asmt-guide [data-act=start]');
 
-  await check('접속 시 평가 시작 안내 표시, 콘텐츠 가림·입력 차단', async () => {
-    assert.match(await overlayText(page), /평가 시작 안내/);
+  await check('접속 시 활동 시작 안내 표시(\'평가\'라는 말 없음), 콘텐츠 가림·입력 차단', async () => {
+    assert.match(await overlayText(page), /활동 시작 안내/);
+    assert.match(await overlayText(page), /\[활동 시작\]/);
+    assert.ok(!/평가|응시/.test(await overlayText(page)), '시작 안내에 평가·응시라는 말 없음');
     assert.equal(await appInert(page), true);
     assert.equal(await phase(page), 'idle');
     assert.ok(!/부정행위|무결성|localStorage/.test(await overlayText(page)), '교사용 유의 사항은 학생 화면에 없음');
@@ -74,9 +76,9 @@ try {
   await stubFullscreen(page, 'reject');
   await page.click('[data-act=start]');
   await page.waitForTimeout(400);
-  await check('전체화면 진입 실패 시 평가 시작 안 함', async () => {
+  await check('전체화면 진입 실패 시 활동 시작 안 함', async () => {
     assert.equal(await phase(page), 'idle');
-    assert.match(await overlayText(page), /전체화면으로 전환하지 못해 평가를 시작하지 않았습니다/);
+    assert.match(await overlayText(page), /전체화면으로 전환하지 못해 활동을 시작하지 않았습니다/);
     const l = await log(page);
     assert.ok(!l || l.sessions.length === 0);
   });
@@ -85,7 +87,9 @@ try {
   // 정상 시작
   await page.click('[data-act=start]');
   await page.waitForTimeout(300);
-  await check('[평가 시작] → 전체화면 진입 성공 후 평가 시작', async () => {
+  await check('[활동 시작] → 전체화면 진입 성공 후 활동 시작, 진행 표시에 평가라는 말 없음', async () => {
+    assert.match(await page.textContent('.asmt-pill'), /활동 진행 중.*활동 종료/s);
+    assert.ok(!/평가/.test(await page.textContent('.asmt-pill')));
     assert.equal(await isFs(page), true);
     assert.equal(await phase(page), 'running');
     assert.equal(await appInert(page), false);
@@ -119,7 +123,8 @@ try {
   await page.waitForSelector('.asmt-paused');
   await check('전체화면 해제 → 즉시 중지, 지정 문구 표시, 기록 저장', async () => {
     const t = await overlayText(page);
-    for (const line of ['평가가 일시 중지되었습니다.', '전체화면 모드가 해제되었습니다.', '평가를 계속하려면 전체화면으로 복귀하세요.', '화면 이탈 기록이 저장되었습니다.']) assert.ok(t.includes(line), line);
+    for (const line of ['활동이 일시 중지되었습니다.', '전체화면 모드가 해제되었습니다.', '활동을 계속하려면 전체화면으로 복귀하세요.', '화면 이탈 기록이 저장되었습니다.']) assert.ok(t.includes(line), line);
+    assert.ok(!/평가/.test(t), '중지 화면에 평가라는 말 없음');
     assert.match(t, /전체화면으로 복귀/);
     const s = await active(page);
     assert.equal(s.departures.length, 1);
@@ -233,7 +238,7 @@ try {
   await page.waitForTimeout(500);
   await page.click('[data-act=resume]');
   await page.waitForTimeout(300);
-  await check('새로고침 후 복귀 → 기존 답안 유지·평가 재개', async () => {
+  await check('새로고침 후 복귀 → 기존 답안 유지·활동 재개', async () => {
     assert.equal(await phase(page), 'running');
     assert.equal(await page.inputValue('#ans-q9'), '전체화면 해제 직전에 입력한 답안');
   });
@@ -276,7 +281,7 @@ try {
     assert.ok(!KEY.startsWith('tideLab.'));
   });
 
-  await check('보고서(PDF 구성)에 이번 평가의 화면 이탈 기록이 그대로 들어감', async () => {
+  await check('보고서(PDF 구성)에 이번 활동의 화면 이탈 기록이 그대로 들어감', async () => {
     const s = await active(page2);
     await page2.evaluate(() => window.__tideApp.navigate('report'));
     await page2.waitForSelector('[data-part=departures]');
@@ -319,11 +324,11 @@ try {
     assert.match(await page2.textContent('.asmt-ended'), new RegExp(`화면 이탈\\s*${nEnd}회`));
   });
   await page2.click('.asmt-ended [data-act=new]');
-  await check('새 평가 시작 안내로 돌아감(버튼 클릭 전 전체화면 강제 진입 없음)', async () => {
+  await check('새 활동 시작 안내로 돌아감(버튼 클릭 전 전체화면 강제 진입 없음)', async () => {
     assert.equal(await phase(page2), 'idle');
     assert.equal(await isFs(page2), false);
     assert.equal(await page2.$('.asmt-guide [data-act=download]'), null, '시작 안내에 기록 받기 없음');
-    assert.ok(!(await overlayText(page2)).includes('지난 평가 기록'));
+    assert.ok(!(await overlayText(page2)).includes('지난 활동 기록'));
   });
 } catch (e) {
   results.push(['✗', '실행 중 오류', e.stack]);

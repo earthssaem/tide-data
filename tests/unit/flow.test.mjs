@@ -1,4 +1,4 @@
-// 수행평가 흐름(형식 3): 사례 불러오기, 평가 설정, 저장 형식, 자료 공개 고정, 보고서 구성
+// 탐구 흐름(형식 3): 사례 불러오기, 수업 설정, 저장 형식, 자료 공개 고정, 보고서 구성
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -137,7 +137,8 @@ test('보고서: 공개 전에는 기상·태풍·위상·⑨ 내용 없음, 공
   const f3 = s2.items.find((x) => x.id === 'f3');
   assert.equal(f3.panels.filter((p) => p.spec).length, 3, '세 지역(확대 그래프 없음)');
   const th = s2.items.find((x) => x.id === 'think2');
-  assert.equal(th.label, '추가 생각 · 평가 제외');
+  assert.equal(th.label, '추가 생각(선택)');
+  assert.ok(!/평가|응시/.test(allText(m)), '보고서에 평가·응시라는 말 없음');
   assert.deepEqual(th.lines, ['서해는 바다가 얕고 만이 좁아서']);
   assert.ok(!allText(m).includes('조석파'), '설명 전문은 보고서에 넣지 않음');
   assert.ok(!m.missing.some((x) => x.qid === 'think2'));
@@ -308,7 +309,7 @@ test('탐구 2 지역별 확대: 값은 같은 축과 같고(평균 0) 세로축
   for (const sp of own) { assert.equal(sp.y.domain[0], -sp.y.domain[1]); assert.match(sp.header.subtitle, /지역별 확대/); assert.equal(sp.y.label, '평균과의 차이 (cm)'); }
 });
 
-test('보고서 화면 이탈 기록: 진행 중 세션 자세히, 같은 시간대 다른 세션 요약, 평가 모드 없으면 절 없음', async () => {
+test('보고서 화면 이탈 기록: 진행 중 세션 자세히, 같은 시간대 다른 세션 요약, 전체화면 모드 없으면 절 없음', async () => {
   const { reportSessions, newSession, recordDeparture, closeIncident, endSession } = await import('../../js/assessment/session-log.js');
   const ad = applySetup(await load('khoa-assess-2025-26'), deployed());
   const st = emptyState(ad.id, ad.dataVersion);
@@ -325,11 +326,12 @@ test('보고서 화면 이탈 기록: 진행 중 세션 자세히, 같은 시간
   const sec = m.sections.find((s) => s.key === 'departures');
   const txt = JSON.stringify(sec);
   assert.match(txt, /화면 이탈","1회 · 합계 1분 40초/);
-  assert.match(txt, /이번 평가의 화면 이탈 1회/);
-  assert.match(txt, /같은 시간대\(앞뒤 12시간\)에 이 컴퓨터에서 진행한 다른 평가 1건/);
+  assert.match(txt, /이번 활동의 화면 이탈 1회/);
+  assert.match(txt, /같은 시간대\(앞뒤 12시간\)에 이 컴퓨터에서 진행한 다른 활동 1건/);
+  assert.ok(!/평가/.test(txt), '화면 이탈 기록 절에 평가라는 말 없음');
   assert.ok(txt.includes('asmt-old') && !txt.includes('asmt-far'));
   assert.equal(buildReport(ad, st, { departures: null }).sections.find((s) => s.key === 'departures'), undefined);
-  assert.match(JSON.stringify(buildReport(ad, st, { departures: { current: null, others: [], at: now } }).sections.find((s) => s.key === 'departures')), /진행 중인 평가가 없을 때/);
+  assert.match(JSON.stringify(buildReport(ad, st, { departures: { current: null, others: [], at: now } }).sections.find((s) => s.key === 'departures')), /진행 중인 활동이 없을 때/);
 });
 
 test('학생이 고른 탐구 1·2 기간: 범위 안만 적용, 길이·24시간 위치는 교사 설정, 저장 형식 정리', async () => {

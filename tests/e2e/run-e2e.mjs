@@ -1,4 +1,4 @@
-// 수행평가 흐름 검증 (Playwright): node tests/e2e/run-e2e.mjs [결과폴더]
+// 탐구 흐름 검증 (Playwright): node tests/e2e/run-e2e.mjs [결과폴더]
 // 학생용(실제 자료 khoa-assess-2025-26): 학생 정보 → 탐구 1~3(추가 자료 확인) → 종합 → 새로고침·백업 복원 → PDF
 // 교사용: 로그인(차단·실패·성공·만료·로그아웃·보호된 요청) → 설정·검증·내보내기 → 미리보기 적용(학생 답과 분리) · 이전 형식 보존 · 자료 로딩 실패
 import { createRequire } from 'node:module';
@@ -104,7 +104,7 @@ try {
     const pg = await cg.newPage(); watch(pg, 'entry-real');
     await pg.goto(BASE);
     await pg.waitForSelector('#entry-gate #entry-code');
-    assert.equal(await pg.$('#asmt-root'), null, '평가 시작 안내보다 먼저');
+    assert.equal(await pg.$('#asmt-root'), null, '활동 시작 안내보다 먼저');
     assert.equal(await pg.$('#btn-start'), null, '앱 화면(시작 화면)을 그리지 않음');
     assert.ok(await pg.$('#loading'), '앱은 입장 전 상태 그대로');
     await pg.fill('#entry-code', '0000'); await pg.click('#entry-submit');
@@ -112,7 +112,7 @@ try {
     assert.ok(await pg.$('#entry-gate'));
     await cg.close();
   });
-  await check('입장 코드: 맞는 코드면 평가 시작 안내로, 새로고침해도 다시 묻지 않고 새 탭은 다시 묻는다, 교사 화면은 묻지 않음', async () => {
+  await check('입장 코드: 맞는 코드면 활동 시작 안내로, 새로고침해도 다시 묻지 않고 새 탭은 다시 묻는다, 교사 화면은 묻지 않음', async () => {
     const testEntry = await makeEntry('5678', 20000);
     const cg = await newCtx({ viewport: { width: 1280, height: 800 }, entry: false });
     await cg.route('**/data/assessment.json', async (route) => { const r = await route.fetch(); const j = await r.json(); j.entry = testEntry; await route.fulfill({ response: r, json: j }); });
@@ -257,8 +257,9 @@ try {
     assert.match(await page.textContent('#inq2-charts'), /지역별 확대\(지역마다 눈금이 다름/);
   });
   await page.click('#inq2-scale-same');
-  await check('탐구 2: 잠깐 생각하기 — 평가 제외 표시, ⑤⑥을 다 쓰기 전에는 [설명 보기]를 열 수 없음', async () => {
-    assert.match(await page.textContent('#think2'), /💭 잠깐 생각하기 · 평가에 포함되지 않아요/);
+  await check('탐구 2: 잠깐 생각하기 — 선택 표시(평가라는 말 없음), ⑤⑥을 다 쓰기 전에는 [설명 보기]를 열 수 없음', async () => {
+    assert.match(await page.textContent('#think2'), /💭 잠깐 생각하기 \(선택\)/);
+    assert.ok(!/평가/.test(await page.textContent('#think2')));
     assert.match(await page.textContent('#think2'), /같은 달과 태양의 영향을 받는데, 지역마다 조차가 다른 이유는 무엇일까요\?/);
     assert.match(await page.textContent('#think2'), /힌트: 바다의 깊이와 해안의 모양을 떠올려 보세요\./);
     assert.equal(await page.isVisible('#think2-explain'), false);
@@ -382,7 +383,8 @@ try {
   await check('보고서 미리보기: 탐구 1~4·종합 순서, 고른 지점이 그래프에 포함', async () => {
     const parts = await page.$$eval('.rp-section', (x) => x.map((s) => s.dataset.part));
     assert.deepEqual(parts, ['inq1', 'inq2', 'inq4', 'conclusion', 'attempts', 'departures', 'sources']);
-    assert.match(await page.textContent('[data-part=departures]'), /이번 평가.*화면 이탈\s*\d+회/s);
+    assert.match(await page.textContent('[data-part=departures]'), /이번 활동.*화면 이탈\s*\d+회/s);
+    assert.match(await page.textContent('[data-part=attempts]'), /활동 기록/);
     assert.match(await page.textContent('#rp-f1'), /만조\(내가 고름\)/);
     assert.match(await page.textContent('#rp-f2'), /대조\(내가 고름\)/);
     assert.equal(await page.$$eval('#rp-q4 .rp-orbit svg', (x) => x.length), 2);
@@ -405,7 +407,7 @@ try {
     assert.ok(new RegExp(`\\b${pages}\\s*/\\s*${pages}\\b`).test(txt));
   });
   await check('PDF 구성 순서', async () => {
-    const order = ['학생 정보와 자료', '탐구 1. 조석의 규칙', '탐구 2. 지역별 차이', '탐구 3. 특이한 변화', '종합', '응시 기록', '화면 이탈 기록', '자료 출처와 분석의 한계'];
+    const order = ['학생 정보와 자료', '탐구 1. 조석의 규칙', '탐구 2. 지역별 차이', '탐구 3. 특이한 변화', '종합', '활동 기록', '화면 이탈 기록', '자료 출처와 분석의 한계'];
     let pos = -1;
     for (const o of order) { const i = norm(body).indexOf(norm(o), pos + 1); assert.ok(i > pos, o); pos = i; }
   });
@@ -432,7 +434,9 @@ try {
     assert.match(body, /그림 1\. 부산 예측 조위 3일.*①에서 고른 지점, ②의 24시간/);
     assert.ok(txt.includes('만조(내가 고름)') && txt.includes('소조(내가 고름)'));
     assert.ok(!/달의 위상/.test(txt), '보고서에 달의 위상 없음');
-    assert.match(txt, /추가 생각 · 평가 제외/);
+    assert.match(txt, /추가 생각\(선택\)/);
+    const hit = /평가|응시/.exec(body);
+    assert.equal(hit, null, `PDF에 평가·응시라는 말 없음: ${hit?.[0]}`);
     assert.ok(norm(body).includes(norm('서해는 바다가 얕고 만이 안쪽으로 좁아져서')));
     assert.ok(!txt.includes('조석파'), '설명 전문은 PDF에 없음');
     assert.match(txt, /문항 ⑪/);
@@ -504,6 +508,14 @@ try {
     await go(page, 'report');
     assert.match(await page.textContent('.report-paper'), /3일 2026-08-20 00:00 ~ 08-23 00:00 \(KST\) · 한 달 2026-08 \(학생이 고른 기간\)/);
   });
+  await check('학생 화면(시작·탐구 1~3·종합·보고서, 전체화면 진행 표시 포함)에 평가·응시라는 말 없음', async () => {
+    for (const step of ['start', 'inq1', 'inq2', 'inq4', 'conclusion', 'report']) {
+      await go(page, step);
+      const hit = /평가|응시/.exec(await visibleText(page));
+      assert.equal(hit, null, `${step}: ${hit?.[0]}`);
+    }
+    assert.match(await page.textContent('.asmt-pill'), /활동 진행 중/);
+  });
   // 재응시 공정성: 같은 학생이 새로 시작하면 이미 공개한 단계의 답은 처음 공개할 때 답으로 고정
   const beforeRetake = await stateOf(page);
   await go(page, 'start');
@@ -513,7 +525,7 @@ try {
   await okDialog(page); // 지우고 새로 시작
   await page.waitForSelector('dialog[open]');
   await check('재응시: 같은 학생이 새로 시작하면 이전 공개 기록 안내, 공개 전 답 고정', async () => {
-    assert.match(await page.textContent('dialog[open]'), /이전 응시 기록이 있습니다/);
+    assert.match(await page.textContent('dialog[open]'), /이전 활동 기록이 있습니다/);
     await page.click('dialog[open] button');
     const st = await stateOf(page);
     assert.equal(st.reveals.weather.at, beforeRetake.reveals.weather.at);
@@ -527,7 +539,7 @@ try {
     assert.match(rp, /백업 파일 불러오기/);
     assert.match(rp, /\[추가 자료 확인\]/);
   });
-  await check('재응시: 학생의 내 작성 내용 삭제로 응시 기록은 지워지지 않음', async () => {
+  await check('재응시: 학생의 내 작성 내용 삭제로 활동 기록은 지워지지 않음', async () => {
     await page.evaluate(() => { window.__tideApp.clearMyWork(); });
     await okDialog(page);
     assert.ok(await page.evaluate(() => localStorage.getItem('tideLabAssess.v1.attempts')));
