@@ -1,4 +1,4 @@
-// 탐구 흐름(형식 3): 사례 불러오기, 수업 설정, 저장 형식, 자료 공개 고정, 보고서 구성
+// 수행평가 흐름(형식 3): 사례 불러오기, 평가 설정, 저장 형식, 자료 공개 고정, 보고서 구성
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -137,9 +137,7 @@ test('보고서: 공개 전에는 기상·태풍·위상·⑨ 내용 없음, 공
   const f3 = s2.items.find((x) => x.id === 'f3');
   assert.equal(f3.panels.filter((p) => p.spec).length, 3, '세 지역(확대 그래프 없음)');
   const th = s2.items.find((x) => x.id === 'think2');
-  assert.equal(th.label, '추가 생각(선택)');
-  assert.ok(!/평가|응시|이탈/.test(allText(m)), '수업용 보고서에 평가·응시·이탈 문구 없음');
-  assert.deepEqual(m.sections.map((s) => s.key), ['inq1', 'inq2', 'inq4', 'conclusion'], '기록 절(응시·화면 이탈) 없음');
+  assert.equal(th.label, '추가 생각 · 평가 제외');
   assert.deepEqual(th.lines, ['서해는 바다가 얕고 만이 좁아서']);
   assert.ok(!allText(m).includes('조석파'), '설명 전문은 보고서에 넣지 않음');
   assert.ok(!m.missing.some((x) => x.qid === 'think2'));
@@ -332,18 +330,6 @@ test('보고서 화면 이탈 기록: 진행 중 세션 자세히, 같은 시간
   assert.ok(txt.includes('asmt-old') && !txt.includes('asmt-far'));
   assert.equal(buildReport(ad, st, { departures: null }).sections.find((s) => s.key === 'departures'), undefined);
   assert.match(JSON.stringify(buildReport(ad, st, { departures: { current: null, others: [], at: now } }).sections.find((s) => s.key === 'departures')), /진행 중인 평가가 없을 때/);
-});
-
-test('보고서 응시 기록: 평가 모드에서 넘길 때만 절이 생김(수업용 기본은 없음)', async () => {
-  const ad = applySetup(await load('khoa-assess-2025-26'), deployed());
-  const st = emptyState(ad.id, ad.dataVersion);
-  assert.equal(buildReport(ad, st).sections.find((s) => s.key === 'attempts'), undefined);
-  assert.match(JSON.stringify(buildReport(ad, st, { attempts: { entry: null, others: [] } }).sections.find((s) => s.key === 'attempts')), /이 컴퓨터에 남은 응시 기록이 없습니다/);
-  const at = Date.UTC(2026, 10, 9, 3, 0);
-  const sec = buildReport(ad, st, { attempts: { entry: { events: [{ at, how: 'new' }, { at: at + 60e3, how: 'reveal-weather' }] }, others: [{ who: '3학년 2반 99번 가○○○', events: [{ at: at - 60e3, how: 'reveal-weather' }] }] } }).sections.find((s) => s.key === 'attempts');
-  const txt = JSON.stringify(sec);
-  assert.match(txt, /기록 2건\(시작 1회\)/);
-  assert.match(txt, /다른 학생 정보로 남은 기록 1건\(1명\)/);
 });
 
 test('학생이 고른 탐구 1·2 기간: 범위 안만 적용, 길이·24시간 위치는 교사 설정, 저장 형식 정리', async () => {

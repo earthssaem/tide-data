@@ -1,7 +1,6 @@
 // 전체화면 평가 모드 검증 (Playwright): node tests/e2e/assessment-e2e.mjs [결과폴더]
-// 평가 모드는 기본으로 꺼져 있으므로(수업용) 이 시험에서는 js/assessment/config.js를 enabled: true로 바꿔 내려준다.
 // 정상 시작·종료, 시작 실패, 전체화면 해제, 복귀 실패, 탭 전환, Alt+Tab(포커스 상실), 짧은 포커스 상실,
-// 새로고침, 재접속(비정상 종료), 입력 차단, 자동 저장과의 관계, 보고서의 화면 이탈 기록·응시 기록(재응시 공정성)
+// 새로고침, 재접속(비정상 종료), 입력 차단, 자동 저장과의 관계, 기록 JSON 내보내기
 import { createRequire } from 'node:module';
 import { spawn } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -36,10 +35,6 @@ const isFs = (page) => page.evaluate(() => !!document.fullscreenElement);
 const overlayText = (page) => page.evaluate(() => { const o = document.querySelector('.asmt-overlay'); return o.hidden ? '' : o.innerText; });
 const appInert = (page) => page.evaluate(() => document.getElementById('app').hasAttribute('inert'));
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-const okDialog = async (p) => { await p.click('dialog[open] button[value=ok]'); await p.waitForTimeout(200); };
-// 평가 모드를 켠 설정(저장소의 config.js는 수업용 기본값 enabled: false)
-const ASSESS_ON = readFileSync(join(ROOT, 'js/assessment/config.js'), 'utf8').replace(/enabled:\s*false/, 'enabled: true');
-if (!/enabled: true/.test(ASSESS_ON)) throw new Error('js/assessment/config.js에서 enabled 값을 찾지 못했습니다.');
 async function setVisibility(page, state) {
   await page.evaluate((st) => {
     Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => st });
@@ -62,7 +57,6 @@ try {
   // 학생 입장 코드는 run-e2e에서 시험한다(여기서는 이미 통과한 탭으로)
   const entryHash = JSON.parse(readFileSync(join(ROOT, 'data/assessment.json'), 'utf8')).entry?.hash;
   if (entryHash) await ctx.addInitScript((h) => { try { sessionStorage.setItem('tideLab.entryOk', h); } catch { /* 무시 */ } }, entryHash);
-  await ctx.route('**/js/assessment/config.js', (route) => route.fulfill({ status: 200, contentType: 'text/javascript; charset=utf-8', body: ASSESS_ON }));
   const page = await ctx.newPage();
   page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
   await page.goto(BASE);
@@ -291,7 +285,7 @@ try {
     assert.match(t, new RegExp(`화면 이탈\\s*${s.departures.length}회`));
     assert.ok(t.includes(s.departures[0].typeLabel));
     assert.match(t, /\(추정\)/, '재접속 추정 시각 표시');
-    const n = await page2.evaluate(() => window.__tideApp.reportRecords().departures.current.departures.length);
+    const n = await page2.evaluate(() => window.__tideApp.departuresInfo().current.departures.length);
     assert.equal(n, s.departures.length);
   });
 
@@ -330,65 +324,6 @@ try {
     assert.equal(await isFs(page2), false);
     assert.equal(await page2.$('.asmt-guide [data-act=download]'), null, '시작 안내에 기록 받기 없음');
     assert.ok(!(await overlayText(page2)).includes('지난 평가 기록'));
-  });
-
-  // ───── 재응시 공정성(응시 기록) — 평가 모드에서만 ─────
-  await page2.click('.asmt-guide [data-act=start]');
-  await page2.waitForFunction(() => document.documentElement.dataset.asmt === 'running');
-  await page2.evaluate(() => window.__tideApp.navigate('inq4'));
-  await page2.waitForSelector('#btn-reveal-weather');
-  await page2.fill('#ans-q10', '공개 전 추측');
-  await page2.click('#btn-reveal-weather'); await okDialog(page2);
-  const beforeRetake = await page2.evaluate(() => JSON.parse(JSON.stringify(window.__tideApp.store.state)));
-  await check('평가 모드 보고서: 응시 기록·화면 이탈 기록 절 포함', async () => {
-    await page2.evaluate(() => window.__tideApp.navigate('report'));
-    await page2.waitForSelector('[data-part=attempts]');
-    const parts = await page2.$$eval('.rp-section', (x) => x.map((s) => s.dataset.part));
-    assert.deepEqual(parts, ['inq1', 'inq2', 'inq4', 'conclusion', 'attempts', 'departures', 'sources']);
-    assert.match(await page2.textContent('[data-part=departures]'), /이번 평가.*화면 이탈\s*\d+회/s);
-  });
-  await page2.evaluate(() => window.__tideApp.navigate('start'));
-  await page2.click('#btn-start');
-  await page2.waitForSelector('dialog[open]');
-  await check('재응시: 지우고 새로 시작 확인 창에 이미 확인한 단계는 다시 고정된다고 안내', async () => assert.match(await page2.textContent('dialog[open]'), /이미 \[추가 자료 확인\]을\(를\) 했습니다.*다시 고정/s));
-  await okDialog(page2); // 지우고 새로 시작
-  await page2.waitForSelector('dialog[open]');
-  await check('재응시: 같은 학생이 새로 시작하면 이전 공개 기록 안내, 공개 전 답 고정', async () => {
-    assert.match(await page2.textContent('dialog[open]'), /이전 응시 기록이 있습니다/);
-    await page2.click('dialog[open] button');
-    const st = await page2.evaluate(() => JSON.parse(JSON.stringify(window.__tideApp.store.state)));
-    assert.equal(st.reveals.weather.at, beforeRetake.reveals.weather.at);
-    assert.equal(st.answers.q10, '', '새 작성 내용은 비어 있음');
-    await page2.evaluate(() => window.__tideApp.navigate('inq4'));
-    await page2.waitForSelector('#ans-q10');
-    assert.equal(await page2.$eval('#ans-q10', (e) => e.readOnly), true);
-    assert.equal(await page2.inputValue('#ans-q10'), '공개 전 추측', '처음 공개할 때 답이 보이고 고칠 수 없음');
-    await page2.evaluate(() => window.__tideApp.navigate('report'));
-    const rp = await page2.textContent('[data-part=attempts]');
-    assert.match(rp, /새로 시작.*이전 공개 기록 적용/s);
-    assert.match(rp, /\[추가 자료 확인\]/);
-  });
-  await check('재응시: 학생의 내 작성 내용 삭제로 응시 기록은 지워지지 않음', async () => {
-    await page2.evaluate(() => { window.__tideApp.clearMyWork(); });
-    await okDialog(page2);
-    assert.ok(await page2.evaluate(() => localStorage.getItem('tideLabAssess.v1.attempts')));
-    assert.equal(await page2.evaluate(() => localStorage.getItem('tideLab.v1.work')), null);
-  });
-  await check('재응시: 다른 학생 정보(가짜 이름)로 먼저 자료를 확인하면 본인 보고서에 같은 시간대 다른 학생 기록으로 남음', async () => {
-    await page2.evaluate(() => { window.__tideApp.startNew({ grade: '3', klass: '2', number: '99', name: '가짜이름' }); });
-    await page2.waitForTimeout(300);
-    await page2.evaluate(() => window.__tideApp.navigate('inq4'));
-    await page2.click('#btn-reveal-weather'); await okDialog(page2);
-    await page2.waitForSelector('dialog[open]', { state: 'detached' }).catch(() => {});
-    await page2.evaluate(() => { window.__tideApp.startNew({ grade: '3', klass: '2', number: '15', name: '김학생' }); });
-    await page2.waitForTimeout(300);
-    if (await page2.$('dialog[open]')) await page2.click('dialog[open] button');
-    await page2.evaluate(() => window.__tideApp.navigate('report'));
-    const rp = await page2.textContent('[data-part=attempts]');
-    assert.match(rp, /같은 시간대\(앞뒤 12시간\)에 이 컴퓨터에서 다른 학생 정보로 남은 기록/);
-    assert.ok(rp.includes('3학년 2반 99번 가○○○'), '이름은 첫 글자만');
-    assert.ok(!rp.includes('가짜이름'));
-    assert.match(rp, /3학년 2반 99번 가○○○\s*\[추가 자료 확인\]/);
   });
 } catch (e) {
   results.push(['✗', '실행 중 오류', e.stack]);

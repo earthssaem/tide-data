@@ -24,7 +24,7 @@ export async function loadRegistry(readText = defaultReadText, base = CASES_BASE
 }
 
 /**
- * 사례 하나를 불러온다(형식 3: 탐구 사례).
+ * 사례 하나를 불러온다(형식 3: 수행평가 사례).
  * 관측 조위는 필수, 나머지 자료는 없으면 availability=false로 표시하고 값을 만들어 넣지 않는다.
  */
 export async function loadCase(entry, readText = defaultReadText, base = CASES_BASE) {
@@ -34,11 +34,11 @@ export async function loadCase(entry, readText = defaultReadText, base = CASES_B
 }
 
 /**
- * 탐구 사례 자료: 관측소별 CaseData(예측·관측 조위, 대표 관측소는 기상) + 과거 비교 기간(관측·기상·태풍)
+ * 수행평가 사례 자료: 관측소별 CaseData(예측·관측 조위, 대표 관측소는 기상) + 과거 비교 기간(관측·기상·태풍)
  * @returns {{config,id,dataVersion,isSample,sampleNotice,tz,timeBasis,months,rep,stationList,st,past,moon,defaults,description,typhoonTracks}}
  */
 export async function buildAssessData(config, readFile) {
-  if (config.formatVersion !== 3 || config.kind !== 'tide-assessment') throw new Error('이 앱에서 읽을 수 없는 사례 형식입니다(형식 3 탐구 사례가 필요합니다).');
+  if (config.formatVersion !== 3 || config.kind !== 'tide-assessment') throw new Error('이 앱에서 읽을 수 없는 사례 형식입니다(형식 3 수행평가 사례가 필요합니다).');
   const tz = config.timezone;
   const cache = new Map();
   const read = (f) => { if (!cache.has(f)) cache.set(f, readFile(f)); return cache.get(f); };

@@ -47,7 +47,7 @@ export async function logout() {
  * @param {HTMLElement} container
  * @param {{title?:string, message?:string, onSuccess:(s)=>void, purpose?:string}} o
  */
-export function renderLogin(container, { title = '교사용 로그인', message = '', onSuccess, purpose = '교사용 설정과 미리보기' }) {
+export function renderLogin(container, { title = '교사용 로그인', message = '', onSuccess, purpose = '교사용 평가 설정과 미리보기' }) {
   container.innerHTML = '';
   const card = h('section', { class: 'card login-card', id: 't-login', 'aria-labelledby': 't-login-h' });
   const err = h('p', { class: 'form-error', id: 't-login-error', role: 'alert', hidden: !message }, message || '');

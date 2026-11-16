@@ -1,4 +1,4 @@
-// 수업 설정(교사가 정하는 값) — 형식 2(탐구 1~4 + 종합)
+// 평가 설정(교사가 정하는 값) — 형식 2(탐구 1~4 + 종합)
 // - 학생용 배포 기본값: data/assessment.json (교사용 메모 없음)
 // - 교사용 화면에서 고친 설정: 서버(로그인으로 보호) 또는 이 브라우저(localStorage 'tideLabTeacher.v1.setup')
 // - 설정은 이미 수집해 둔 자료의 범위만 고를 수 있고, 없는 자료를 만들지 않는다.
@@ -52,7 +52,7 @@ export function defaultSetup(ad) {
 
 /** 설정 파일 검사(형식이 틀리면 예외). 빠진 값은 fallback으로 */
 export function parseSetup(obj, fallback = null) {
-  if (!isObj(obj) || obj.format !== SETUP_FORMAT) throw new Error('조석 데이터 탐구실의 설정 파일이 아닙니다.');
+  if (!isObj(obj) || obj.format !== SETUP_FORMAT) throw new Error('조석 데이터 탐구실의 평가 설정 파일이 아닙니다.');
   if (typeof obj.version !== 'number' || obj.version > SETUP_VERSION) throw new Error('이 앱에서 읽을 수 없는 설정 파일 버전입니다.');
   if (obj.version < SETUP_MIN_READ) throw new Error('이전 구성(관측소 선택·탐구 1~5)의 설정 파일입니다. 지금 구성에서는 읽을 수 없으니 교사용 화면에서 다시 설정하세요.');
   if (typeof obj.caseId !== 'string' || !obj.caseId) throw new Error('설정 파일에 사례(caseId)가 없습니다.');
@@ -86,7 +86,7 @@ export function parseSetup(obj, fallback = null) {
 }
 
 /**
- * 탐구 자료에 설정 적용: 각 탐구의 시각 범위(ms)를 계산한다. 잘못된 값은 사례 기본값으로 둔다.
+ * 평가 자료에 설정 적용: 각 탐구의 시각 범위(ms)를 계산한다. 잘못된 값은 사례 기본값으로 둔다.
  * @returns ad + { setup, win: {month, inq1, count, inq2, a, b} }
  */
 export function applySetup(ad, cfg) {
@@ -289,6 +289,6 @@ export function clearTeacherSetup() {
 /** 학생용 배포 기본 설정 읽기(없으면 예외 — 예시 데이터로 바꾸지 않는다) */
 export async function loadDeployedSetup(readText) {
   let text;
-  try { text = await readText(SETUP_URL); } catch (e) { throw new Error(`설정 파일(${SETUP_URL})을 불러오지 못했습니다. ${e.message}`); }
-  try { return parseSetup(JSON.parse(text)); } catch (e) { throw new Error(`설정 파일(${SETUP_URL})이 올바르지 않습니다: ${e.message}`); }
+  try { text = await readText(SETUP_URL); } catch (e) { throw new Error(`평가 설정 파일(${SETUP_URL})을 불러오지 못했습니다. ${e.message}`); }
+  try { return parseSetup(JSON.parse(text)); } catch (e) { throw new Error(`평가 설정 파일(${SETUP_URL})이 올바르지 않습니다: ${e.message}`); }
 }

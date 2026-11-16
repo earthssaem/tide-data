@@ -117,7 +117,7 @@ export function render(app, container) {
   let unsub = null;
   right.append(thinkCard());
 
-  /** 잠깐 생각하기(선택, 번호 없음): 한 줄 입력 + [설명 보기](처음엔 접힘) */
+  /** 잠깐 생각하기(선택·평가 제외): 한 줄 입력 + [설명 보기](처음엔 접힘) */
   function thinkCard() {
     const T = THINK2;
     const card = h('section', { class: 'think-card', id: 'think2', 'aria-labelledby': 'think2-title' });
