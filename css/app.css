@@ -386,7 +386,7 @@ textarea:focus { border-color: var(--teal); }
 }
 
 
-/* ── 수행평가 흐름: 자료 공개, 잠금, 그림판, 관측소 선택, 교사 설정 ── */
+/* ── 탐구 흐름: 자료 공개, 잠금, 그림판, 관측소 선택, 교사 설정 ── */
 .badge-err { background: #fdecea; color: #b42318; border: 1px solid #f3b8b1; }
 .badge-info { background: var(--navy-soft); color: var(--navy); }
 .notice-lock { background: #f2f5f9; border-color: var(--line); color: #34465c; }
@@ -502,7 +502,7 @@ textarea:focus { border-color: var(--teal); }
 #t-password { flex: 1; min-width: 0; font: inherit; padding: .45rem .6rem; border: 1px solid var(--line); border-radius: 8px; }
 .t-auth-row { justify-content: flex-end; }
 
-/* ── 수행평가 4탐구 화면(형식 3) ── */
+/* ── 탐구 화면(형식 3) ── */
 .seg-btn { padding: .3rem .8rem; font-size: .88rem; font-weight: 700; color: var(--navy); background: #fff; border: 0; border-right: 1px solid var(--line); cursor: pointer; }
 .seg-btn:last-child { border-right: 0; }
 .seg-btn.on { background: var(--navy); color: #fff; }
@@ -549,7 +549,7 @@ textarea:focus { border-color: var(--teal); }
 .answer-label { font-weight: 700; font-size: .92rem; margin: .6rem 0 .2rem; }
 
 
-/* 탐구 2 잠깐 생각하기(선택·평가 제외) */
+/* 탐구 2 잠깐 생각하기(선택) */
 .think-card { margin-top: .9rem; padding: .7rem .8rem; border: 1px dashed var(--line); border-radius: 10px; background: #fbfaf5; }
 .think-card h3 { font-size: .95rem; margin: 0 0 .35rem; color: var(--navy); }
 .think-q { margin: 0 0 .2rem; font-weight: 600; }

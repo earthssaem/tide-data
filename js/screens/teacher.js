@@ -1,4 +1,4 @@
-// 교사용 평가 설정 화면 (?mode=teacher)
+// 교사용 수업 설정 화면 (?mode=teacher)
 // - 문항 켜기·끄기, 기본 분석 연월, 탐구 1 구간(3일 + 문항 ②의 24시간), 탐구 2 지역 비교 기간, 탐구 3 비교 기간(A·B), 교사용 메모
 // - 저장된 교사 설정이 학생용 배포 설정과 다르면 다른 항목을 보여 주고 [배포 설정 값으로 맞추기]를 제공
 // - 교사 로그인(서버에서 비밀번호·세션 확인)을 통과해야 화면이 열린다. 교사용 메모가 든 설정은 서버 저장소가 있으면
@@ -18,6 +18,7 @@ import { layoutToSVG, screenMeasure } from '../chart/svg.js';
 import { $, h, confirmDialog, alertDialog, choiceDialog, downloadBlob, pickFile, toast } from '../util/dom.js';
 import { escapeHtml } from '../util/format.js';
 import { EXPORT_NOTICE } from '../assessment/session-log.js';
+import { ASSESSMENT_CONFIG } from '../assessment/config.js';
 import { makeEntry, validCode, normCode } from '../setup/entry.js';
 import { fmtRange, fmtDateTime, HOUR, DAY } from '../util/time.js';
 import { checkSession, renderLogin, teacherFetch, logout, expiryText, currentSession } from '../teacher-auth.js';
@@ -35,9 +36,9 @@ export async function boot(app) {
   $('#stepper').hidden = true;
   $('.top-tools').style.display = 'none';
   $('#bottom-nav').hidden = true;
-  $('#brand-home').querySelector('.brand-name').textContent = '조석 데이터 탐구실 · 교사용 평가 설정';
+  $('#brand-home').querySelector('.brand-name').textContent = '조석 데이터 탐구실 · 교사용 수업 설정';
   $('#brand-home').addEventListener('click', () => { location.href = '?mode=teacher'; });
-  document.title = '교사용 평가 설정 — 조석 데이터 탐구실';
+  document.title = '교사용 수업 설정 — 조석 데이터 탐구실';
   await start(app);
 }
 
@@ -146,7 +147,7 @@ function render(app, T) {
   const realCases = T.registry.cases.filter((c) => !c.sample);
   const sampleCases = T.registry.cases.filter((c) => c.sample);
   screen.append(h('div', { class: 'inq-head' },
-    h('h1', {}, '교사용 평가 설정'),
+    h('h1', {}, '교사용 수업 설정'),
     h('p', { class: 'inq-intro' }, '문항 사용 여부, 분석할 달, 탐구별 구간·기간을 정합니다. 확보한 실제 자료의 범위 안에서만 고를 수 있고, 없는 자료는 만들지 않습니다. 대조·소조·조석 형태의 정답을 학생에게 지정하는 기능은 없습니다.')));
   const steps = h('section', { class: 'card t-howto', id: 't-howto' });
   steps.innerHTML = `<h2>설정 저장과 학생 적용은 다릅니다</h2>
@@ -156,21 +157,26 @@ function render(app, T) {
       <li><b>보관·다른 컴퓨터</b> — <b>교사 보관용 파일</b>(메모 포함)을 받아 두고, 다른 컴퓨터에서 [설정 파일 불러오기]로 이어서 고칠 수 있습니다.</li>
     </ol>`;
   screen.append(steps);
-  // 학생 화면에는 보이지 않는 기록 해석 유의 사항(교사용)
-  screen.append(h('details', { class: 'card t-records-note', id: 't-records-note' },
-    h('summary', {}, h('b', {}, '화면 이탈 기록·응시 기록을 볼 때 유의할 점')),
-    h('ul', { class: 'small' },
-      ...EXPORT_NOTICE.map((t) => h('li', {}, t)),
-      h('li', {}, '보고서의 응시 기록은 그 컴퓨터·브라우저에 남은 기록만 담습니다. 다른 컴퓨터·브라우저에서 처음부터 하거나 브라우저 설정으로 사이트 데이터를 지우면 알 수 없습니다.'),
-      h('li', {}, '화면 이탈 기록은 학생 PDF 보고서의 \'화면 이탈 기록\'에서 확인합니다(보고서를 만든 시각까지의 기록).'),
-      h('li', {}, '이 안내는 학생 화면과 보고서에는 표시하지 않습니다.'))));
+  // 평가 모드(전체화면·화면 이탈 기록·응시 기록)는 기본으로 꺼 두고 탐구 수업용으로 쓴다
+  if (!ASSESSMENT_CONFIG.enabled) {
+    screen.append(h('p', { class: 'small muted', id: 't-mode-note' }, '탐구 수업용으로 쓰고 있습니다(전체화면 평가 모드, 화면 이탈 기록, 응시 기록 없음). 수행평가로 쓰려면 README의 ‘전체화면 평가 모드’를 보세요.'));
+  } else {
+    // 학생 화면에는 보이지 않는 기록 해석 유의 사항(교사용)
+    screen.append(h('details', { class: 'card t-records-note', id: 't-records-note' },
+      h('summary', {}, h('b', {}, '화면 이탈 기록·응시 기록을 볼 때 유의할 점')),
+      h('ul', { class: 'small' },
+        ...EXPORT_NOTICE.map((t) => h('li', {}, t)),
+        h('li', {}, '보고서의 응시 기록은 그 컴퓨터·브라우저에 남은 기록만 담습니다. 다른 컴퓨터·브라우저에서 처음부터 하거나 브라우저 설정으로 사이트 데이터를 지우면 알 수 없습니다.'),
+        h('li', {}, '화면 이탈 기록은 학생 PDF 보고서의 \'화면 이탈 기록\'에서 확인합니다(보고서를 만든 시각까지의 기록).'),
+        h('li', {}, '이 안내는 학생 화면과 보고서에는 표시하지 않습니다.'))));
+  }
 
   const bar = h('div', { class: 'card t-bar' });
-  const caseSel = h('select', { id: 't-case', 'aria-label': '평가 사례' });
+  const caseSel = h('select', { id: 't-case', 'aria-label': '탐구 자료(사례)' });
   caseSel.innerHTML = realCases.map((c) => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.label || c.id)}</option>`).join('');
   caseSel.value = T.ad.id;
   caseSel.addEventListener('change', async () => {
-    if (!(await confirmDialog({ title: '평가 사례 바꾸기', body: '평가 사례를 바꾸면 설정이 새 사례의 기본값으로 바뀝니다. 지금 설정을 보관하려면 먼저 교사 보관용 파일을 내보내세요.', okLabel: '사례 바꾸기' }))) { caseSel.value = T.ad.id; return; }
+    if (!(await confirmDialog({ title: '탐구 자료(사례) 바꾸기', body: '사례를 바꾸면 설정이 새 사례의 기본값으로 바뀝니다. 지금 설정을 보관하려면 먼저 교사 보관용 파일을 내보내세요.', okLabel: '사례 바꾸기' }))) { caseSel.value = T.ad.id; return; }
     T.cfg = null;
     await loadCaseFor(T, caseSel.value);
     persist(T);
@@ -180,7 +186,7 @@ function render(app, T) {
     h('div', { class: 't-bar-row t-auth-row' },
       h('span', { class: 'badge badge-ok', id: 't-auth' }, `교사 로그인됨 · ${expiryText(currentSession()?.expiresAt)}`),
       h('button', { type: 'button', class: 'btn btn-ghost btn-sm', id: 't-logout', onclick: () => doLogout(app, T) }, '로그아웃')),
-    h('div', { class: 't-bar-row' }, h('label', { for: 't-case' }, h('b', {}, '평가 사례 ')), caseSel, h('span', { class: 'muted small' }, `설정 출처: ${T.source}`)),
+    h('div', { class: 't-bar-row' }, h('label', { for: 't-case' }, h('b', {}, '탐구 자료(사례) ')), caseSel, h('span', { class: 'muted small' }, `설정 출처: ${T.source}`)),
     h('div', { class: 't-bar-row' },
       h('a', { class: 'btn btn-primary', id: 't-preview', href: '?mode=preview', target: '_blank', rel: 'noopener', onclick: () => persist(T) }, '학생용 미리보기'),
       h('button', { type: 'button', class: 'btn btn-secondary', id: 't-export', onclick: () => exportDialog(T) }, '설정 저장·내보내기'),
@@ -391,7 +397,7 @@ async function exportDialog(T) {
     ],
   });
   const stamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  if (v === 'teacher') downloadBlob(new Blob([JSON.stringify(teacherExport(T.cfg), null, 1)], { type: 'application/json' }), `조석탐구_평가설정_교사보관용_${stamp}.json`);
+  if (v === 'teacher') downloadBlob(new Blob([JSON.stringify(teacherExport(T.cfg), null, 1)], { type: 'application/json' }), `조석탐구_설정_교사보관용_${stamp}.json`);
   if (v === 'student') downloadBlob(new Blob([JSON.stringify(studentDeployment(T.cfg), null, 1)], { type: 'application/json' }), 'assessment.json');
 }
 

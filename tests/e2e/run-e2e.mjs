@@ -1,4 +1,5 @@
-// 수행평가 흐름 검증 (Playwright): node tests/e2e/run-e2e.mjs [결과폴더]
+// 탐구 흐름 검증 (Playwright): node tests/e2e/run-e2e.mjs [결과폴더]
+// 기본(수업용): 전체화면 평가 모드·화면 이탈 기록·응시 기록 없음. 평가 모드를 켠 경우는 assessment-e2e.mjs에서 시험한다.
 // 학생용(실제 자료 khoa-assess-2025-26): 학생 정보 → 탐구 1~3(추가 자료 확인) → 종합 → 새로고침·백업 복원 → PDF
 // 교사용: 로그인(차단·실패·성공·만료·로그아웃·보호된 요청) → 설정·검증·내보내기 → 미리보기 적용(학생 답과 분리) · 이전 형식 보존 · 자료 로딩 실패
 import { createRequire } from 'node:module';
@@ -33,11 +34,13 @@ const obs5 = series('stations/DT_0005/observed.csv', 'tide_cm');
 const obs22 = series('past/DT_0005-2022-09/observed.csv', 'tide_cm');
 const wx22 = new Map(readCsv('past/DT_0005-2022-09/weather.csv').map((r) => [r.time, r]));
 
-async function passAssessment(p) {
-  await p.waitForSelector('#asmt-root', { state: 'attached' });
-  const btn = await p.$('.asmt-overlay:not([hidden]) [data-act=start], .asmt-overlay:not([hidden]) [data-act=resume]');
-  if (btn) { await btn.click(); await p.waitForFunction(() => document.documentElement.dataset.asmt === 'running'); }
+/** 수업용(기본): 평가 모드가 꺼져 있어 평가 시작 안내·가림 화면 없이 바로 앱이 열린다 */
+async function noAssessment(p) {
+  await p.waitForFunction(() => document.documentElement.dataset.asmt === 'disabled');
+  assert.equal(await p.$('#asmt-root'), null, '평가 모드 화면 없음');
 }
+// 수업용 학생 화면·보고서에 나오면 안 되는 말(평가 모드 문구)
+const ASSESS_WORDS = /평가|응시|이탈|감점|부정행위|전체화면/;
 
 const results = [];
 const check = async (name, fn) => {
@@ -104,7 +107,7 @@ try {
     const pg = await cg.newPage(); watch(pg, 'entry-real');
     await pg.goto(BASE);
     await pg.waitForSelector('#entry-gate #entry-code');
-    assert.equal(await pg.$('#asmt-root'), null, '평가 시작 안내보다 먼저');
+    assert.equal(await pg.$('#asmt-root'), null, '평가 시작 안내 없음');
     assert.equal(await pg.$('#btn-start'), null, '앱 화면(시작 화면)을 그리지 않음');
     assert.ok(await pg.$('#loading'), '앱은 입장 전 상태 그대로');
     await pg.fill('#entry-code', '0000'); await pg.click('#entry-submit');
@@ -112,7 +115,7 @@ try {
     assert.ok(await pg.$('#entry-gate'));
     await cg.close();
   });
-  await check('입장 코드: 맞는 코드면 평가 시작 안내로, 새로고침해도 다시 묻지 않고 새 탭은 다시 묻는다, 교사 화면은 묻지 않음', async () => {
+  await check('입장 코드: 맞는 코드면 바로 시작 화면으로(평가 시작 안내 없음), 새로고침해도 다시 묻지 않고 새 탭은 다시 묻는다, 교사 화면은 묻지 않음', async () => {
     const testEntry = await makeEntry('5678', 20000);
     const cg = await newCtx({ viewport: { width: 1280, height: 800 }, entry: false });
     await cg.route('**/data/assessment.json', async (route) => { const r = await route.fetch(); const j = await r.json(); j.entry = testEntry; await route.fulfill({ response: r, json: j }); });
@@ -122,9 +125,10 @@ try {
     for (let i = 0; i < 2; i++) { await pg.fill('#entry-code', '1111'); await pg.click('#entry-submit'); await pg.waitForFunction(() => !document.querySelector('#entry-submit').disabled); }
     await pg.fill('#entry-code', '56 78'); await pg.click('#entry-submit');
     await pg.waitForSelector('#entry-gate', { state: 'detached' });
-    await pg.waitForSelector('.asmt-guide [data-act=start]');
+    await pg.waitForSelector('.student-form');
+    await noAssessment(pg);
     await pg.reload();
-    await pg.waitForSelector('.asmt-guide [data-act=start]');
+    await pg.waitForSelector('.student-form');
     assert.equal(await pg.$('#entry-gate'), null, '같은 탭 새로고침은 다시 묻지 않음');
     const pg2 = await cg.newPage(); watch(pg2, 'entry2');
     await pg2.goto(BASE);
@@ -143,7 +147,7 @@ try {
 
   // ───── 1. 시작 화면 ─────
   await page.goto(BASE + '?case=sample-2099');
-  await passAssessment(page);
+  await noAssessment(page);
   await page.waitForSelector('.student-form');
   await check('시작: 제목·탐구 순서(관측소 선택 단계 없음)', async () => {
     assert.match(await page.textContent('.start-hero'), /조석 데이터 탐구실/);
@@ -257,8 +261,9 @@ try {
     assert.match(await page.textContent('#inq2-charts'), /지역별 확대\(지역마다 눈금이 다름/);
   });
   await page.click('#inq2-scale-same');
-  await check('탐구 2: 잠깐 생각하기 — 평가 제외 표시, ⑤⑥을 다 쓰기 전에는 [설명 보기]를 열 수 없음', async () => {
-    assert.match(await page.textContent('#think2'), /💭 잠깐 생각하기 · 평가에 포함되지 않아요/);
+  await check('탐구 2: 잠깐 생각하기 — 선택 표시(평가 문구 없음), ⑤⑥을 다 쓰기 전에는 [설명 보기]를 열 수 없음', async () => {
+    assert.match(await page.textContent('#think2'), /💭 잠깐 생각하기 \(선택\)/);
+    assert.ok(!/평가/.test(await page.textContent('#think2')));
     assert.match(await page.textContent('#think2'), /같은 달과 태양의 영향을 받는데, 지역마다 조차가 다른 이유는 무엇일까요\?/);
     assert.match(await page.textContent('#think2'), /힌트: 바다의 깊이와 해안의 모양을 떠올려 보세요\./);
     assert.equal(await page.isVisible('#think2-explain'), false);
@@ -353,7 +358,7 @@ try {
 
   // ───── 7. 새로고침·백업 복원 ─────
   const before = await stateOf(page);
-  await page.reload(); await passAssessment(page);
+  await page.reload(); await noAssessment(page);
   await page.waitForSelector('#ans-q12');
   await check('새로고침 후 답·그림·공개 상태 유지', async () => {
     const after = await stateOf(page);
@@ -381,8 +386,7 @@ try {
   await page.waitForSelector('#btn-pdf');
   await check('보고서 미리보기: 탐구 1~4·종합 순서, 고른 지점이 그래프에 포함', async () => {
     const parts = await page.$$eval('.rp-section', (x) => x.map((s) => s.dataset.part));
-    assert.deepEqual(parts, ['inq1', 'inq2', 'inq4', 'conclusion', 'attempts', 'departures', 'sources']);
-    assert.match(await page.textContent('[data-part=departures]'), /이번 평가.*화면 이탈\s*\d+회/s);
+    assert.deepEqual(parts, ['inq1', 'inq2', 'inq4', 'conclusion', 'sources'], '수업용: 응시 기록·화면 이탈 기록 절 없음');
     assert.match(await page.textContent('#rp-f1'), /만조\(내가 고름\)/);
     assert.match(await page.textContent('#rp-f2'), /대조\(내가 고름\)/);
     assert.equal(await page.$$eval('#rp-q4 .rp-orbit svg', (x) => x.length), 2);
@@ -405,9 +409,11 @@ try {
     assert.ok(new RegExp(`\\b${pages}\\s*/\\s*${pages}\\b`).test(txt));
   });
   await check('PDF 구성 순서', async () => {
-    const order = ['학생 정보와 자료', '탐구 1. 조석의 규칙', '탐구 2. 지역별 차이', '탐구 3. 특이한 변화', '종합', '응시 기록', '화면 이탈 기록', '자료 출처와 분석의 한계'];
+    const order = ['학생 정보와 자료', '탐구 1. 조석의 규칙', '탐구 2. 지역별 차이', '탐구 3. 특이한 변화', '종합', '자료 출처와 분석의 한계'];
     let pos = -1;
     for (const o of order) { const i = norm(body).indexOf(norm(o), pos + 1); assert.ok(i > pos, o); pos = i; }
+    const hit = ASSESS_WORDS.exec(body);
+    assert.equal(hit, null, `PDF에 평가 모드 문구 없음: ${hit?.[0]}`);
   });
   await check('PDF: 학생이 쓴 답·고른 값이 화면과 같게 반영(줄바꿈·긴 답변·음수)', async () => {
     const st = await stateOf(page);
@@ -432,7 +438,7 @@ try {
     assert.match(body, /그림 1\. 부산 예측 조위 3일.*①에서 고른 지점, ②의 24시간/);
     assert.ok(txt.includes('만조(내가 고름)') && txt.includes('소조(내가 고름)'));
     assert.ok(!/달의 위상/.test(txt), '보고서에 달의 위상 없음');
-    assert.match(txt, /추가 생각 · 평가 제외/);
+    assert.match(txt, /추가 생각\(선택\)/);
     assert.ok(norm(body).includes(norm('서해는 바다가 얕고 만이 안쪽으로 좁아져서')));
     assert.ok(!txt.includes('조석파'), '설명 전문은 PDF에 없음');
     assert.match(txt, /문항 ⑪/);
@@ -504,53 +510,30 @@ try {
     await go(page, 'report');
     assert.match(await page.textContent('.report-paper'), /3일 2026-08-20 00:00 ~ 08-23 00:00 \(KST\) · 한 달 2026-08 \(학생이 고른 기간\)/);
   });
-  // 재응시 공정성: 같은 학생이 새로 시작하면 이미 공개한 단계의 답은 처음 공개할 때 답으로 고정
-  const beforeRetake = await stateOf(page);
+  await check('수업용: 학생 화면(시작·탐구 1~3·종합·보고서)에 평가 모드 문구 없음', async () => {
+    for (const step of ['start', 'inq1', 'inq2', 'inq4', 'conclusion', 'report']) {
+      await go(page, step);
+      const hit = ASSESS_WORDS.exec(await visibleText(page));
+      assert.equal(hit, null, `${step}: ${hit?.[0]}`);
+    }
+  });
+  // 수업용: 같은 학생이 새로 시작하면 이전 공개 기록(응시 기록)을 적용하지 않고 처음부터 새로 시작
   await go(page, 'start');
   await page.click('#btn-start');
   await page.waitForSelector('dialog[open]');
-  await check('재응시: 지우고 새로 시작 확인 창에 이미 확인한 단계는 다시 고정된다고 안내', async () => assert.match(await page.textContent('dialog[open]'), /이미 \[추가 자료 확인\]을\(를\) 했습니다.*다시 고정/s));
+  await check('수업용: 지우고 새로 시작 확인 창에 응시 기록·다시 고정 안내 없음', async () => assert.ok(!/이미 \[추가 자료 확인\]|다시 고정|응시/.test(await page.textContent('dialog[open]'))));
   await okDialog(page); // 지우고 새로 시작
-  await page.waitForSelector('dialog[open]');
-  await check('재응시: 같은 학생이 새로 시작하면 이전 공개 기록 안내, 공개 전 답 고정', async () => {
-    assert.match(await page.textContent('dialog[open]'), /이전 응시 기록이 있습니다/);
-    await page.click('dialog[open] button');
+  await check('수업용: 새로 시작하면 추가 자료 확인 전 상태(이전 공개 기록 적용·안내 없음)', async () => {
+    assert.equal(await page.$('dialog[open]'), null, '이전 응시 기록 안내 없음');
     const st = await stateOf(page);
-    assert.equal(st.reveals.weather.at, beforeRetake.reveals.weather.at);
-    assert.equal(st.answers.q9, '', '새 작성 내용은 비어 있음');
+    assert.equal(st.reveals.weather, null);
     await go(page, 'inq4');
-    assert.equal(await page.$eval('#ans-q9', (e) => e.readOnly), true);
-    assert.equal(await page.inputValue('#ans-q9'), beforeRetake.reveals.weather.answers.q9, '처음 공개할 때 답이 보이고 고칠 수 없음');
-    await go(page, 'report');
-    const rp = await page.textContent('[data-part=attempts]');
-    assert.match(rp, /새로 시작.*이전 공개 기록 적용/s);
-    assert.match(rp, /백업 파일 불러오기/);
-    assert.match(rp, /\[추가 자료 확인\]/);
+    assert.equal(await page.$eval('#ans-q9', (e) => e.readOnly), false);
+    assert.ok(await page.$('#btn-reveal-weather'));
   });
-  await check('재응시: 학생의 내 작성 내용 삭제로 응시 기록은 지워지지 않음', async () => {
-    await page.evaluate(() => { window.__tideApp.clearMyWork(); });
-    await okDialog(page);
-    assert.ok(await page.evaluate(() => localStorage.getItem('tideLabAssess.v1.attempts')));
-    assert.equal(await page.evaluate(() => localStorage.getItem('tideLab.v1.work')), null);
-  });
-  await check('재응시: 다른 학생 정보(가짜 이름)로 먼저 자료를 확인하면 본인 보고서에 같은 시간대 다른 학생 기록으로 남음', async () => {
-    await page.evaluate(() => {
-      window.__tideApp.startNew({ grade: '3', klass: '2', number: '99', name: '가짜이름' });
-      window.__tideApp.store.update((s) => { s.reveals.weather = null; });
-    });
-    await page.waitForTimeout(300);
-    await go(page, 'inq4');
-    await page.click('#btn-reveal-weather'); await okDialog(page);
-    await page.waitForSelector('dialog[open]', { state: 'detached' }).catch(() => {});
-    await page.evaluate(() => { window.__tideApp.startNew({ grade: '3', klass: '2', number: '15', name: '김학생' }); });
-    await page.waitForTimeout(300);
-    if (await page.$('dialog[open]')) await page.click('dialog[open] button');
-    await go(page, 'report');
-    const rp = await page.textContent('[data-part=attempts]');
-    assert.match(rp, /같은 시간대\(앞뒤 12시간\)에 이 컴퓨터에서 다른 학생 정보로 남은 기록/);
-    assert.ok(rp.includes('3학년 2반 99번 가○○○'), '이름은 첫 글자만');
-    assert.ok(!rp.includes('가짜이름'));
-    assert.match(rp, /3학년 2반 99번 가○○○\s*\[추가 자료 확인\]/);
+  await check('수업용: 응시 기록·화면 이탈 기록을 브라우저에 남기지 않음', async () => {
+    const keys = await page.evaluate(() => Object.keys(localStorage));
+    assert.deepEqual(keys.filter((k) => k.startsWith('tideLabAssess')), []);
   });
   await check('학생 화면은 서버(API)나 외부로 아무것도 보내지 않음(답은 학생 브라우저에만)', async () => assert.deepEqual(studentApi, []));
 
@@ -568,7 +551,7 @@ try {
     assert.equal(await apiStatus(tp, '/api/teacher/setup'), 401);
     assert.equal(await apiStatus(tp, '/api/teacher/setup', 'PUT', { format: 'tide-lab-assessment-setup', version: 2, caseId: 'x' }), 401);
     const pv0 = await ctx.newPage();
-    await pv0.goto(BASE + '?mode=preview'); await passAssessment(pv0);
+    await pv0.goto(BASE + '?mode=preview'); await noAssessment(pv0);
     await pv0.waitForSelector('#t-login-form');
     assert.equal(await pv0.$('.student-form'), null, '미리보기도 로그인 전에는 열리지 않음');
     await pv0.close();
@@ -615,13 +598,25 @@ try {
   await check('교사용: 임시 후보에 교사 검토 필요 표시, 기본 설정 검증 통과', async () => {
     assert.ok(await tp.isVisible('#t-review-badge'));
     assert.match(await tp.textContent('#t-entry-state'), /입장 코드가 설정되어 있습니다/);
-    assert.match(await tp.textContent('#t-records-note'), /부정행위를 판정하거나 감점하지 마십시오/, '기록 해석 유의 사항은 교사 화면에');
-    assert.equal(await tp.$('#t-records-dl'), null, '이탈 기록 받기 없음(PDF에 포함)');
-    assert.match(await tp.textContent('#t-records-note'), /PDF 보고서의 '화면 이탈 기록'/);
+    assert.equal(await tp.$('#t-records-note'), null, '수업용: 기록 해석 유의 사항 없음');
+    assert.match(await tp.textContent('#t-mode-note'), /탐구 수업용으로 쓰고 있습니다/);
+    assert.equal(await tp.$('#t-records-dl'), null, '이탈 기록 받기 없음');
+    assert.match(await tp.textContent('h1'), /교사용 수업 설정/);
     assert.equal(await tp.$('#asmt-root .asmt-overlay:not([hidden])'), null);
     assert.equal(await tp.$$eval('#t-valid .t-v-error', (x) => x.length), 0);
     assert.match(await tp.textContent('#t-valid'), /모든 자료 KST 확인/);
     for (const id of ['#t-inq1-chart svg', '#t-inq2-chart svg', '#t-inq4-chart svg', '#t-month-chart svg']) assert.ok(await tp.$(id), id);
+  });
+  await check('교사용(평가 모드를 켠 경우): 화면 이탈 기록·응시 기록 해석 유의 사항 표시', async () => {
+    const on = readFileSync(join(ROOT, 'js/assessment/config.js'), 'utf8').replace(/enabled:\s*false/, 'enabled: true');
+    const ta = await ctx.newPage(); watch(ta, 'teacher-assess');
+    await ta.route('**/js/assessment/config.js', (route) => route.fulfill({ status: 200, contentType: 'text/javascript; charset=utf-8', body: on }));
+    await ta.goto(BASE + '?mode=teacher');
+    await ta.waitForSelector('#t-editor');
+    assert.match(await ta.textContent('#t-records-note'), /부정행위를 판정하거나 감점하지 마십시오/);
+    assert.match(await ta.textContent('#t-records-note'), /PDF 보고서의 '화면 이탈 기록'/);
+    assert.equal(await ta.$('#t-mode-note'), null);
+    await ta.close();
   });
   await tp.selectOption('#t-month', '2026-08'); await tp.waitForTimeout(300);
   await check('교사용: 분석 연월을 바꾸면 탐구 1·2 구간이 그달로 옮겨지고 검증 통과', async () => {
@@ -666,7 +661,7 @@ try {
   const pv = await ctx.newPage();
   watch(pv, 'preview');
   await pv.goto(BASE + href);
-  await passAssessment(pv);
+  await noAssessment(pv);
   await pv.waitForSelector('.student-form');
   await check('미리보기: 교사용 미리보기 표시·새 작성 공간', async () => { assert.ok(await pv.isVisible('#preview-note')); assert.equal((await stateOf(pv)).started, false); });
   await pv.selectOption('select[name=grade]', '1'); await pv.fill('input[name=klass]', '1'); await pv.fill('input[name=number]', '1'); await pv.fill('input[name=name]', '미리보기');
@@ -698,14 +693,14 @@ try {
   });
   await check('학생 화면에는 교사 설정이 적용되지 않음(배포 설정만)', async () => {
     const sp = await ctx.newPage();
-    await sp.goto(BASE); await passAssessment(sp);
+    await sp.goto(BASE); await noAssessment(sp);
     await sp.waitForFunction(() => window.__tideApp?.store);
     assert.equal(await sp.evaluate(() => window.__tideApp.ad.setup.month), '2026-09');
     await sp.close();
   });
   await check('교사용 기능 시험: 가상 데이터는 미리보기에서만 선택', async () => {
     const sp = await ctx.newPage();
-    await sp.goto(BASE + '?mode=preview&case=sample-2099'); await passAssessment(sp);
+    await sp.goto(BASE + '?mode=preview&case=sample-2099'); await noAssessment(sp);
     await sp.waitForSelector('.student-form');
     assert.match(await sp.textContent('#sample-banner'), /기능 확인용 예시 데이터/);
     await sp.close();
@@ -759,7 +754,7 @@ try {
     assert.equal(await apiStatus(p, '/api/teacher/session'), 200, '(대조) 새 유효 세션은 통과 — 쿠키가 실제로 전송됨');
     await cx.close();
     const pv2 = await ctx.newPage();
-    await pv2.goto(BASE + '?mode=preview'); await passAssessment(pv2);
+    await pv2.goto(BASE + '?mode=preview'); await noAssessment(pv2);
     await pv2.waitForSelector('#t-login-form');
     await pv2.close();
   });
@@ -772,7 +767,7 @@ try {
   await ctxL.addInitScript((v) => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('tideLab.v1.work', v); sessionStorage.setItem('seeded', '1'); } }, JSON.stringify(legacy));
   const pl = await ctxL.newPage();
   watch(pl, 'legacy');
-  await pl.goto(BASE); await passAssessment(pl);
+  await pl.goto(BASE); await noAssessment(pl);
   await pl.waitForSelector('#legacy-note-v2');
   await check('이전 형식 저장 내용: 원본 보존·안내·백업 받기', async () => {
     assert.match(await pl.textContent('#legacy-note-v2'), /이전학생/);
@@ -789,7 +784,7 @@ try {
   const ctxF = await newCtx({ viewport: { width: 1280, height: 800 } });
   const pf = await ctxF.newPage();
   await pf.route('**/data/cases/khoa-assess-2025-26/case.json', (r) => r.abort());
-  await pf.goto(BASE); await passAssessment(pf);
+  await pf.goto(BASE); await noAssessment(pf);
   await pf.waitForSelector('#fatal');
   await check('자료 로딩 실패: 오류와 재시도 제공, 예시 데이터로 자동 전환 안 함', async () => {
     assert.ok(await pf.isVisible('#btn-retry'));
@@ -809,10 +804,10 @@ try {
       assert.equal(await pb.$('#t-login-form'), null);
       assert.equal(await pb.$('#t-editor'), null);
       assert.match(await pb.textContent('#t-login-blocked'), /TEACHER_PASSWORD_HASH/);
-      await pb.goto(`http://localhost:${PORT + 1}/?mode=preview`); await passAssessment(pb);
+      await pb.goto(`http://localhost:${PORT + 1}/?mode=preview`); await noAssessment(pb);
       await pb.waitForSelector('#fatal');
       assert.equal(await pb.$('.student-form'), null);
-      await pb.goto(`http://localhost:${PORT + 1}/`); await passAssessment(pb);
+      await pb.goto(`http://localhost:${PORT + 1}/`); await noAssessment(pb);
       await pb.waitForSelector('.student-form');
     });
     await cb.close();

@@ -1,9 +1,9 @@
-// 앱 시작점: 평가 설정·사례 불러오기, 저장 상태 복구, 화면 전환, 공통 머리말
+// 앱 시작점: 수업 설정·사례 불러오기, 저장 상태 복구, 화면 전환, 공통 머리말
 // 모드(주소창 ?mode=)
 //   (없음)   학생용: data/assessment.json의 설정과 실제 관측 자료만 사용. 예시 데이터로 자동 전환하지 않는다.
 //   preview  교사용 미리보기·기능 시험(교사 로그인 후): 교사 설정 적용. 작성 내용은 학생 답과 따로 저장.
 //            ?case=sample-2099 처럼 사례를 고를 수 있다(가상 데이터는 여기서만).
-//   teacher  교사용 평가 설정 화면
+//   teacher  교사용 설정 화면
 import { loadRegistry, loadCase } from './data/loader.js';
 import { Store } from './state/store.js';
 import {
@@ -22,6 +22,9 @@ import { answerLines } from './report/model.js';
 import { ASSESSMENT_CONFIG } from './assessment/config.js';
 import { sanitizeLog, reportSessions } from './assessment/session-log.js';
 import { setAttemptsMode, recordEvent, recordReveal, applyPriorReveals, entryFor, othersNear } from './state/attempts.js';
+
+// 응시 기록(재응시 공정성)과 화면 이탈 기록은 평가 모드를 켰을 때만 남기고 보고서에 넣는다(기본: 수업용, 꺼짐)
+const RECORDS = ASSESSMENT_CONFIG.enabled;
 
 import * as StartScreen from './screens/start.js';
 import * as Inq1Screen from './screens/inquiry1.js';
@@ -112,9 +115,9 @@ async function boot() {
     }
     const caseId = app.mode === 'preview' ? (urlParam('case') || cfg?.caseId || app.registry.defaultCase) : cfg.caseId;
     const entry = app.registry.cases.find((c) => c.id === caseId);
-    if (!entry) throw new Error(`평가 설정의 사례(${caseId})를 사례 목록(index.json)에서 찾을 수 없습니다.`);
+    if (!entry) throw new Error(`설정한 사례(${caseId})를 사례 목록(index.json)에서 찾을 수 없습니다.`);
     const ad0 = await loadCase(entry);
-    if (app.mode === 'student' && ad0.isSample) throw new Error('학생용 평가 설정에 기능 확인용 예시 데이터 사례가 지정되어 있습니다. 선생님께 알려 주세요(예시 데이터는 교사용 기능 시험에서만 씁니다).');
+    if (app.mode === 'student' && ad0.isSample) throw new Error('학생용 설정에 기능 확인용 예시 데이터 사례가 지정되어 있습니다. 선생님께 알려 주세요(예시 데이터는 교사용 기능 시험에서만 씁니다).');
     const useCfg = cfg && cfg.caseId === caseId ? cfg : null;
     if (app.mode === 'preview' && !useCfg) app.setupSource = '설정 없음(사례 파일의 기본값)';
     app.baseAd = applySetup(ad0, useCfg); // 교사 설정(학생이 고른 탐구 1·2 기간은 화면을 그릴 때 적용)
@@ -247,7 +250,7 @@ export async function reveal(kind) {
     const answers = JSON.parse(JSON.stringify(Object.fromEntries(R.lockIds.map((id) => [id, x.answers[id]]))));
     x.reveals[kind] = { at: Date.now(), answers };
   }, { topic: 'reveal', immediate: true });
-  recordReveal(app.ad.id, app.store.state.student, kind, app.store.state.reveals[kind]);
+  if (RECORDS) recordReveal(app.ad.id, app.store.state.student, kind, app.store.state.reveals[kind]);
   toast(`[${R.label}] 완료. 확인 전 답은 따로 보관되었습니다.`);
   navigate(app.currentStep, { replace: true });
   return true;
@@ -315,7 +318,7 @@ export async function importBackup() {
   let text;
   try { text = await file.text(); } catch (e) { await alertDialog({ title: '불러오기 실패', body: `파일을 읽지 못했습니다: ${e.message}\n기존 작성 내용은 그대로 보존됩니다.` }); return; }
   const r = parseBackup(text, { knownCaseIds: app.registry.cases.map((c) => c.id), currentCaseId: app.ad.id, currentDataVersion: app.ad.dataVersion });
-  if (r.ok && r.state.caseId !== app.ad.id) { r.ok = false; r.error = `현재 평가 사례(${app.ad.id})와 다른 사례(${r.state.caseId})의 백업입니다. 이 화면에서는 불러올 수 없습니다.`; }
+  if (r.ok && r.state.caseId !== app.ad.id) { r.ok = false; r.error = `지금 탐구하는 자료(${app.ad.id})와 다른 사례(${r.state.caseId})의 백업입니다. 이 화면에서는 불러올 수 없습니다.`; }
   if (!r.ok) {
     await alertDialog({ title: '백업 파일을 불러올 수 없습니다', body: `${r.error}\n\n기존 작성 내용은 바뀌지 않았습니다.` });
     return;
@@ -332,9 +335,12 @@ export async function importBackup() {
   next.started = true;
   next.dataVersion = next.dataVersion || app.ad.dataVersion;
   // 백업에 있는 공개 기록은 이 컴퓨터 기록에도 남기고, 이 컴퓨터에 더 이른 공개 기록이 있으면 그것을 적용(공개 전 백업으로 잠금이 풀리지 않게)
-  for (const kind of ['weather']) if (next.reveals[kind]) recordReveal(app.ad.id, next.student, kind, next.reveals[kind]);
-  const applied = applyPriorReveals(next);
-  recordEvent(app.ad.id, next.student, 'import', { file: file.name.slice(0, 120), fileUpdatedAt: r.state.updatedAt, ...(applied.length ? { priorReveals: applied } : {}) });
+  let applied = [];
+  if (RECORDS) {
+    for (const kind of ['weather']) if (next.reveals[kind]) recordReveal(app.ad.id, next.student, kind, next.reveals[kind]);
+    applied = applyPriorReveals(next);
+    recordEvent(app.ad.id, next.student, 'import', { file: file.name.slice(0, 120), fileUpdatedAt: r.state.updatedAt, ...(applied.length ? { priorReveals: applied } : {}) });
+  }
   app.store.replace(next);
   toast('백업 파일을 불러왔습니다.');
   navigate(next.step === 'start' ? 'inq1' : next.step);
@@ -371,18 +377,18 @@ export function startNew(student) {
   st.student = student;
   st.started = true;
   st.step = 'inq1';
-  const applied = applyPriorReveals(st);
-  recordEvent(app.ad.id, student, 'new', applied.length ? { priorReveals: applied } : {});
+  const applied = RECORDS ? applyPriorReveals(st) : [];
+  if (RECORDS) recordEvent(app.ad.id, student, 'new', applied.length ? { priorReveals: applied } : {});
   app.store.replace(st);
   navigate('inq1');
   priorRevealNotice(applied);
 }
 
-/** [이어서 작성하기]: 기록하고, 이 학생의 이전 공개 기록을 적용 */
+/** [이어서 작성하기]: (평가 모드) 기록하고, 이 학생의 이전 공개 기록을 적용 */
 export function continueWork(student) {
   let applied = [];
-  app.store.update((x) => { x.student = student; applied = applyPriorReveals(x); }, { immediate: true });
-  recordEvent(app.ad.id, student, 'continue', applied.length ? { priorReveals: applied } : {});
+  app.store.update((x) => { x.student = student; if (RECORDS) applied = applyPriorReveals(x); }, { immediate: true });
+  if (RECORDS) recordEvent(app.ad.id, student, 'continue', applied.length ? { priorReveals: applied } : {});
   const s = app.store.state;
   navigate(s.step && s.step !== 'start' ? s.step : 'inq1');
   priorRevealNotice(applied);
@@ -390,12 +396,18 @@ export function continueWork(student) {
 
 /** 보고서에 넣을 화면 이탈 기록(평가 모드를 쓰지 않으면 null) */
 function departuresInfo() {
-  if (!ASSESSMENT_CONFIG.enabled) return null;
+  if (!RECORDS) return null;
   let log = null;
   try { log = sanitizeLog(JSON.parse(localStorage.getItem(ASSESSMENT_CONFIG.storageKey) || 'null'), ASSESSMENT_CONFIG.maxSessions); } catch { log = null; }
   return reportSessions(log || { sessions: [], activeId: null });
 }
 
-Object.assign(app, { navigate, reveal, downloadBackup, downloadLegacy, importBackup, clearMyWork, startNew, continueWork, stepStatus, attemptsEntry: () => entryFor(app.ad.id, app.store.state.student), attemptsEntryFor: (st) => entryFor(app.ad.id, st), attemptsOthers: () => othersNear(app.ad.id, app.store.state.student), departuresInfo });
+/** 보고서에 덧붙일 기록(평가 모드에서만: 응시 기록·화면 이탈 기록). 수업용(기본)에서는 빈 객체 → 보고서에 기록 절 없음 */
+function reportRecords() {
+  if (!RECORDS) return {};
+  return { attempts: { entry: entryFor(app.ad.id, app.store.state.student), others: othersNear(app.ad.id, app.store.state.student) }, departures: departuresInfo() };
+}
+
+Object.assign(app, { navigate, reveal, downloadBackup, downloadLegacy, importBackup, clearMyWork, startNew, continueWork, stepStatus, attemptsEntryFor: (st) => (RECORDS ? entryFor(app.ad.id, st) : null), reportRecords });
 
 boot();
